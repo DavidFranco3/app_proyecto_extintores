@@ -50,9 +50,6 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
-    print("hola mi amor");
-    print(widget.showModal);
-
     var dataTemp = {
       'nombre': data['nombre'],
       'descripcion': data['descripcion'],
@@ -74,7 +71,6 @@ class _AccionesState extends State<Acciones> {
             dataTemp);
         _showDialog(
             "Clasificacion agregada correctamente", Icons.check, Colors.green);
-        closeRegistroModal;
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
@@ -115,7 +111,6 @@ class _AccionesState extends State<Acciones> {
             dataTemp);
         _showDialog("Clasificacion actualizada correctamente", Icons.check,
             Colors.green);
-        closeRegistroModal;
       }
     } catch (error) {
       setState(() {
@@ -144,7 +139,6 @@ class _AccionesState extends State<Acciones> {
             "Se ha eliminado la clasificacion $id correctamente", {});
         _showDialog(
             "Clasificacion eliminada correctamente", Icons.check, Colors.green);
-        closeRegistroModal;
       }
     } catch (error) {
       setState(() {

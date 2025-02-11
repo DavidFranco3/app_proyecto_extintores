@@ -10,20 +10,20 @@ Future<Map<String, dynamic>> _obtenerDatosComunes(String token) async {
     final usuarioService = UsuarioService();
 
     // Obtener el id del usuario
-    final idUsuario = await authService.obtenidusuarioLogueado(token);
+    final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
     
     // Obtener los datos del usuario
-    Map<String, dynamic>? user = await usuarioService.obtenerUsuario2(idUsuario?['id'] ?? '');
-    if (user == null || user['data'] == null) {
+    Map<String, dynamic>? user = await usuarioService.obtenerUsuario2(idUsuario);
+    if (user == null) {
       throw Exception("No se pudieron obtener los datos del usuario.");
     }
 
-    final nombre = user['data']['nombre'];
-    final email = user['data']['email'];
+    final nombre = user['nombre'];
+    final email = user['email'];
 
     // Obtener la IP
     final ipResponse = await LogsService().obtenIP();
-    final ipTemp = ipResponse['data'];
+    final ipTemp = ipResponse;
 
     // Obtener el número de logs
     final noLogResponse = await LogsService().obtenerNumeroLog();

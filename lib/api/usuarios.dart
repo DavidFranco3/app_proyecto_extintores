@@ -44,7 +44,7 @@ class UsuarioService {
   Future<Map<String, dynamic>?> obtenerUsuario2(String id) async {
   try {
     final response = await http.get(
-      Uri.parse('https://api.example.com/users/$id'),
+      Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS + '/$id'),
       headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
     );
 
