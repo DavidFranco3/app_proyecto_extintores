@@ -1,36 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../api/clasificaciones.dart';
-import '../../components/Clasificaciones/list_clasificaciones.dart';
-import '../../components/Clasificaciones/acciones.dart';
+import '../../api/frecuencias.dart';
+import '../../components/Frecuencias/list_frecuencias.dart';
+import '../../components/Frecuencias/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class ClasificacionesPage extends StatefulWidget {
+class FrecuenciasPage extends StatefulWidget {
   @override
-  _ClasificacionesPageState createState() => _ClasificacionesPageState();
+  _FrecuenciasPageState createState() => _FrecuenciasPageState();
 }
 
-class _ClasificacionesPageState extends State<ClasificacionesPage> {
+class _FrecuenciasPageState extends State<FrecuenciasPage> {
   bool loading = true;
-  List<Map<String, dynamic>> dataClasificaciones = [];
+  List<Map<String, dynamic>> dataFrecuencias = [];
 
   @override
   void initState() {
     super.initState();
-    getClasificaciones();
+    getFrecuencias();
   }
 
-  Future<void> getClasificaciones() async {
+  Future<void> getFrecuencias() async {
     try {
-      final clasificacionesService = ClasificacionesService();
+      final frecuenciasService = FrecuenciasService();
       final List<dynamic> response =
-          await clasificacionesService.listarClasificaciones();
+          await frecuenciasService.listarFrecuencias();
 
       if (response.isNotEmpty) {
         setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
+          dataFrecuencias = formatModelFrecuencias(response);
           loading = false;
         });
       } else {
@@ -40,7 +40,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener las frecuencias: $e");
       setState(() {
         loading = false;
       });
@@ -50,45 +50,45 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   // Función para abrir el modal de registro con el formulario de Acciones
-void openRegistroModal() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                'Registrar Clasificación',
-                overflow: TextOverflow.ellipsis,
+  void openRegistroModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Registrar Clasificación',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context); // Cierra el diálogo
+                },
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: IntrinsicHeight(
+              child: Acciones(
+                showModal: () {
+                  Navigator.pop(
+                      context); // Cierra el modal después de registrar
+                },
+                onCompleted: getFrecuencias,
+                accion: "registrar",
+                data: null,
               ),
             ),
-            IconButton(
-              icon: Icon(Icons.close),
-              onPressed: () {
-                Navigator.pop(context); // Cierra el diálogo
-              },
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: IntrinsicHeight( // Ajusta la altura según el contenido
-            child: Acciones(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              onCompleted: getClasificaciones,
-              accion: "registrar",
-              data: null,
-            ),
           ),
-        ),
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
 // Cierra el modal
   void closeModal() {
@@ -97,14 +97,14 @@ void openRegistroModal() {
     });
   }
 
-  // Función para formatear los datos de las clasificaciones
-  List<Map<String, dynamic>> formatModelClasificaciones(List<dynamic> data) {
+  // Función para formatear los datos de las frecuencias
+  List<Map<String, dynamic>> formatModelFrecuencias(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
         'id': item['_id'],
         'nombre': item['nombre'],
-        'descripcion': item['descripcion'],
+        'cantidadDias': item['cantidadDias'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
@@ -133,8 +133,11 @@ void openRegistroModal() {
                   ),
                 ),
                 Expanded(
-                  child:
-                      TblClasificaciones(clasificaciones: dataClasificaciones, onCompleted: getClasificaciones,),
+                  child: TblFrecuencias(
+                    frecuencias: dataFrecuencias,
+                    onCompleted:
+                        getFrecuencias, // Pasa la función para que se pueda llamar desde el componente
+                  ),
                 ),
               ],
             ),

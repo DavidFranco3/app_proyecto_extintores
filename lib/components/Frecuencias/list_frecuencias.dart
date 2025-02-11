@@ -1,39 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
-import './acciones.dart';
+import 'acciones.dart';
 import '../Modal/BasicModal/basic_modal.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
 
-class TblClasificaciones extends StatefulWidget {
-  final List<Map<String, dynamic>> clasificaciones;
+class TblFrecuencias extends StatefulWidget {
+  final List<Map<String, dynamic>> frecuencias;
   final Function onCompleted;
 
-  TblClasificaciones({Key? key, required this.clasificaciones, required this.onCompleted})
-      : super(key: key);
+  TblFrecuencias({Key? key, required this.frecuencias, required this.onCompleted}) : super(key: key);
 
   @override
-  _TblClasificacionesState createState() => _TblClasificacionesState();
+  _TblFrecuenciasState createState() => _TblFrecuenciasState();
 }
 
-class _TblClasificacionesState extends State<TblClasificaciones> {
+class _TblFrecuenciasState extends State<TblFrecuencias> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
 
   // Para mostrar el modal de edición
-  void editarClasificacion(Widget content) {
+  void editarFrecuencia(Widget content) {
     setState(() {
-      titulosModal = "Editar clasificacion";
+      titulosModal = "Editar frecuencia";
       contentModal = content;
       showModal = true;
     });
   }
 
   // Para mostrar el modal de eliminación
-  void eliminarClasificacion(Widget content) {
+  void eliminarFrecuencia(Widget content) {
     setState(() {
-      titulosModal = "Eliminar clasificacion";
+      titulosModal = "Eliminar frecuencia";
       contentModal = content;
       showModal = true;
     });
@@ -49,7 +48,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
       {'name': 'Nombre'},
-      {'name': 'Descripción'},
+      {'name': 'Dias de duracion'},
       {'name': 'Creado el'},
       {'name': 'Actualizado el'},
       {'name': 'Acciones'}
@@ -62,10 +61,10 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.clasificaciones.map((row) {
+              datos: widget.frecuencias.map((row) {
                 return {
                   'Nombre': row['nombre'],
-                  'Descripción': row['descripcion'],
+                  'Dias de duracion': row['cantidadDias'],
                   'Creado el': row['createdAt'] ?? '',
                   'Actualizado el': row['updatedAt'] ?? '',
                   'Acciones': (row) => Row(
@@ -74,7 +73,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
                             icon: FaIcon(FontAwesomeIcons.pen,
                                 color: Colors.amber),
                             onPressed: () {
-                              editarClasificacion(
+                              editarFrecuencia(
                                 Acciones(
                                   showModal: () {
                                     Navigator.pop(
@@ -91,7 +90,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
                             icon: FaIcon(FontAwesomeIcons.trash,
                                 color: Colors.red),
                             onPressed: () {
-                              eliminarClasificacion(
+                              eliminarFrecuencia(
                                 Acciones(
                                   showModal: () {
                                     Navigator.pop(

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../api/auth.dart';
 import '../../api/logs.dart';
 import '../../api/usuarios.dart';

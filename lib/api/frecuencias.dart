@@ -4,18 +4,36 @@ import '../utils/constants.dart';
 import 'endpoints.dart';
 
 class FrecuenciasService {
-  Future<http.Response> listarFrecuencias() async {
-    final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_LISTAR_FRECUENCIAS),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    );
-    return response;
+    Future<List<dynamic>> listarFrecuencias() async {
+    try {
+      final response = await http.get(
+        Uri.parse(API_HOST + ENDPOINT_LISTAR_FRECUENCIAS),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data is List) {
+          return data; // Retornar la lista directamente
+        } else {
+          print("Error: La respuesta no es una lista.");
+          return [];
+        }
+      } else {
+        print("Error: Código de estado ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error al obtener las clasificaciones: $e");
+      return [];
+    }
   }
 
-  Future<http.Response> registraFrecuencias(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> registraFrecuencias(Map<String, dynamic> data) async {
     final response = await http.post(
       Uri.parse(API_HOST + ENDPOINT_REGISTRAR_FRECUENCIAS),
       headers: {
@@ -24,7 +42,10 @@ class FrecuenciasService {
       },
       body: json.encode(data),
     );
-    return response;
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 
   Future<http.Response> obtenerFrecuencias(String params) async {
@@ -38,7 +59,7 @@ class FrecuenciasService {
     return response;
   }
 
-  Future<http.Response> actualizarFrecuencias(String id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> actualizarFrecuencias(String id, Map<String, dynamic> data) async {
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_FRECUENCIAS + '/$id'),
       headers: {
@@ -47,7 +68,10 @@ class FrecuenciasService {
       },
       body: json.encode(data),
     );
-    return response;
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 
   Future<http.Response> eliminarFrecuencias(String id, Map<String, dynamic> data) async {
@@ -62,7 +86,7 @@ class FrecuenciasService {
     return response;
   }
 
-  Future<http.Response> actualizaDeshabilitarFrecuencias(String id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> actualizaDeshabilitarFrecuencias(String id, Map<String, dynamic> data) async {
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_FRECUENCIAS + '/$id'),
       headers: {
@@ -71,6 +95,9 @@ class FrecuenciasService {
       },
       body: json.encode(data),
     );
-    return response;
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 }

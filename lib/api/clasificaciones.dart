@@ -115,13 +115,9 @@ class ClasificacionesService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Clasificación deshabilitada'};
-    } else {
-      return {
-        'success': false,
-        'message': 'Error al deshabilitar clasificación'
-      };
-    }
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 }

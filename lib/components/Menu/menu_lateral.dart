@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../page/Clasificaciones/clasificaciones.dart'; // Asegúrate de importar el archivo donde tienes el ClasificacionesPage
+import '../../page/Frecuencias/frecuencias.dart';
 import '../Home/home.dart';
 
 class MenuLateral extends StatelessWidget {
@@ -40,6 +41,17 @@ class MenuLateral extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ClasificacionesPage()), // Navega a la página de Clasificaciones
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(FontAwesomeIcons.list), // Ícono para Clasificaciones
+            title: Text('Frecuencias'),
+            onTap: () {
+              Navigator.pop(context); // Cierra el menú lateral
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FrecuenciasPage()), // Navega a la página de Clasificaciones
               );
             },
           ),
