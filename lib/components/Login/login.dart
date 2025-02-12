@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/auth.dart';
@@ -114,7 +113,14 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Image.asset('assets/img/isologo_1.png'),
+              SizedBox(
+                width: 150,
+                height: 150,
+                child: Image.asset(
+                  'lib/assets/img/isologo_1.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
               const SizedBox(height: 40),
               TextField(
                 controller: _emailController,

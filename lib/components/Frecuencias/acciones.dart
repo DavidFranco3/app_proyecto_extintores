@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:provider/provider.dart';
 import '../../api/frecuencias.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:flutter/services.dart';
@@ -31,7 +30,7 @@ class _AccionesState extends State<Acciones> {
 
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _nombreController.text = widget.data['nombre'] ?? '';
-      _cantidadDiasController.text = widget.data['descripcion'] ?? '';
+      _cantidadDiasController.text = widget.data['cantidadDias'] ?? '';
     }
   }
 

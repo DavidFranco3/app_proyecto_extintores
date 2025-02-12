@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../page/Clasificaciones/clasificaciones.dart'; // Asegúrate de importar el archivo donde tienes el ClasificacionesPage
 import '../../page/Frecuencias/frecuencias.dart';
+import '../../page/TiposExtintores/tipos_extintores.dart';
 import '../Home/home.dart';
 
 class MenuLateral extends StatelessWidget {
@@ -45,13 +46,24 @@ class MenuLateral extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(FontAwesomeIcons.list), // Ícono para Clasificaciones
+            leading: Icon(Icons.calendar_today), // Ícono de calendario para Frecuencias
             title: Text('Frecuencias'),
             onTap: () {
               Navigator.pop(context); // Cierra el menú lateral
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FrecuenciasPage()), // Navega a la página de Clasificaciones
+                MaterialPageRoute(builder: (context) => FrecuenciasPage()), // Navega a la página de Frecuencias
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(FontAwesomeIcons.fireExtinguisher), // Ícono de extintor para Tipos de extintores
+            title: Text('Tipos de extintores'),
+            onTap: () {
+              Navigator.pop(context); // Cierra el menú lateral
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TiposExtintoresPage()), // Navega a la página de Tipos de extintores
               );
             },
           ),

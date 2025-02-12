@@ -1,36 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../api/frecuencias.dart';
-import '../../components/Frecuencias/list_frecuencias.dart';
-import '../../components/Frecuencias/acciones.dart';
+import '../../api/tipos_extintores.dart';
+import '../../components/TiposExtintores/list_tipos_extintores.dart';
+import '../../components/TiposExtintores/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class FrecuenciasPage extends StatefulWidget {
+class TiposExtintoresPage extends StatefulWidget {
   @override
-  _FrecuenciasPageState createState() => _FrecuenciasPageState();
+  _TiposExtintoresPageState createState() => _TiposExtintoresPageState();
 }
 
-class _FrecuenciasPageState extends State<FrecuenciasPage> {
+class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
   bool loading = true;
-  List<Map<String, dynamic>> dataFrecuencias = [];
+  List<Map<String, dynamic>> dataTiposExtintores = [];
 
   @override
   void initState() {
     super.initState();
-    getFrecuencias();
+    getTiposExtintores();
   }
 
-  Future<void> getFrecuencias() async {
+  Future<void> getTiposExtintores() async {
     try {
-      final frecuenciasService = FrecuenciasService();
+      final tiposExtintoresService = TiposExtintoresService();
       final List<dynamic> response =
-          await frecuenciasService.listarFrecuencias();
+          await tiposExtintoresService.listarTiposExtintores();
 
       if (response.isNotEmpty) {
         setState(() {
-          dataFrecuencias = formatModelFrecuencias(response);
+          dataTiposExtintores = formatModelTiposExtintores(response);
           loading = false;
         });
       } else {
@@ -40,7 +40,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      print("Error al obtener las tiposExtintores: $e");
       setState(() {
         loading = false;
       });
@@ -60,7 +60,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Registrar frecuencia',
+                  'Registrar tipo de extintor',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -74,12 +74,12 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
+              // Ajusta la altura según el contenido
               child: Acciones(
                 showModal: () {
-                  Navigator.pop(
-                      context); // Cierra el modal después de registrar
+                  Navigator.pop(context); // Esto cierra el modal
                 },
-                onCompleted: getFrecuencias,
+                onCompleted: getTiposExtintores,
                 accion: "registrar",
                 data: null,
               ),
@@ -97,14 +97,14 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
     });
   }
 
-  // Función para formatear los datos de las frecuencias
-  List<Map<String, dynamic>> formatModelFrecuencias(List<dynamic> data) {
+  // Función para formatear los datos de las tiposExtintores
+  List<Map<String, dynamic>> formatModelTiposExtintores(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
         'id': item['_id'],
         'nombre': item['nombre'],
-        'cantidadDias': item['cantidadDias'],
+        'descripcion': item['descripcion'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
@@ -124,15 +124,15 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "Frecuencias",
-                    style: TextStyle(
-                      fontSize: 24, // Tamaño grande
-                      fontWeight: FontWeight.bold, // Negrita
-                    ),
-                  ),
-                ),
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        "Tipos de extintores",
+        style: TextStyle(
+          fontSize: 24, // Tamaño grande
+          fontWeight: FontWeight.bold, // Negrita
+        ),
+      ),
+    ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton.icon(
@@ -143,14 +143,12 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
                   ),
                 ),
                 Expanded(
-                  child: TblFrecuencias(
+                  child: TblTiposExtintores(
                     showModal: () {
-                      Navigator.pop(
-                          context); // Cierra el modal después de registrar
+                      Navigator.pop(context); // Esto cierra el modal
                     },
-                    frecuencias: dataFrecuencias,
-                    onCompleted:
-                        getFrecuencias, // Pasa la función para que se pueda llamar desde el componente
+                    tiposExtintores: dataTiposExtintores,
+                    onCompleted: getTiposExtintores,
                   ),
                 ),
               ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../api/clasificaciones.dart';
+import '../../api/tipos_extintores.dart';
 import '../Logs/logs_informativos.dart';
 
 class Acciones extends StatefulWidget {
@@ -45,7 +45,7 @@ class _AccionesState extends State<Acciones> {
       widget.showModal(); // Llama a setShow con el valor booleano
   }
 
-  void _guardarClasificacion(Map<String, dynamic> data) async {
+  void _guardarTipoExtintor(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
@@ -57,9 +57,9 @@ class _AccionesState extends State<Acciones> {
     };
 
     try {
-      final clasificacionesService = ClasificacionesService();
+      final tiposExtintoresService = TiposExtintoresService();
       var response =
-          await clasificacionesService.registrarClasificaciones(dataTemp);
+          await tiposExtintoresService.registraTiposExtintores(dataTemp);
       // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
       if (response['status'] == 200) {
         // Asumiendo que 'response' es un Map que contiene el código de estado
@@ -70,7 +70,7 @@ class _AccionesState extends State<Acciones> {
             "Se ha registrado la clasificacion ${data['nombre']} correctamente",
             dataTemp);
         _showDialog(
-            "Clasificacion agregada correctamente", Icons.check, Colors.green);
+            "Tipo de extintoragregada correctamente", Icons.check, Colors.green);
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
@@ -88,7 +88,7 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _editarClasificacion(String id, Map<String, dynamic> data) async {
+  void _editarTipoExtintor(String id, Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
@@ -99,9 +99,9 @@ class _AccionesState extends State<Acciones> {
     };
 
     try {
-      final clasificacionesService = ClasificacionesService();
+      final tiposExtintoresService = TiposExtintoresService();
       var response =
-          await clasificacionesService.actualizarClasificaciones(id, dataTemp);
+          await tiposExtintoresService.actualizarTiposExtintores(id, dataTemp);
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
@@ -109,7 +109,7 @@ class _AccionesState extends State<Acciones> {
         LogsInformativos(
             "Se ha modificado la clasificacion ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog("Clasificacion actualizada correctamente", Icons.check,
+        _showDialog("Tipo de extintoractualizada correctamente", Icons.check,
             Colors.green);
       }
     } catch (error) {
@@ -120,7 +120,7 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarClasificacion(String id) async {
+  void _eliminarTipoExtintor(String id) async {
     setState(() {
       _isLoading = true;
     });
@@ -128,8 +128,8 @@ class _AccionesState extends State<Acciones> {
     var dataTemp = {'estado': "false"};
 
     try {
-      final clasificacionesService = ClasificacionesService();
-      var response = await clasificacionesService.deshabilitarClasificaciones(
+      final tiposExtintoresService = TiposExtintoresService();
+      var response = await tiposExtintoresService.actualizaDeshabilitarTiposExtintores(
           id, dataTemp);
       if (response['status'] == 200) {
         setState(() {
@@ -138,7 +138,7 @@ class _AccionesState extends State<Acciones> {
         LogsInformativos(
             "Se ha eliminado la clasificacion $id correctamente", {});
         _showDialog(
-            "Clasificacion eliminada correctamente", Icons.check, Colors.green);
+            "Tipo de extintoreliminada correctamente", Icons.check, Colors.green);
       }
     } catch (error) {
       setState(() {
@@ -185,11 +185,11 @@ class _AccionesState extends State<Acciones> {
       };
 
       if (widget.accion == 'registrar') {
-        _guardarClasificacion(formData);
+        _guardarTipoExtintor(formData);
       } else if (widget.accion == 'editar') {
-        _editarClasificacion(widget.data['id'], formData);
+        _editarTipoExtintor(widget.data['id'], formData);
       } else if (widget.accion == 'eliminar') {
-        _eliminarClasificacion(widget.data['id']);
+        _eliminarTipoExtintor(widget.data['id']);
       }
     }
   }

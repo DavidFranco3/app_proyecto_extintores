@@ -50,45 +50,45 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   // Función para abrir el modal de registro con el formulario de Acciones
-void openRegistroModal() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                'Registrar Clasificación',
-                overflow: TextOverflow.ellipsis,
+  void openRegistroModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Registrar Clasificación',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context); // Cierra el diálogo
+                },
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: IntrinsicHeight(
+              // Ajusta la altura según el contenido
+              child: Acciones(
+                showModal: () {
+                  Navigator.pop(context); // Esto cierra el modal
+                },
+                onCompleted: getClasificaciones,
+                accion: "registrar",
+                data: null,
               ),
             ),
-            IconButton(
-              icon: Icon(Icons.close),
-              onPressed: () {
-                Navigator.pop(context); // Cierra el diálogo
-              },
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: IntrinsicHeight( // Ajusta la altura según el contenido
-            child: Acciones(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              onCompleted: getClasificaciones,
-              accion: "registrar",
-              data: null,
-            ),
           ),
-        ),
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
 // Cierra el modal
   void closeModal() {
@@ -125,6 +125,16 @@ void openRegistroModal() {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    "Clasificaciones",
+                    style: TextStyle(
+                      fontSize: 24, // Tamaño grande
+                      fontWeight: FontWeight.bold, // Negrita
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton.icon(
                     onPressed:
                         openRegistroModal, // Abre el modal con el formulario de acciones
@@ -133,8 +143,13 @@ void openRegistroModal() {
                   ),
                 ),
                 Expanded(
-                  child:
-                      TblClasificaciones(clasificaciones: dataClasificaciones, onCompleted: getClasificaciones,),
+                  child: TblClasificaciones(
+                    showModal: () {
+                      Navigator.pop(context); // Esto cierra el modal
+                    },
+                    clasificaciones: dataClasificaciones,
+                    onCompleted: getClasificaciones,
+                  ),
                 ),
               ],
             ),

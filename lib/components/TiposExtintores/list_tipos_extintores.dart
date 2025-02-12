@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
-import './acciones.dart';
+import 'acciones.dart';
 import '../Modal/BasicModal/basic_modal.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
 
-class TblClasificaciones extends StatefulWidget {
+class TblTiposExtintores extends StatefulWidget {
   final VoidCallback showModal;
-  final List<Map<String, dynamic>> clasificaciones;
+  final List<Map<String, dynamic>> tiposExtintores;
   final Function onCompleted;
 
-  TblClasificaciones(
-      {Key? key, required this.showModal, required this.clasificaciones, required this.onCompleted})
+  TblTiposExtintores(
+      {Key? key,
+      required this.showModal,
+      required this.tiposExtintores,
+      required this.onCompleted})
       : super(key: key);
 
   @override
-  _TblClasificacionesState createState() => _TblClasificacionesState();
+  _TblTiposExtintoresState createState() => _TblTiposExtintoresState();
 }
 
-class _TblClasificacionesState extends State<TblClasificaciones> {
+class _TblTiposExtintoresState extends State<TblTiposExtintores> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -46,7 +49,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
             children: [
               Expanded(
                 child: Text(
-                  'Editar Clasificación',
+                  'Editar tipo de extintor',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -73,7 +76,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
     );
   }
 
-   void openEliminarModal(row) {
+  void openEliminarModal(row) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -83,7 +86,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
             children: [
               Expanded(
                 child: Text(
-                  'Eliminar Clasificación',
+                  'Eliminar tipo de extintor',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -126,7 +129,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.clasificaciones.map((row) {
+              datos: widget.tiposExtintores.map((row) {
                 return {
                   'Nombre': row['nombre'],
                   'Descripción': row['descripcion'],
@@ -140,7 +143,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
                 return Row(
                   children: [
                     IconButton(
-                      icon: FaIcon(FontAwesomeIcons.pen, color:const Color.fromARGB(255, 6, 47, 214)),
+                      icon: FaIcon(FontAwesomeIcons.pen, color: const Color.fromARGB(255, 6, 47, 214)),
                       onPressed: () =>
                         openEditarModal(row['_originalRow']),
                     ),
