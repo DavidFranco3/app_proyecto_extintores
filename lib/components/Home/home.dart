@@ -32,7 +32,7 @@ class HomePage extends StatelessWidget {
       onWillPop: () async => false,
       child: Scaffold(
         appBar: Header(), // Usa el header con menú de usuario
-        drawer: MenuLateral(), // Usa el menú lateral
+        drawer: MenuLateral(currentPage: "Inicio"), // Usa el menú lateral
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

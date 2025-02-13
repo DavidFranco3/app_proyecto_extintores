@@ -117,29 +117,35 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Frecuencias"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "Frecuencias",
-                    style: TextStyle(
-                      fontSize: 24, // Tamaño grande
-                      fontWeight: FontWeight.bold, // Negrita
+                  child: Center(
+                    child: Text(
+                      "Frecuencias",
+                      style: TextStyle(
+                        fontSize: 24, // Tamaño grande
+                        fontWeight: FontWeight.bold, // Negrita
+                      ),
                     ),
                   ),
                 ),
+                // Centra el botón de registrar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        openRegistroModal, // Abre el modal con el formulario de acciones
-                    icon: Icon(FontAwesomeIcons.plus),
-                    label: Text("Registrar"),
+                  child: Center(
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      icon: Icon(FontAwesomeIcons.plus),
+                      label: Text("Registrar"),
+                    ),
                   ),
                 ),
                 Expanded(

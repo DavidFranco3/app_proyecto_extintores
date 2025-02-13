@@ -1,36 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../api/clasificaciones.dart';
-import '../../components/Clasificaciones/list_clasificaciones.dart';
-import '../../components/Clasificaciones/acciones.dart';
+import '../../api/extintores.dart';
+import '../../components/Extintores/list_extintores.dart';
+import '../../components/Extintores/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class ClasificacionesPage extends StatefulWidget {
+class ExtintoresPage extends StatefulWidget {
   @override
-  _ClasificacionesPageState createState() => _ClasificacionesPageState();
+  _ExtintoresPageState createState() => _ExtintoresPageState();
 }
 
-class _ClasificacionesPageState extends State<ClasificacionesPage> {
+class _ExtintoresPageState extends State<ExtintoresPage> {
   bool loading = true;
-  List<Map<String, dynamic>> dataClasificaciones = [];
+  List<Map<String, dynamic>> dataExtintores = [];
 
   @override
   void initState() {
     super.initState();
-    getClasificaciones();
+    getExtintores();
   }
 
-  Future<void> getClasificaciones() async {
+  Future<void> getExtintores() async {
     try {
-      final clasificacionesService = ClasificacionesService();
+      final frecuenciasService = ExtintoresService();
       final List<dynamic> response =
-          await clasificacionesService.listarClasificaciones();
+          await frecuenciasService.listarExtintores();
+          print(response);
 
       if (response.isNotEmpty) {
         setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
+          dataExtintores = formatModelExtintores(response);
           loading = false;
         });
       } else {
@@ -40,7 +41,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener los extintores: $e");
       setState(() {
         loading = false;
       });
@@ -60,7 +61,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Registrar Clasificación',
+                  'Registrar extintor',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -74,12 +75,12 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              // Ajusta la altura según el contenido
               child: Acciones(
                 showModal: () {
-                  Navigator.pop(context); // Esto cierra el modal
+                  Navigator.pop(
+                      context); // Cierra el modal después de registrar
                 },
-                onCompleted: getClasificaciones,
+                onCompleted: getExtintores,
                 accion: "registrar",
                 data: null,
               ),
@@ -97,14 +98,17 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
     });
   }
 
-  // Función para formatear los datos de las clasificaciones
-  List<Map<String, dynamic>> formatModelClasificaciones(List<dynamic> data) {
+  // Función para formatear los datos de las extintores
+  List<Map<String, dynamic>> formatModelExtintores(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
         'id': item['_id'],
-        'nombre': item['nombre'],
-        'descripcion': item['descripcion'],
+        'numeroSerie': item['numeroSerie'],
+        'idTipoExtintor': item['idTipoExtintor'],
+        'extintor': item['tipoExtintor']['nombre'],
+        'capacidad': item['capacidad'],
+        'ultimaRecarga': item['ultimaRecarga'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
@@ -117,7 +121,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Clasificaciones"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Extintores"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -128,7 +132,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Clasificaciones",
+                      "Extintores",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
@@ -149,12 +153,14 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
                   ),
                 ),
                 Expanded(
-                  child: TblClasificaciones(
+                  child: TblExtintores(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(
+                          context); // Cierra el modal después de registrar
                     },
-                    clasificaciones: dataClasificaciones,
-                    onCompleted: getClasificaciones,
+                    extintores: dataExtintores,
+                    onCompleted:
+                        getExtintores, // Pasa la función para que se pueda llamar desde el componente
                   ),
                 ),
               ],

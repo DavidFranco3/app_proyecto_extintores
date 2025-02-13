@@ -23,8 +23,7 @@ class _LogsPageState extends State<LogsPage> {
   Future<void> getLogs() async {
     try {
       final logsService = LogsService();
-      final List<dynamic> response =
-          await logsService.listarLogs();
+      final List<dynamic> response = await logsService.listarLogs();
 
       if (response.isNotEmpty) {
         setState(() {
@@ -71,19 +70,22 @@ class _LogsPageState extends State<LogsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Logs"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "Logs",
-                    style: TextStyle(
-                      fontSize: 24, // Tamaño grande
-                      fontWeight: FontWeight.bold, // Negrita
+                  child: Center(
+                    child: Text(
+                      "Logs",
+                      style: TextStyle(
+                        fontSize: 24, // Tamaño grande
+                        fontWeight: FontWeight.bold, // Negrita
+                      ),
                     ),
                   ),
                 ),

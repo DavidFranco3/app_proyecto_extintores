@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../page/Clasificaciones/clasificaciones.dart'; // Asegúrate de importar el archivo donde tienes el ClasificacionesPage
+import '../../page/Clasificaciones/clasificaciones.dart';
 import '../../page/Frecuencias/frecuencias.dart';
 import '../../page/TiposExtintores/tipos_extintores.dart';
+import '../../page/Extintores/extintores.dart';
 import '../../page/Logs/logs.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,21 +12,30 @@ import '../Logs/logs_informativos.dart';
 import '../../api/auth.dart';
 
 class MenuLateral extends StatelessWidget {
+  final String currentPage; // Variable para identificar la página actual
+
+  // Constructor para recibir la página actual
+  MenuLateral({required this.currentPage});
+
   Future<void> _logout(BuildContext context) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn'); // Remueve el estado de sesión
       LogsInformativos("Sesión cerrada correctamente", {}); // Log informativo
-      AuthService authService = AuthService(); // Instancia el servicio de autenticación
+      AuthService authService =
+          AuthService(); // Instancia el servicio de autenticación
       await authService.logoutApi(); // Llama a la API para cerrar sesión
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginPage()), // Navega a la página de login
+        MaterialPageRoute(
+            builder: (context) => LoginPage()), // Navega a la página de login
         (route) => false, // Elimina todas las rutas previas
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cerrar sesión')), // Muestra error en caso de fallo
+        SnackBar(
+            content: Text(
+                'Error al cerrar sesión')), // Muestra error en caso de fallo
       );
     }
   }
@@ -37,7 +47,7 @@ class MenuLateral extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           Container(
-            height: 80, // 🔽 Reduciendo el tamaño
+            height: 80, // Reduciendo el tamaño
             color: Colors.blue,
             child: Center(
               child: Text(
@@ -46,70 +56,105 @@ class MenuLateral extends StatelessWidget {
               ),
             ),
           ),
-          ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Inicio'),
-            onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HomePage()), // Navega a la página de Inicio
-              );
-            },
+          _buildListTile(
+            context,
+            Icons.home,
+            'Inicio',
+            HomePage(),
           ),
-          ListTile(
-            leading: Icon(FontAwesomeIcons.list), // Ícono para Clasificaciones
-            title: Text('Clasificaciones'),
-            onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ClasificacionesPage()), // Navega a la página de Clasificaciones
-              );
-            },
+          _buildListTile(
+            context,
+            FontAwesomeIcons.list,
+            'Clasificaciones',
+            ClasificacionesPage(),
           ),
-          ListTile(
-            leading: Icon(Icons.calendar_today), // Ícono de calendario para Frecuencias
-            title: Text('Frecuencias'),
-            onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => FrecuenciasPage()), // Navega a la página de Frecuencias
-              );
-            },
+          _buildListTile(
+            context,
+            Icons.calendar_today,
+            'Frecuencias',
+            FrecuenciasPage(),
           ),
-          ListTile(
-            leading: Icon(FontAwesomeIcons.fireExtinguisher), // Ícono de extintor para Tipos de extintores
-            title: Text('Tipos de extintores'),
-            onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TiposExtintoresPage()), // Navega a la página de Tipos de extintores
-              );
-            },
+          // Menú principal para Extintores con opciones desplegables
+          ExpansionTile(
+            leading: Icon(FontAwesomeIcons.fireAlt),
+            title: Text(
+              'Extintores',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+            ),
+            dense: true,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero), // Elimina la línea inferior
+            collapsedShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero), // Elimina la línea superior
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: Column(
+                  children: [
+                    _buildListTile(
+                      context,
+                      FontAwesomeIcons.fireExtinguisher,
+                      'Extintores',
+                      ExtintoresPage(),
+                    ),
+                    _buildListTile(
+                      context,
+                      FontAwesomeIcons.wrench,
+                      'Tipos de extintores',
+                      TiposExtintoresPage(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          ListTile(
-            leading: Icon(FontAwesomeIcons.fileLines), // Ícono para Logs
-            title: Text('Logs'),
-            onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LogsPage()), // Navega a la página de Logs
-              );
-            },
+          _buildListTile(
+            context,
+            FontAwesomeIcons.fileLines,
+            'Logs',
+            LogsPage(),
           ),
           ListTile(
             leading: Icon(Icons.logout),
             title: Text('Cerrar sesión'),
             onTap: () {
-              _logout(context); // Llama a la función de logout
+              _logout(context);
             },
           ),
         ],
       ),
+    );
+  }
+
+  // Método para construir el ListTile con el color correspondiente
+  Widget _buildListTile(
+      BuildContext context, IconData icon, String title, Widget page) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: currentPage == title
+            ? Colors.white
+            : null, // Cambia el color del ícono si es la página activa
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: currentPage == title
+              ? Colors.white
+              : null, // Cambia el color del texto si es la página activa
+        ),
+      ),
+      tileColor: currentPage == title
+          ? Colors.blue
+          : null, // Cambia el color de fondo si es la página activa
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => page), // Navega a la página correspondiente
+        );
+      },
     );
   }
 }

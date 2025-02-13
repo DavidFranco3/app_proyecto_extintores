@@ -117,29 +117,35 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(), // Usa el menú lateral
+      drawer: MenuLateral(
+        currentPage: "Tipos de extintores",
+      ), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Text(
-        "Tipos de extintores",
-        style: TextStyle(
-          fontSize: 24, // Tamaño grande
-          fontWeight: FontWeight.bold, // Negrita
-        ),
-      ),
-    ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Center(
+                    child: Text(
+                      "Tipos de extintores",
+                      style: TextStyle(
+                        fontSize: 24, // Tamaño grande
+                        fontWeight: FontWeight.bold, // Negrita
+                      ),
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        openRegistroModal, // Abre el modal con el formulario de acciones
-                    icon: Icon(FontAwesomeIcons.plus),
-                    label: Text("Registrar"),
+                  child: Center(
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      icon: Icon(FontAwesomeIcons.plus),
+                      label: Text("Registrar"),
+                    ),
                   ),
                 ),
                 Expanded(
