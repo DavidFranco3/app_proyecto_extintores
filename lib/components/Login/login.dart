@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../Logs/logs_informativos.dart';
 import '../../api/auth.dart';
 import '../../api/usuarios.dart';
 import '../../utils/validations.dart';
@@ -85,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
 
       print('User Name: $userName');
       _showMessage("Bienvenido $userName");
+      LogsInformativos("Se ha iniciado sesion con el usuario $userName" , {});
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);

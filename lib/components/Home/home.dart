@@ -3,14 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
 import '../Menu/menu_lateral.dart';
 import '../Header/header.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../Logs/logs_informativos.dart';
+import '../../api/auth.dart';
 
 class HomePage extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
-
+      LogsInformativos("Sesion cerrada correctamente", {});
+      AuthService authService = AuthService();
+      authService.logoutApi();
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../api/auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
+import '../Logs/logs_informativos.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({Key? key}) : super(key: key);
@@ -10,7 +12,9 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
-
+      LogsInformativos("Sesion cerrada correctamente", {});
+      AuthService authService = AuthService();
+      authService.logoutApi();
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),

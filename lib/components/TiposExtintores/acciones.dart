@@ -120,7 +120,7 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarTipoExtintor(String id) async {
+  void _eliminarTipoExtintor(String id, data) async {
     setState(() {
       _isLoading = true;
     });
@@ -136,7 +136,7 @@ class _AccionesState extends State<Acciones> {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha eliminado la clasificacion $id correctamente", {});
+            "Se ha eliminado la clasificacion ${data['nombre']} correctamente", {});
         _showDialog(
             "Tipo de extintoreliminada correctamente", Icons.check, Colors.green);
       }
@@ -189,7 +189,7 @@ class _AccionesState extends State<Acciones> {
       } else if (widget.accion == 'editar') {
         _editarTipoExtintor(widget.data['id'], formData);
       } else if (widget.accion == 'eliminar') {
-        _eliminarTipoExtintor(widget.data['id']);
+        _eliminarTipoExtintor(widget.data['id'], formData);
       }
     }
   }

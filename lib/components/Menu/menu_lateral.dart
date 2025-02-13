@@ -3,9 +3,33 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../page/Clasificaciones/clasificaciones.dart'; // Asegúrate de importar el archivo donde tienes el ClasificacionesPage
 import '../../page/Frecuencias/frecuencias.dart';
 import '../../page/TiposExtintores/tipos_extintores.dart';
+import '../../page/Logs/logs.dart';
 import '../Home/home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../Login/login.dart';
+import '../Logs/logs_informativos.dart';
+import '../../api/auth.dart';
 
 class MenuLateral extends StatelessWidget {
+  Future<void> _logout(BuildContext context) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('isLoggedIn'); // Remueve el estado de sesión
+      LogsInformativos("Sesión cerrada correctamente", {}); // Log informativo
+      AuthService authService = AuthService(); // Instancia el servicio de autenticación
+      await authService.logoutApi(); // Llama a la API para cerrar sesión
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()), // Navega a la página de login
+        (route) => false, // Elimina todas las rutas previas
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cerrar sesión')), // Muestra error en caso de fallo
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -29,9 +53,8 @@ class MenuLateral extends StatelessWidget {
               Navigator.pop(context); // Cierra el menú lateral
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()), // Navega a la página de Clasificaciones
+                MaterialPageRoute(builder: (context) => HomePage()), // Navega a la página de Inicio
               );
-              // Aquí puedes agregar la acción para ir al inicio, si lo deseas
             },
           ),
           ListTile(
@@ -68,11 +91,21 @@ class MenuLateral extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: Icon(FontAwesomeIcons.fileLines), // Ícono para Logs
+            title: Text('Logs'),
+            onTap: () {
+              Navigator.pop(context); // Cierra el menú lateral
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LogsPage()), // Navega a la página de Logs
+              );
+            },
+          ),
+          ListTile(
             leading: Icon(Icons.logout),
             title: Text('Cerrar sesión'),
             onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
-              // Aquí podrías llamar a tu función de logout
+              _logout(context); // Llama a la función de logout
             },
           ),
         ],

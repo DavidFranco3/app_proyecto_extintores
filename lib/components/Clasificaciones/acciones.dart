@@ -120,7 +120,7 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarClasificacion(String id) async {
+  void _eliminarClasificacion(String id, data) async {
     setState(() {
       _isLoading = true;
     });
@@ -136,7 +136,7 @@ class _AccionesState extends State<Acciones> {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha eliminado la clasificacion $id correctamente", {});
+            "Se ha eliminado la clasificacion ${data['nombre']} correctamente", {});
         _showDialog(
             "Clasificacion eliminada correctamente", Icons.check, Colors.green);
       }
@@ -189,7 +189,7 @@ class _AccionesState extends State<Acciones> {
       } else if (widget.accion == 'editar') {
         _editarClasificacion(widget.data['id'], formData);
       } else if (widget.accion == 'eliminar') {
-        _eliminarClasificacion(widget.data['id']);
+        _eliminarClasificacion(widget.data['id'], formData);
       }
     }
   }

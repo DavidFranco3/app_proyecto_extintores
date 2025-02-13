@@ -119,7 +119,7 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarFrecuencia(String id) async {
+  void _eliminarFrecuencia(String id, data) async {
     setState(() {
       _isLoading = true;
     });
@@ -134,7 +134,7 @@ class _AccionesState extends State<Acciones> {
         setState(() {
           _isLoading = false;
         });
-        LogsInformativos("Se ha eliminado la frecuencia $id correctamente", {});
+        LogsInformativos("Se ha eliminado la frecuencia ${data['nombre']} correctamente", {});
         _showDialog(
             "Frecuencia eliminada correctamente", Icons.check, Colors.green);
       }
@@ -187,7 +187,7 @@ class _AccionesState extends State<Acciones> {
       } else if (widget.accion == 'editar') {
         _editarFrecuencia(widget.data['id'], formData);
       } else if (widget.accion == 'eliminar') {
-        _eliminarFrecuencia(widget.data['id']);
+        _eliminarFrecuencia(widget.data['id'], formData);
       }
     }
   }
