@@ -3,7 +3,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/extintores.dart';
 import '../../api/tipos_extintores.dart';
 import '../Logs/logs_informativos.dart';
-import 'package:flutter/services.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;

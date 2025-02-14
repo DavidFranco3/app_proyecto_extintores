@@ -6,7 +6,8 @@ import '../utils/constants.dart'; // Importa el archivo donde definiste los endp
 class ClientesService {
 
   // Listar clientes
-  Future<Map<String, dynamic>> listarClientes() async {
+  Future<List<dynamic>> listarClientes() async {
+    try {
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_LISTAR_CLIENTES),
       headers: {
@@ -16,9 +17,21 @@ class ClientesService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      return {'success': false, 'message': 'Error al obtener clientes'};
+        final data = jsonDecode(response.body);
+
+        if (data is List) {
+          return data; // Retornar la lista directamente
+        } else {
+          print("Error: La respuesta no es una lista.");
+          return [];
+        }
+      } else {
+        print("Error: Código de estado ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error al obtener las clasificaciones: $e");
+      return [];
     }
   }
 
@@ -33,11 +46,10 @@ class ClientesService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Cliente registrado'};
-    } else {
-      return {'success': false, 'message': 'Error al registrar cliente'};
-    }
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 
   // Obtener cliente por ID
@@ -68,11 +80,10 @@ class ClientesService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Cliente actualizado'};
-    } else {
-      return {'success': false, 'message': 'Error al actualizar cliente'};
-    }
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 
   // Eliminar cliente
@@ -103,10 +114,9 @@ class ClientesService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Cliente deshabilitado'};
-    } else {
-      return {'success': false, 'message': 'Error al deshabilitar cliente'};
-    }
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
-import '../Modal/BasicModal/basic_modal.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
 
@@ -158,19 +157,6 @@ class _TblTiposExtintoresState extends State<TblTiposExtintores> {
             ),
           ),
         ),
-
-        // Modal
-        if (showModal)
-          BasicModal(
-            show: showModal,
-            setShow: (bool value) {
-              setState(() {
-                showModal = value;
-              });
-            },
-            title: titulosModal ?? '',
-            child: contentModal ?? Container(),
-          ),
       ],
     );
   }

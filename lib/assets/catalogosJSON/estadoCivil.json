@@ -1,0 +1,32 @@
+[
+  {
+    "código": "S",
+    "descripción": "Persona que no contrajo matrimonio ninguna vez",
+    "nombre": "Soltero"
+  },
+  {
+    "código": "C",
+    "descripción": "Persona casada y que no enviudó, ni se separó, ni se divorció",
+    "nombre": "Casado"
+  },
+  {
+    "código": "D",
+    "descripción": "Persona que disolvió legalmente su último matrimonio",
+    "nombre": "Divorciado"
+  },
+  {
+    "código": "V",
+    "descripción": "Persona casada y su cónyuge fallecido",
+    "nombre": "Viudo"
+  },
+  {
+    "código": "E",
+    "descripción": "Persona casada que sin disolver su matrimonio declara que no considera como de casado su situación conyugal",
+    "nombre": "Separado"
+  },
+  {
+    "código": "B",
+    "descripción": "Refiere a la situación expresada en el Articulo 1º de la Ley 18.246 Unión Concubinaria",
+    "nombre": "Concubinato"
+  }
+]

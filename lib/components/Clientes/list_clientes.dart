@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
-import './acciones.dart';
+import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
 
-class TblClasificaciones extends StatefulWidget {
+class TblClientes extends StatefulWidget {
   final VoidCallback showModal;
-  final List<Map<String, dynamic>> clasificaciones;
+  final List<Map<String, dynamic>> clientes;
   final Function onCompleted;
 
-  TblClasificaciones(
-      {Key? key,
-      required this.showModal,
-      required this.clasificaciones,
-      required this.onCompleted})
+  TblClientes(
+      {Key? key, required this.showModal, required this.clientes, required this.onCompleted})
       : super(key: key);
 
   @override
-  _TblClasificacionesState createState() => _TblClasificacionesState();
+  _TblClientesState createState() => _TblClientesState();
 }
 
-class _TblClasificacionesState extends State<TblClasificaciones> {
+class _TblClientesState extends State<TblClientes> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -48,7 +45,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
             children: [
               Expanded(
                 child: Text(
-                  'Editar Clasificación',
+                  'Editar cliente',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -75,7 +72,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
     );
   }
 
-  void openEliminarModal(row) {
+   void openEliminarModal(row) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -85,7 +82,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
             children: [
               Expanded(
                 child: Text(
-                  'Eliminar Clasificación',
+                  'Eliminar cliente',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -116,7 +113,9 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
       {'name': 'Nombre'},
-      {'name': 'Descripción'},
+      {'name': 'Email'},
+      {'name': 'Telefono'},
+      {'name': 'Dirección'},
       {'name': 'Creado el'},
       {'name': 'Actualizado el'},
     ];
@@ -124,14 +123,15 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Envolvemos el SizedBox dentro de Expanded
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.clasificaciones.map((row) {
+              datos: widget.clientes.map((row) {
                 return {
                   'Nombre': row['nombre'],
-                  'Descripción': row['descripcion'],
+                  'Email': row['correo'],
+                  'Telefono': row['telefono'],
+                  'Dirección': "C " + row['calle']  + " " + row['nExterior'] + " LOC " + row['colonia'] + " " + row['cPostal'] + " " + row['municipio'] + " , " + row['estadoDom'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
                   'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
@@ -142,13 +142,14 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
                 return Row(
                   children: [
                     IconButton(
-                      icon: FaIcon(FontAwesomeIcons.pen,
-                          color: const Color.fromARGB(255, 6, 47, 214)),
-                      onPressed: () => openEditarModal(row['_originalRow']),
+                      icon: FaIcon(FontAwesomeIcons.pen, color: const Color.fromARGB(255, 6, 47, 214)),
+                      onPressed: () =>
+                        openEditarModal(row['_originalRow']),
                     ),
                     IconButton(
                       icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
-                      onPressed: () => openEliminarModal(row['_originalRow']),
+                      onPressed: () =>
+                        openEliminarModal(row['_originalRow']),
                     ),
                   ],
                 );

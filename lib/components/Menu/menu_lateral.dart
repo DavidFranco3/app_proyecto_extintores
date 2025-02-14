@@ -5,6 +5,7 @@ import '../../page/Frecuencias/frecuencias.dart';
 import '../../page/TiposExtintores/tipos_extintores.dart';
 import '../../page/Extintores/extintores.dart';
 import '../../page/Logs/logs.dart';
+import '../../page/Clientes/clientes.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -61,6 +62,12 @@ class MenuLateral extends StatelessWidget {
             Icons.home,
             'Inicio',
             HomePage(),
+          ),
+          _buildListTile(
+            context,
+            Icons.person,
+            'Clientes',
+            ClientesPage(),
           ),
           _buildListTile(
             context,
