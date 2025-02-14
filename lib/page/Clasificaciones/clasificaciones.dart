@@ -25,24 +25,24 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   Future<void> getClasificaciones() async {
     try {
       final clasificacionesService = ClasificacionesService();
-      final List<dynamic> response =
-          await clasificacionesService.listarClasificaciones();
+      final List<dynamic> response = await clasificacionesService.listarClasificaciones();
 
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataClasificaciones = formatModelClasificaciones(response);
-          loading = false;
+          loading = false; // Desactivar el estado de carga
         });
       } else {
-        print('Error: La respuesta está vacía o no es válida.');
         setState(() {
-          loading = false;
+          dataClasificaciones = []; // Lista vacía
+          loading = false; // Desactivar el estado de carga
         });
       }
     } catch (e) {
       print("Error al obtener las clasificaciones: $e");
       setState(() {
-        loading = false;
+        loading = false; // En caso de error, desactivar el estado de carga
       });
     }
   }
@@ -117,7 +117,8 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Clasificaciones"), // Usa el menú lateral
+      drawer:
+          MenuLateral(currentPage: "Clasificaciones"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

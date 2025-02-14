@@ -25,18 +25,18 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
   Future<void> getFrecuencias() async {
     try {
       final frecuenciasService = FrecuenciasService();
-      final List<dynamic> response =
-          await frecuenciasService.listarFrecuencias();
+      final List<dynamic> response = await frecuenciasService.listarFrecuencias();
 
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataFrecuencias = formatModelFrecuencias(response);
           loading = false;
         });
       } else {
-        print('Error: La respuesta está vacía o no es válida.');
         setState(() {
           loading = false;
+          dataFrecuencias = [];
         });
       }
     } catch (e) {

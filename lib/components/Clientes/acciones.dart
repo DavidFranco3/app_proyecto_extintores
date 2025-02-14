@@ -124,6 +124,7 @@ class _AccionesState extends State<Acciones> {
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
     widget.showModal(); // Llama a setShow con el valor booleano
+    widget.onCompleted();
   }
 
   void _guardarCliente(Map<String, dynamic> data) async {
@@ -199,9 +200,6 @@ class _AccionesState extends State<Acciones> {
       },
     };
 
-
-    
-
     try {
       final clientesService = ClientesService();
       var response = await clientesService.actualizarClientes(id, dataTemp);
@@ -270,7 +268,6 @@ class _AccionesState extends State<Acciones> {
               onPressed: () {
                 Navigator.of(context).pop();
                 closeRegistroModal();
-                widget.onCompleted();
               },
             ),
           ],

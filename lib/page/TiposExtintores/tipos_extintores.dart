@@ -25,18 +25,18 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
   Future<void> getTiposExtintores() async {
     try {
       final tiposExtintoresService = TiposExtintoresService();
-      final List<dynamic> response =
-          await tiposExtintoresService.listarTiposExtintores();
+      final List<dynamic> response = await tiposExtintoresService.listarTiposExtintores();
 
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataTiposExtintores = formatModelTiposExtintores(response);
           loading = false;
         });
       } else {
-        print('Error: La respuesta está vacía o no es válida.');
         setState(() {
           loading = false;
+          dataTiposExtintores = [];
         });
       }
     } catch (e) {

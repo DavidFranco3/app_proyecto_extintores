@@ -99,7 +99,8 @@ class _AccionesState extends State<Acciones> {
 
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
-    widget.showModal(); // Llama a setShow con el valor booleano
+    widget.showModal();
+    widget.onCompleted(); // Llama a setShow con el valor booleano
   }
 
   void _guardarExtintor(Map<String, dynamic> data) async {
@@ -226,7 +227,6 @@ class _AccionesState extends State<Acciones> {
               onPressed: () {
                 Navigator.of(context).pop();
                 closeRegistroModal();
-                widget.onCompleted();
               },
             ),
           ],

@@ -43,6 +43,7 @@ class _AccionesState extends State<Acciones> {
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
       widget.showModal(); // Llama a setShow con el valor booleano
+      widget.onCompleted();
   }
 
   void _guardarClasificacion(Map<String, dynamic> data) async {
@@ -168,7 +169,6 @@ class _AccionesState extends State<Acciones> {
               onPressed: () {
                 Navigator.of(context).pop();
                 closeRegistroModal();
-                widget.onCompleted();
               },
             ),
           ],

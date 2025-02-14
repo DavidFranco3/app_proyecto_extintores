@@ -25,18 +25,17 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
   Future<void> getExtintores() async {
     try {
       final frecuenciasService = ExtintoresService();
-      final List<dynamic> response =
-          await frecuenciasService.listarExtintores();
-          print(response);
-
+      final List<dynamic> response = await frecuenciasService.listarExtintores();
+      
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataExtintores = formatModelExtintores(response);
           loading = false;
         });
       } else {
-        print('Error: La respuesta está vacía o no es válida.');
         setState(() {
+          dataExtintores = []; // Lista vacía
           loading = false;
         });
       }

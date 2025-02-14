@@ -25,15 +25,16 @@ class _LogsPageState extends State<LogsPage> {
       final logsService = LogsService();
       final List<dynamic> response = await logsService.listarLogs();
 
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataLogs = formatModelLogs(response);
           loading = false;
         });
       } else {
-        print('Error: La respuesta está vacía o no es válida.');
         setState(() {
           loading = false;
+          dataLogs = [];
         });
       }
     } catch (e) {

@@ -10,7 +10,11 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones({required this.showModal, required this.onCompleted, required this.accion, required this.data});
+  Acciones(
+      {required this.showModal,
+      required this.onCompleted,
+      required this.accion,
+      required this.data});
 
   @override
   _AccionesState createState() => _AccionesState();
@@ -44,6 +48,7 @@ class _AccionesState extends State<Acciones> {
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
     widget.showModal(); // Llama a setShow con el valor booleano
+    widget.onCompleted();
   }
 
   void _guardarFrecuencia(Map<String, dynamic> data) async {
@@ -134,7 +139,9 @@ class _AccionesState extends State<Acciones> {
         setState(() {
           _isLoading = false;
         });
-        LogsInformativos("Se ha eliminado la frecuencia ${data['nombre']} correctamente", {});
+        LogsInformativos(
+            "Se ha eliminado la frecuencia ${data['nombre']} correctamente",
+            {});
         _showDialog(
             "Frecuencia eliminada correctamente", Icons.check, Colors.green);
       }
@@ -166,7 +173,6 @@ class _AccionesState extends State<Acciones> {
               onPressed: () {
                 Navigator.of(context).pop();
                 closeRegistroModal();
-                widget.onCompleted();
               },
             ),
           ],

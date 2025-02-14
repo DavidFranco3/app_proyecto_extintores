@@ -4,12 +4,16 @@ import '../../api/tipos_extintores.dart';
 import '../Logs/logs_informativos.dart';
 
 class Acciones extends StatefulWidget {
-final VoidCallback showModal;
-final Function onCompleted;
+  final VoidCallback showModal;
+  final Function onCompleted;
   final String accion;
   final dynamic data;
 
-  Acciones({required this.showModal, required this.onCompleted, required this.accion, required this.data});
+  Acciones(
+      {required this.showModal,
+      required this.onCompleted,
+      required this.accion,
+      required this.data});
 
   @override
   _AccionesState createState() => _AccionesState();
@@ -42,7 +46,8 @@ class _AccionesState extends State<Acciones> {
 
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
-      widget.showModal(); // Llama a setShow con el valor booleano
+    widget.showModal(); // Llama a setShow con el valor booleano
+    widget.onCompleted();
   }
 
   void _guardarTipoExtintor(Map<String, dynamic> data) async {
@@ -69,8 +74,8 @@ class _AccionesState extends State<Acciones> {
         LogsInformativos(
             "Se ha registrado la clasificacion ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Tipo de extintoragregada correctamente", Icons.check, Colors.green);
+        _showDialog("Tipo de extintoragregada correctamente", Icons.check,
+            Colors.green);
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
@@ -129,16 +134,17 @@ class _AccionesState extends State<Acciones> {
 
     try {
       final tiposExtintoresService = TiposExtintoresService();
-      var response = await tiposExtintoresService.actualizaDeshabilitarTiposExtintores(
-          id, dataTemp);
+      var response = await tiposExtintoresService
+          .actualizaDeshabilitarTiposExtintores(id, dataTemp);
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha eliminado la clasificacion ${data['nombre']} correctamente", {});
-        _showDialog(
-            "Tipo de extintoreliminada correctamente", Icons.check, Colors.green);
+            "Se ha eliminado la clasificacion ${data['nombre']} correctamente",
+            {});
+        _showDialog("Tipo de extintoreliminada correctamente", Icons.check,
+            Colors.green);
       }
     } catch (error) {
       setState(() {
@@ -168,7 +174,6 @@ class _AccionesState extends State<Acciones> {
               onPressed: () {
                 Navigator.of(context).pop();
                 closeRegistroModal();
-                widget.onCompleted();
               },
             ),
           ],

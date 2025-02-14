@@ -27,21 +27,22 @@ class _ClientesPageState extends State<ClientesPage> {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
 
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataClientes = formatModelClientes(response);
-          loading = false;
+          loading = false; // Desactivar el estado de carga
         });
       } else {
-        print('Error: La respuesta está vacía o no es válida.');
         setState(() {
-          loading = false;
+          dataClientes = []; // Lista vacía
+          loading = false; // Desactivar el estado de carga
         });
       }
     } catch (e) {
-      print("Error al obtener las clientes: $e");
+      print("Error al obtener los clientes: $e");
       setState(() {
-        loading = false;
+        loading = false; // En caso de error, desactivar el estado de carga
       });
     }
   }
