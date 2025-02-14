@@ -73,18 +73,27 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
             ],
           ),
           content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Acciones(
-                showModal: () {
-                  Navigator.pop(
-                      context); // Cierra el modal después de registrar
-                },
-                onCompleted: getFrecuencias,
-                accion: "registrar",
-                data: null,
-              ),
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus(); // Cierra el teclado al tocar fuera
+                  },
+                  child: Acciones(
+                    showModal: () {
+                      Navigator.pop(context); // Esto cierra el modal
+                    },
+                    onCompleted: getFrecuencias,
+                    accion: "registrar",
+                    data: null,
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
         );
       },
     );

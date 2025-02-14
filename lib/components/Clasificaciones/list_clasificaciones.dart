@@ -62,11 +62,22 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              child: Acciones(
-                showModal: widget.showModal,
-                onCompleted: widget.onCompleted,
-                accion: "editar",
-                data: row,
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
+                    },
+                    child: Acciones(
+                      showModal: widget.showModal,
+                      onCompleted: widget.onCompleted,
+                      accion: "editar",
+                      data: row,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -99,11 +110,22 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              child: Acciones(
-                showModal: widget.showModal,
-                onCompleted: widget.onCompleted,
-                accion: "eliminar",
-                data: row,
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
+                    },
+                    child: Acciones(
+                      showModal: widget.showModal,
+                      onCompleted: widget.onCompleted,
+                      accion: "eliminar",
+                      data: row,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -10,7 +10,10 @@ class TblFrecuencias extends StatefulWidget {
   final Function onCompleted;
 
   TblFrecuencias(
-      {Key? key, required this.showModal, required this.frecuencias, required this.onCompleted})
+      {Key? key,
+      required this.showModal,
+      required this.frecuencias,
+      required this.onCompleted})
       : super(key: key);
 
   @override
@@ -59,11 +62,22 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              child: Acciones(
-                showModal: widget.showModal,
-                onCompleted: widget.onCompleted,
-                accion: "editar",
-                data: row,
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
+                    },
+                    child: Acciones(
+                      showModal: widget.showModal,
+                      onCompleted: widget.onCompleted,
+                      accion: "editar",
+                      data: row,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -72,7 +86,7 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
     );
   }
 
-   void openEliminarModal(row) {
+  void openEliminarModal(row) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -96,11 +110,22 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              child: Acciones(
-                showModal: widget.showModal,
-                onCompleted: widget.onCompleted,
-                accion: "eliminar",
-                data: row,
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
+                    },
+                    child: Acciones(
+                      showModal: widget.showModal,
+                      onCompleted: widget.onCompleted,
+                      accion: "eliminar",
+                      data: row,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -138,14 +163,13 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
                 return Row(
                   children: [
                     IconButton(
-                      icon: FaIcon(FontAwesomeIcons.pen, color: const Color.fromARGB(255, 6, 47, 214)),
-                      onPressed: () =>
-                        openEditarModal(row['_originalRow']),
+                      icon: FaIcon(FontAwesomeIcons.pen,
+                          color: const Color.fromARGB(255, 6, 47, 214)),
+                      onPressed: () => openEditarModal(row['_originalRow']),
                     ),
                     IconButton(
                       icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
-                      onPressed: () =>
-                        openEliminarModal(row['_originalRow']),
+                      onPressed: () => openEliminarModal(row['_originalRow']),
                     ),
                   ],
                 );

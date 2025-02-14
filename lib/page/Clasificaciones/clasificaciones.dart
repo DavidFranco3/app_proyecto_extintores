@@ -25,7 +25,8 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   Future<void> getClasificaciones() async {
     try {
       final clasificacionesService = ClasificacionesService();
-      final List<dynamic> response = await clasificacionesService.listarClasificaciones();
+      final List<dynamic> response =
+          await clasificacionesService.listarClasificaciones();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -74,14 +75,24 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              // Ajusta la altura según el contenido
-              child: Acciones(
-                showModal: () {
-                  Navigator.pop(context); // Esto cierra el modal
-                },
-                onCompleted: getClasificaciones,
-                accion: "registrar",
-                data: null,
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
+                    },
+                    child: Acciones(
+                      showModal: () {
+                        Navigator.pop(context); // Esto cierra el modal
+                      },
+                      onCompleted: getClasificaciones,
+                      accion: "registrar",
+                      data: null,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

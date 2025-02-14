@@ -73,18 +73,27 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
             ],
           ),
           content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              // Ajusta la altura según el contenido
-              child: Acciones(
-                showModal: () {
-                  Navigator.pop(context); // Esto cierra el modal
-                },
-                onCompleted: getTiposExtintores,
-                accion: "registrar",
-                data: null,
-              ),
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus(); // Cierra el teclado al tocar fuera
+                  },
+                  child: Acciones(
+                    showModal: () {
+                      Navigator.pop(context); // Esto cierra el modal
+                    },
+                    onCompleted: getTiposExtintores,
+                    accion: "registrar",
+                    data: null,
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
         );
       },
     );

@@ -25,8 +25,9 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
   Future<void> getExtintores() async {
     try {
       final frecuenciasService = ExtintoresService();
-      final List<dynamic> response = await frecuenciasService.listarExtintores();
-      
+      final List<dynamic> response =
+          await frecuenciasService.listarExtintores();
+
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
@@ -74,14 +75,24 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
           ),
           content: SingleChildScrollView(
             child: IntrinsicHeight(
-              child: Acciones(
-                showModal: () {
-                  Navigator.pop(
-                      context); // Cierra el modal después de registrar
-                },
-                onCompleted: getExtintores,
-                accion: "registrar",
-                data: null,
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
+                    },
+                    child: Acciones(
+                      showModal: () {
+                        Navigator.pop(context); // Esto cierra el modal
+                      },
+                      onCompleted: getExtintores,
+                      accion: "registrar",
+                      data: null,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

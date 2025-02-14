@@ -49,54 +49,54 @@ class _ClientesPageState extends State<ClientesPage> {
 
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
-  // Función para abrir el modal de registro con el formulario de Acciones
-  void openRegistroModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Registrar cliente',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: GestureDetector(
-                onTap: () {
-                  // Cierra el teclado si se toca fuera de un campo de texto
-                  FocusScope.of(context).requestFocus(FocusNode());
-                },
-                child: Acciones(
-                  showModal: () {
-                    Navigator.pop(
-                        context); // Cierra el modal después de registrar
-                  },
-                  onCompleted: getClientes,
-                  accion: "registrar",
-                  data: null,
-                ),
+void openRegistroModal() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                'Registrar Cliente',
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo
+              },
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus(); // Cierra el teclado al tocar fuera
+                  },
+                  child: Acciones(
+                    showModal: () {
+                      Navigator.pop(context); // Esto cierra el modal
+                    },
+                    onCompleted: getClientes,
+                    accion: "registrar",
+                    data: null,
+                  ),
+                ),
+              ],
+            ),
           ),
-          // Permite que el teclado ajuste el contenido en la pantalla
-          scrollable: true,
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
 // Cierra el modal
   void closeModal() {

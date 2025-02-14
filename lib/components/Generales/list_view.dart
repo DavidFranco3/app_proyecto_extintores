@@ -13,9 +13,14 @@ class DataTableCustom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: datos.map((row) {
+    return Scrollbar(
+      thumbVisibility: true,
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: BouncingScrollPhysics(),
+        itemCount: datos.length,
+        itemBuilder: (context, index) {
+          final row = datos[index];
           return Card(
             elevation: 3,
             margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
@@ -26,25 +31,22 @@ class DataTableCustom extends StatelessWidget {
                 children: [
                   ...columnas.map((col) {
                     final columnName = col['name'];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${columnName}: ',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blueGrey,
-                            ),
+                    return Row(
+                      children: [
+                        Text(
+                          '${columnName}: ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey,
                           ),
-                          Expanded(
-                            child: Text(
-                              row[columnName]?.toString() ?? '',
-                              style: TextStyle(fontSize: 16),
-                            ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            row[columnName]?.toString() ?? 'N/A',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   }).toList(),
                   if (accionesBuilder != null)
@@ -56,7 +58,7 @@ class DataTableCustom extends StatelessWidget {
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
