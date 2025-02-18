@@ -6,7 +6,7 @@ import '../../page/TiposExtintores/tipos_extintores.dart';
 import '../../page/Extintores/extintores.dart';
 import '../../page/Logs/logs.dart';
 import '../../page/Clientes/clientes.dart';
-import '../../page/CrearEncuesta/crearEncuesta.dart';
+import '../../page/Encuestas/encuestas.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -72,9 +72,9 @@ class MenuLateral extends StatelessWidget {
           ),
           _buildListTile(
             context,
-            Icons.person,
+            Icons.poll, // Icono relacionado con encuestas
             'Crear encuesta',
-            CrearEncuestaScreen(),
+           EncuestasPage(),
           ),
           _buildListTile(
             context,

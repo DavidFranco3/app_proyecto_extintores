@@ -126,7 +126,7 @@ class _AccionesState extends State<Acciones> {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha registrado la extintor ${data['nombre']} correctamente",
+            "Se ha registrado la extintor ${data['numeroSerie']} correctamente",
             dataTemp);
         _showDialog(
             "Extintor agregada correctamente", Icons.check, Colors.green);
@@ -166,7 +166,7 @@ class _AccionesState extends State<Acciones> {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha modificado la extintor ${data['nombre']} correctamente",
+            "Se ha modificado la extintor ${data['numeroSerie']} correctamente",
             dataTemp);
         _showDialog(
             "Extintor actualizada correctamente", Icons.check, Colors.green);
@@ -195,7 +195,7 @@ class _AccionesState extends State<Acciones> {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha eliminado la extintor ${data['nombre']} correctamente", {});
+            "Se ha eliminado la extintor ${data['numeroSerie']} correctamente", {});
         _showDialog(
             "Extintor eliminada correctamente", Icons.check, Colors.green);
       }
