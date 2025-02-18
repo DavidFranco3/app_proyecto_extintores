@@ -52,10 +52,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         ))
     .toList() ?? [];
 
-print("hola");
-    print(preguntasss.map((pregunta) => pregunta.toJson()).toList());
-
-
     if (widget.accion == 'editar') {
       preguntas = 
         preguntasss;
@@ -266,15 +262,6 @@ print("hola");
       _editarEncuesta(widget.data["id"], formData);
     }
     // Aquí podrías enviar la encuesta a Firebase o una API
-  }
-
-  void _limpiarEncuesta() {
-    setState(() {
-      nombreController.clear();
-      frecuenciaController.clear();
-      clasificacionController.clear();
-      preguntas.clear();
-    });
   }
 
   void _showDialog(String title, IconData icon, Color color,
