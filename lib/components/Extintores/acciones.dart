@@ -287,6 +287,7 @@ class _AccionesState extends State<Acciones> {
                 ? null
                 : _idTipoExtintorController.text,
             decoration: InputDecoration(labelText: 'Tipo de extintor'),
+            isExpanded: true,
             items: dataTiposExtintores.map((tipo) {
               return DropdownMenuItem<String>(
                 value: tipo['id'],

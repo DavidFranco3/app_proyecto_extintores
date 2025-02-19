@@ -44,17 +44,17 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     super.initState();
     getFrecuencias();
     getClasificaciones();
-    List<Pregunta> preguntasss = (widget.data["preguntas"] as List<dynamic>?)
-    ?.map((pregunta) => Pregunta(
-          titulo: pregunta["titulo"],
-          observaciones: pregunta["observaciones"],
-          opciones: List<String>.from(pregunta["opciones"] ?? []),
-        ))
-    .toList() ?? [];
+    List<Pregunta> preguntasss = (widget.data?["preguntas"] as List<dynamic>?)
+            ?.map((pregunta) => Pregunta(
+                  titulo: pregunta["titulo"] ?? "",
+                  observaciones: pregunta["observaciones"] ?? "",
+                  opciones: List<String>.from(pregunta["opciones"] ?? []),
+                ))
+            .toList() ??
+        [];
 
     if (widget.accion == 'editar') {
-      preguntas = 
-        preguntasss;
+      preguntas = preguntasss;
       nombreController.text = widget.data['nombre'] ?? '';
       frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
       clasificacionController.text = widget.data['idClasificacion'] ?? '';
@@ -389,6 +389,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   : frecuenciaController.text,
                               decoration:
                                   InputDecoration(labelText: 'Frecuencia'),
+                              isExpanded: true,
                               items: dataFrecuencias.map((tipo) {
                                 return DropdownMenuItem<String>(
                                   value: tipo['id'],
@@ -411,6 +412,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   : clasificacionController.text,
                               decoration:
                                   InputDecoration(labelText: 'Clasificación'),
+                              isExpanded: true,
                               items: dataClasificaciones.map((tipo) {
                                 return DropdownMenuItem<String>(
                                   value: tipo['id'],

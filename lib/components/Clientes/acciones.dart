@@ -4,7 +4,6 @@ import '../../api/clientes.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -421,6 +420,7 @@ class _AccionesState extends State<Acciones> {
                 ? null
                 : _estadoDomController.text,
             decoration: InputDecoration(labelText: 'Estado'),
+            isExpanded: true,
             items: _estadosFuture.map((estado) {
               return DropdownMenuItem<String>(
                 value: estado['nombre'],
