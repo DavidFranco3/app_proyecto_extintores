@@ -83,12 +83,8 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         'idUsuario': item['idUsuario'],
         'idCliente': item['idCliente'],
         'idEncuesta': item['idEncuesta'],
-        'encuesta': (item['encuesta'] is List)
-            ? item['encuesta']
-            : [], // ✅ Asegurar que sea lista
-        'imagenes': (item['imagenes'] is List)
-            ? item['imagenes']
-            : [], // ✅ Asegurar que sea lista
+        'encuesta': item['encuesta'],
+        'imagenes': item['imagenes'],
         'comentarios': item['comentarios'],
         'usuario': item['usuario']['nombre'],
         'cliente': item['cliente']['nombre'],

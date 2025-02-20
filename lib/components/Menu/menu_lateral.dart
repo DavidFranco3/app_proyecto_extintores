@@ -73,15 +73,15 @@ class MenuLateral extends StatelessWidget {
           ),
           _buildListTile(
             context,
-            Icons.table_bar,
-            'Inspeccion',
+            Icons.fact_check, // Ícono representativo de inspección
+            'Inspección',
             InspeccionesPage(),
           ),
           _buildListTile(
             context,
             Icons.poll, // Icono relacionado con encuestas
             'Crear encuesta',
-           EncuestasPage(),
+            EncuestasPage(),
           ),
           _buildListTile(
             context,

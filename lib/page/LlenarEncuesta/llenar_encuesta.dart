@@ -204,6 +204,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return preguntas.map((pregunta) {
       return {
         "pregunta": pregunta.titulo,
+        "observaciones": pregunta.observaciones,
         "respuesta": pregunta.respuesta.isNotEmpty
             ? pregunta.respuesta
             : "No respondida",

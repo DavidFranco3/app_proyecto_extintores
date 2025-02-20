@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
-import '../../page/LlenarEncuesta/llenar_encuesta.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:open_file/open_file.dart';
+import 'package:dio/dio.dart';
+import '../../api/inspecciones.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -25,6 +29,54 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
+  bool isLoading = false;
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> handleDownloadPDF(row) async {
+    setState(() => isLoading = true);
+
+    try {
+      final inspeccionesService = InspeccionesService();
+      String fileURL = inspeccionesService.urlDownloadPDF(row["id"]);
+      var dio = Dio();
+
+      // Obtener el directorio de descargas
+      Directory tempDir = await getTemporaryDirectory();
+      String filePath = "${tempDir.path}/Encuesta de inspeccion ${row["id"]}.pdf";
+
+      // Descargar el archivo
+      await dio.download(fileURL, filePath);
+
+      // Abrir el archivo después de descargarlo
+      OpenFile.open(filePath);
+    } catch (e) {
+      print("Error al descargar el PDF: $e");
+    }
+
+    setState(() => isLoading = false);
+  }
+
+  Future<void> handleSendEmail(row) async {
+    try {
+      final inspeccionesService = InspeccionesService();
+      var response = await inspeccionesService.sendEmail(row["id"]);
+
+      if (response['status'] == 200) {
+        _showMessage("Correo enviado");
+      } else {
+        _showMessage("Error al enviar correo");
+      }
+    } catch (e) {
+      _showMessage("Error: ${e.toString()}");
+    } finally {
+      isLoading = false;
+    }
+  }
 
   // Función para formatear fechas
   String formatDate(String date) {
@@ -37,22 +89,6 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     // Ahora formateamos la fecha en formato de 12 horas (con AM/PM)
     final dateFormat = DateFormat('dd/MM/yyyy hh:mm:ss a'); // Formato 12 horas
     return dateFormat.format(localDate);
-  }
-
-  void openEditarPage(row) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => EncuestaPage(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              onCompleted: widget.onCompleted,
-              accion: "editar",
-              data: row)),
-    ).then((_) {
-      widget.onCompleted(); // Actualizar inspecciones al regresar de la página
-    });
   }
 
   void openEliminarModal(row) {
@@ -137,8 +173,21 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                 return Row(
                   children: [
                     IconButton(
-                      icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
+                      icon: 
+                      FaIcon(FontAwesomeIcons.trash, 
+                      color: Colors.red),
                       onPressed: () => openEliminarModal(row['_originalRow']),
+                    ),
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.filePdf,
+                          color: Colors.blue), // Ícono más relacionado con PDF
+                      onPressed: () => handleDownloadPDF(row['_originalRow']),
+                    ),
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.envelope,
+                          color: Colors
+                              .orange), // Ícono más relacionado con el correo
+                      onPressed: () => handleSendEmail(row['_originalRow']),
                     ),
                   ],
                 );

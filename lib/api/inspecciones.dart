@@ -100,4 +100,23 @@ class InspeccionesService {
       'status': response.statusCode, // Retorna la respuesta del servidor
     };
   }
+
+  Future<Map<String, dynamic>> sendEmail(String id) async {
+  final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF + '/$id';
+
+  final response = await http.get(
+    Uri.parse(apiUrl),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  );
+
+  return {
+    'status': response.statusCode, // Retorna la respuesta del servidor
+  };
+}
+
+  String urlDownloadPDF(String id) {
+    return API_HOST + ENDPOINT_DESCARGAR_PDF + '/$id';
+  }
 }

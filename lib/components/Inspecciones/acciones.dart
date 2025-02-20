@@ -29,6 +29,7 @@ class _AccionesState extends State<Acciones> {
   @override
   void initState() {
     super.initState();
+    print(widget.data);
     _usuarioController = TextEditingController();
     _clienteController = TextEditingController();
     _encuestaController = TextEditingController();
@@ -36,7 +37,7 @@ class _AccionesState extends State<Acciones> {
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _usuarioController.text = widget.data['usuario'] ?? '';
       _clienteController.text = widget.data['cliente'] ?? '';
-      _encuestaController.text = widget.data['encuesta'] ?? '';
+      _encuestaController.text = widget.data['cuestionario'] ?? '';
     }
   }
 
@@ -70,7 +71,7 @@ class _AccionesState extends State<Acciones> {
           _isLoading = false;
         });
         LogsInformativos(
-            "Se ha eliminado la inspeccion ${data['nombre']} correctamente", {});
+            "Se ha eliminado la inspeccion ${data['id']} correctamente", {});
         _showDialog(
             "inspeccion eliminada correctamente", Icons.check, Colors.green);
       }
