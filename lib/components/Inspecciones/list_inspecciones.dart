@@ -3,11 +3,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:open_file/open_file.dart';
 import 'package:dio/dio.dart';
 import '../../api/inspecciones.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -37,31 +37,56 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 
-  Future<void> handleDownloadPDF(row) async {
+  Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
     setState(() => isLoading = true);
 
     try {
       final inspeccionesService = InspeccionesService();
       String fileURL = inspeccionesService.urlDownloadPDF(row["id"]);
+
+      if (fileURL.isEmpty) {
+        throw Exception("La URL del archivo es inválida.");
+      }
+
       var dio = Dio();
 
-      // Obtener el directorio de descargas
-      Directory tempDir = await getTemporaryDirectory();
-      String filePath = "${tempDir.path}/Encuesta de inspeccion ${row["id"]}.pdf";
+      // **Solicitar permisos de almacenamiento en Android**
+      if (Platform.isAndroid) {
+        var status = await Permission.manageExternalStorage.request();
+        if (!status.isGranted) {
+          throw Exception("Permiso de almacenamiento denegado.");
+        }
+      }
+
+      // Obtener la carpeta de Descargas en Android
+      Directory? downloadsDir = Directory('/storage/emulated/0/Download');
+
+      if (!downloadsDir.existsSync()) {
+        downloadsDir.createSync(recursive: true);
+      }
+
+      String filePath =
+          "${downloadsDir.path}/Encuesta_de_inspección_${row["id"]}.pdf";
 
       // Descargar el archivo
       await dio.download(fileURL, filePath);
 
-      // Abrir el archivo después de descargarlo
-      OpenFile.open(filePath);
+      // Verificar si el archivo se descargó correctamente
+      File file = File(filePath);
+      if (await file.exists()) {
+        OpenFile.open(filePath);
+        print("Archivo guardado en: $filePath");
+      } else {
+        throw Exception("El archivo no se descargó correctamente.");
+      }
     } catch (e) {
       print("Error al descargar el PDF: $e");
+    } finally {
+      setState(() => isLoading = false);
     }
-
-    setState(() => isLoading = false);
   }
 
-  Future<void> handleSendEmail(row) async {
+  Future<void> handleSendEmail(Map<String, dynamic> row) async {
     try {
       final inspeccionesService = InspeccionesService();
       var response = await inspeccionesService.sendEmail(row["id"]);
@@ -70,6 +95,73 @@ class _TblInspeccionesState extends State<TblInspecciones> {
         _showMessage("Correo enviado");
       } else {
         _showMessage("Error al enviar correo");
+      }
+    } catch (e) {
+      _showMessage("Error: ${e.toString()}");
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  Future<void> showEmailModal(
+    Map<String, dynamic> row) async {
+    TextEditingController emailController = TextEditingController();
+
+    // 📌 Mostrar el modal
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Ingresar Correo"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: "Correo electrónico",
+                  hintText: "Ingresa el correo",
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el modal sin hacer nada
+              },
+              child: Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                // 📌 Validar el correo
+                String email = emailController.text.trim();
+                if (email.isNotEmpty) {
+                  // 📌 Ejecutar la función con el correo
+                  downloadAndOpenZip(row, email);
+                  Navigator.of(context).pop(); // Cerrar el modal
+                } else {
+                  print("❌ Por favor ingresa un correo válido.");
+                }
+              },
+              child: Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> downloadAndOpenZip(
+      Map<String, dynamic> row, String email) async {
+    try {
+      final inspeccionesService = InspeccionesService();
+      var response = await inspeccionesService.urlDownloadZIP(row["id"], email);
+
+      if (response['status'] == 200) {
+        _showMessage("Zip enviado");
+      } else {
+        _showMessage("Error al enviar el zip");
       }
     } catch (e) {
       _showMessage("Error: ${e.toString()}");
@@ -173,9 +265,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                 return Row(
                   children: [
                     IconButton(
-                      icon: 
-                      FaIcon(FontAwesomeIcons.trash, 
-                      color: Colors.red),
+                      icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
                       onPressed: () => openEliminarModal(row['_originalRow']),
                     ),
                     IconButton(
@@ -188,6 +278,12 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                           color: Colors
                               .orange), // Ícono más relacionado con el correo
                       onPressed: () => handleSendEmail(row['_originalRow']),
+                    ),
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.fileZipper,
+                          color: Colors
+                              .yellow), // Ícono más relacionado con el correo
+                      onPressed: () => showEmailModal(row['_originalRow']),
                     ),
                   ],
                 );

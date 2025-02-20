@@ -153,12 +153,6 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: _login,
                       child: const Text('Iniciar sesión'),
                     ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/register');
-                },
-                child: const Text('Registrarse'),
-              ),
             ],
           ),
         ),

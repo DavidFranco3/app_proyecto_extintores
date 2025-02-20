@@ -3,12 +3,14 @@ import '../../api/encuesta_inspeccion.dart';
 import '../../api/inspecciones.dart';
 import '../../api/auth.dart';
 import '../../api/clientes.dart';
+import '../../api/dropbox.dart';
 import '../../components/Logs/logs_informativos.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../page/Inspecciones/inspecciones.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EncuestaPage extends StatefulWidget {
   final VoidCallback showModal;
@@ -16,7 +18,7 @@ class EncuestaPage extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-EncuestaPage(
+  EncuestaPage(
       {required this.showModal,
       required this.onCompleted,
       required this.accion,
@@ -36,6 +38,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
   final int preguntasPorPagina = 5; // Número de preguntas por página
   final PageController _pageController = PageController();
   List<Map<String, dynamic>> dataClientes = [];
+
+  List<String> uploadedImageLinks =
+      []; // Array para guardar los enlaces de las imágenes
 
   late TextEditingController usuarioController;
   late TextEditingController clienteController;
@@ -217,14 +222,13 @@ class _EncuestaPageState extends State<EncuestaPage> {
       _isLoading = true;
     });
 
-    print(data);
-
     var dataTemp = {
       'idUsuario': data['idUsuario'],
       'idCliente': data['idCliente'],
       'idEncuesta': data['idEncuesta'],
       'encuesta': data['preguntas'],
       'comentarios': data['comentarios'],
+      'imagenes': data['imagenes'],
       'estado': "true",
     };
 
@@ -272,17 +276,40 @@ class _EncuestaPageState extends State<EncuestaPage> {
     // Obtener los datos comunes utilizando el token
     final datosComunes = await obtenerDatosComunes(token);
     print('Datos comunes obtenidos para logout: $datosComunes');
+
+    // Obtener las respuestas para guardar
     List<Map<String, String>> respuestasAguardar =
         obtenerRespuestasParaGuardar();
 
+    // Subir imágenes si es que hay imágenes seleccionadas
+    if (imagePaths.isNotEmpty) {
+      setState(() {
+        _isLoading = true;
+      });
+      final dropboxService = DropboxService();
+
+      for (var imagePath in imagePaths) {
+        String? sharedLink =
+            await dropboxService.uploadImageToDropbox(imagePath);
+        if (sharedLink != null) {
+          uploadedImageLinks.add(sharedLink); // Guardar el enlace en el array
+        }
+      }
+      print('Enlaces de imágenes subidas: $uploadedImageLinks');
+    }
+
+    // Crear el formulario con los datos
     var formData = {
       "idUsuario": datosComunes["idUsuario"],
       "idCliente": clienteController.text,
       "idEncuesta": selectedEncuestaId,
       "preguntas": respuestasAguardar,
+      "imagenes":
+          uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
       "comentarios": comentariosController.text
     };
 
+    // Llamar a la función para guardar la encuesta
     _guardarEncuesta(formData);
   }
 
@@ -323,6 +350,25 @@ class _EncuestaPageState extends State<EncuestaPage> {
     );
   }
 
+// Definir la lista de rutas de las imágenes
+  List<String> imagePaths = [];
+
+// Función para seleccionar varias imágenes
+  Future<void> _pickImages() async {
+    final ImagePicker picker = ImagePicker();
+
+    // Seleccionar múltiples imágenes
+    final List<XFile>? pickedFiles = await picker.pickMultiImage();
+
+    if (pickedFiles != null) {
+      setState(() {
+        imagePaths = pickedFiles.map((file) => file.path).toList();
+      });
+      // Aquí puedes hacer lo que necesites con el array de enlaces, como guardarlos en tu base de datos
+      print('Enlaces de imágenes subidas: $uploadedImageLinks');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -349,23 +395,44 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     // Botón centrado debajo del título
                     Center(
                       child: ElevatedButton(
-                        onPressed: _onSubmit,
+                        onPressed: _isLoading
+                            ? null
+                            : _onSubmit, // Deshabilitar botón mientras carga
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           minimumSize: Size(200, 50), // Tamaño fijo
                         ),
-                        child: Text("Guardar Inspección"),
+                        child:
+                            _isLoading // Si está cargando, mostrar el Spinner, si no, el texto normal
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SpinKitFadingCircle(
+                                        color: const Color.fromARGB(
+                                            255, 241, 8, 8),
+                                        size: 24,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text("Guardando..."), // Texto de carga
+                                    ],
+                                  )
+                                : Text(
+                                    "Guardar Inspección"), // Texto normal cuando no está cargando
                       ),
                     ),
+
                     Center(
                       child: ElevatedButton(
-                          onPressed: returnPrincipalPage,
-                          child: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24)
-                              : Text("Cancelar"),
-                        ),
+                        onPressed: _isLoading
+                            ? null
+                            : returnPrincipalPage, // Deshabilitar el botón "Cancelar" mientras carga
+                        child: _isLoading
+                            ? SpinKitFadingCircle(
+                                color: const Color.fromARGB(255, 241, 8, 8),
+                                size: 24,
+                              )
+                            : Text("Cancelar"),
+                      ),
                     ),
                     SizedBox(height: 20), // Espacio debajo del botón
 
@@ -422,7 +489,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             300, // Si no quieres que sea fijo, quita el height aquí
                         child: PageView.builder(
                           controller: _pageController,
-                          itemCount: dividirPreguntasEnPaginas().length + 1,
+                          itemCount: dividirPreguntasEnPaginas().length +
+                              2, // +2 por la nueva página de imagen
                           itemBuilder: (context, pageIndex) {
                             if (pageIndex <
                                 dividirPreguntasEnPaginas().length) {
@@ -473,7 +541,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                   );
                                 },
                               );
-                            } else {
+                            } else if (pageIndex ==
+                                dividirPreguntasEnPaginas().length) {
+                              // Página de comentarios finales
                               return Padding(
                                 padding: EdgeInsets.all(16.0),
                                 child: Column(
@@ -496,6 +566,39 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                       ),
                                     ),
                                   ],
+                                ),
+                              );
+                            } else {
+                              // Página para cargar imagen
+                              return Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Carga de Imágenes",
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      SizedBox(height: 10),
+                                      ElevatedButton(
+                                        onPressed: _pickImages,
+                                        child: Text("Seleccionar Imágenes"),
+                                      ),
+                                      SizedBox(height: 20),
+                                      // Mostrar la cantidad de imágenes cargadas
+                                      if (imagePaths.isNotEmpty)
+                                        Text(
+                                          "Imágenes cargadas: ${imagePaths.length}",
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               );
                             }
@@ -523,7 +626,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             IconButton(
                               icon: Icon(Icons.arrow_forward),
                               onPressed: currentPage <
-                                      dividirPreguntasEnPaginas().length
+                                      dividirPreguntasEnPaginas().length + 1
                                   ? () {
                                       _pageController.nextPage(
                                           duration: Duration(milliseconds: 300),
