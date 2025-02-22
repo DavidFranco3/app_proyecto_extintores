@@ -20,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   final AuthService authService = AuthService();
-  final UsuarioService usuarioService = UsuarioService();
+  final UsuariosService usuarioService = UsuariosService();
 
   @override
   void dispose() {

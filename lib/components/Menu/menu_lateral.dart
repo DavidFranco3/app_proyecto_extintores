@@ -8,6 +8,7 @@ import '../../page/Logs/logs.dart';
 import '../../page/Clientes/clientes.dart';
 import '../../page/Encuestas/encuestas.dart';
 import '../../page/Inspecciones/inspecciones.dart';
+import '../../page/Usuarios/usuarios.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -128,6 +129,12 @@ class MenuLateral extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          _buildListTile(
+            context,
+            FontAwesomeIcons.person,
+            'Usuarios',
+            UsuariosPage(),
           ),
           _buildListTile(
             context,

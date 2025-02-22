@@ -11,6 +11,11 @@ import '../../components/Header/header.dart';
 import '../../page/Inspecciones/inspecciones.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:signature/signature.dart';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:ui' as ui;
 
 class EncuestaPage extends StatefulWidget {
   final VoidCallback showModal;
@@ -41,10 +46,17 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
   List<String> uploadedImageLinks =
       []; // Array para guardar los enlaces de las imágenes
+  String linkFirma = "";
 
   late TextEditingController usuarioController;
   late TextEditingController clienteController;
   late TextEditingController comentariosController;
+
+  final SignatureController _controller = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
 
   @override
   void initState() {
@@ -107,6 +119,44 @@ class _EncuestaPageState extends State<EncuestaPage> {
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
+    }
+  }
+
+  Future<String> saveImage(Uint8List imageBytes) async {
+    try {
+      // Obtener el directorio de caché de la aplicación
+      final directory = await getTemporaryDirectory();
+
+      // Construir la ruta del archivo (formato PNG)
+      final filePath =
+          '${directory.path}/8808c45a-a5f8-4fa1-9007-b95295c174a1/1002317481.png';
+
+      // Crear el directorio si no existe
+      final fileDirectory =
+          Directory('${directory.path}/8808c45a-a5f8-4fa1-9007-b95295c174a1');
+      if (!await fileDirectory.exists()) {
+        await fileDirectory.create(recursive: true);
+      }
+
+      // Convertir los bytes a imagen (no usar librería 'image' si no es necesario)
+      final image = await decodeImageFromList(imageBytes);
+
+      // Crear un archivo para guardar la imagen
+      final file = File(filePath);
+
+      // Convertir la imagen a PNG y guardarla, asegurándose de que sea transparente
+      final pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (pngBytes != null) {
+        await file.writeAsBytes(pngBytes.buffer.asUint8List());
+        print('Imagen guardada en: $filePath');
+      }
+
+      // Retornar la ruta del archivo
+      return filePath;
+    } catch (e) {
+      print('Error guardando la imagen: $e');
+      return ''; // Valor vacío en caso de error
     }
   }
 
@@ -229,6 +279,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       'encuesta': data['preguntas'],
       'comentarios': data['comentarios'],
       'imagenes': data['imagenes'],
+      'firmaCliente': data['firmaCliente'],
       'estado': "true",
     };
 
@@ -277,26 +328,56 @@ class _EncuestaPageState extends State<EncuestaPage> {
     final datosComunes = await obtenerDatosComunes(token);
     print('Datos comunes obtenidos para logout: $datosComunes');
 
-    // Obtener las respuestas para guardar
-    List<Map<String, String>> respuestasAguardar =
-        obtenerRespuestasParaGuardar();
+    final dropboxService = DropboxService();
+    setState(() {
+      _isLoading = true; // Activar la animación de carga al inicio
+    });
 
-    // Subir imágenes si es que hay imágenes seleccionadas
+    String imagenFile = "";
+
+// Obtener la imagen de la firma
+    final Uint8List? signatureImage = await _controller.toPngBytes();
+    print("Firma imagen generada con tamaño: ${signatureImage?.length} bytes");
+
+    if (signatureImage != null) {
+      // Llamas a la función que espera un Uint8List y obtienes la ruta
+      String filePath = await saveImage(signatureImage);
+
+      if (filePath.isNotEmpty) {
+        imagenFile = filePath;
+        String? sharedLink =
+            await dropboxService.uploadImageToDropbox(imagenFile);
+        if (sharedLink != null) {
+          linkFirma = sharedLink; // Guardar el enlace de la firma
+          print("Enlace de la firma: $linkFirma");
+        }
+      } else {
+        print('No se pudo guardar la imagen de la firma correctamente');
+      }
+    } else {
+      print('La imagen de firma es nula');
+    }
+
+// Subir imágenes adicionales si hay imágenes seleccionadas
     if (imagePaths.isNotEmpty) {
-      setState(() {
-        _isLoading = true;
-      });
-      final dropboxService = DropboxService();
-
       for (var imagePath in imagePaths) {
         String? sharedLink =
             await dropboxService.uploadImageToDropbox(imagePath);
         if (sharedLink != null) {
-          uploadedImageLinks.add(sharedLink); // Guardar el enlace en el array
+          uploadedImageLinks
+              .add(sharedLink); // Guardar el enlace de la imagen adicional
         }
       }
-      print('Enlaces de imágenes subidas: $uploadedImageLinks');
     }
+
+// Desactivamos la animación de carga después de que todas las imágenes se hayan subido
+    setState(() {
+      _isLoading = false; // Desactivar la animación de carga
+    });
+
+    // Obtener las respuestas para guardar
+    List<Map<String, String>> respuestasAguardar =
+        obtenerRespuestasParaGuardar();
 
     // Crear el formulario con los datos
     var formData = {
@@ -306,7 +387,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
       "preguntas": respuestasAguardar,
       "imagenes":
           uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
-      "comentarios": comentariosController.text
+      "comentarios": comentariosController.text,
+      "firmaCliente": linkFirma
     };
 
     // Llamar a la función para guardar la encuesta
@@ -490,7 +572,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: dividirPreguntasEnPaginas().length +
-                              2, // +2 por la nueva página de imagen
+                              3, // +2 por la nueva página de imagen
                           itemBuilder: (context, pageIndex) {
                             if (pageIndex <
                                 dividirPreguntasEnPaginas().length) {
@@ -568,8 +650,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                   ],
                                 ),
                               );
-                            } else {
-                              // Página para cargar imagen
+                            } else if (pageIndex ==
+                                dividirPreguntasEnPaginas().length + 1) {
                               return Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
@@ -601,6 +683,49 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                   ),
                                 ),
                               );
+                            } else {
+                              // Página para cargar imagen
+                              return Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: SingleChildScrollView(
+                                    // Permite desplazamiento si es necesario
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "Firma del cliente",
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Signature(
+                                          controller: _controller,
+                                          height: 300,
+                                          backgroundColor:
+                                              Colors.grey, // Fondo transparente
+                                        ),
+                                        SizedBox(
+                                            height:
+                                                20), // Espacio entre la firma y los botones
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            ElevatedButton(
+                                              onPressed: _isLoading
+                                                  ? null
+                                                  : () => _controller.clear(),
+                                              child: Text("Limpiar Firma"),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
                             }
                           },
                         ),
@@ -626,7 +751,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             IconButton(
                               icon: Icon(Icons.arrow_forward),
                               onPressed: currentPage <
-                                      dividirPreguntasEnPaginas().length + 1
+                                      dividirPreguntasEnPaginas().length + 2
                                   ? () {
                                       _pageController.nextPage(
                                           duration: Duration(milliseconds: 300),
