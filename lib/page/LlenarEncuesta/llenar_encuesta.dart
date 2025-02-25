@@ -4,6 +4,7 @@ import '../../api/inspecciones.dart';
 import '../../api/auth.dart';
 import '../../api/clientes.dart';
 import '../../api/dropbox.dart';
+import '../../api/inspecciones_proximas.dart';
 import '../../components/Logs/logs_informativos.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -43,6 +44,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   final int preguntasPorPagina = 5; // Número de preguntas por página
   final PageController _pageController = PageController();
   List<Map<String, dynamic>> dataClientes = [];
+  String? selectedIdFrecuencia;
 
   List<String> uploadedImageLinks =
       []; // Array para guardar los enlaces de las imágenes
@@ -221,6 +223,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       dataTemp.add({
         'id': item['_id'],
         'nombre': item['nombre'],
+        'idFrecuencia': item['idFrecuencia'],
         'preguntas': item['preguntas'],
       });
     }
@@ -286,8 +289,18 @@ class _EncuestaPageState extends State<EncuestaPage> {
     try {
       final inspeccionesService = InspeccionesService();
       var response = await inspeccionesService.registraInspecciones(dataTemp);
+
       // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
       if (response['status'] == 200) {
+        var dataTemp = {
+          'idFrecuencia': selectedIdFrecuencia,
+          'idEncuesta': data['idEncuesta'],
+          'estado': "true",
+        };
+
+        final inspeccionesProximasService = InspeccionesProximasService();
+        await inspeccionesProximasService
+            .registraInspeccionesProximas(dataTemp);
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
@@ -526,7 +539,18 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         setState(() {
                           selectedEncuestaId = newValue;
                           currentPage = 0;
+
+                          // Buscar la encuesta seleccionada y obtener idFrecuencia
+                          final encuestaSeleccionada = dataEncuestas.firstWhere(
+                            (encuesta) => encuesta['id'] == newValue,
+                          );
+
+                          if (encuestaSeleccionada != null) {
+                            selectedIdFrecuencia =
+                                encuestaSeleccionada['idFrecuencia'];
+                          }
                         });
+
                         if (newValue != null) {
                           actualizarPreguntas(newValue);
                         }
@@ -538,6 +562,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         );
                       }).toList(),
                     ),
+
                     SizedBox(height: 10),
 
                     // Dropdown de Cliente

@@ -61,6 +61,14 @@ const String ENDPOINT_DESCARGAR_PDF = "/inspecciones/generar-pdf";
 const String ENDPOINT_ENVIAR_PDF = "/inspecciones/enviar-pdf";
 const String ENDPOINT_ENVIAR_ZIP = "/inspecciones/enviar-imagenes";
 
+// Inspecciones proximas
+const String ENDPOINT_LISTAR_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/listar";
+const String ENDPOINT_REGISTRAR_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/registro";
+const String ENDPOINT_OBTENER_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/obtener";
+const String ENDPOINT_ACTUALIZAR_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/actualizar";
+const String ENDPOINT_ELIMINAR_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/eliminar";
+const String ENDPOINT_DESHABILITAR_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/deshabilitar";
+
 // Tipos de Extintores
 const String ENDPOINT_LISTAR_TIPOS_EXTINTORES = "/tiposExtintores/listar";
 const String ENDPOINT_REGISTRAR_TIPOS_EXTINTORES = "/tiposExtintores/registro";
