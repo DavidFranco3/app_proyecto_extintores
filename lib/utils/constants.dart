@@ -1,8 +1,8 @@
 // Constante para desarrollo
-const String API_HOST = "http://192.168.3.4:5050";
+// const String API_HOST = "http://192.168.3.4:5050";
 
 // Constantes para puesta en producción
-// const String API_HOST = 'https://extintores-api.vercel.app';
+const String API_HOST = 'https://extintores-api.vercel.app';
 
 // Constantes para pruebas
 // const String API_HOST = "https://demoapilab.grupodentalherfran.com";

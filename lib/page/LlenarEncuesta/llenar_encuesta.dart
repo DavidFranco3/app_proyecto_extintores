@@ -545,10 +545,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             (encuesta) => encuesta['id'] == newValue,
                           );
 
-                          if (encuestaSeleccionada != null) {
-                            selectedIdFrecuencia =
-                                encuestaSeleccionada['idFrecuencia'];
-                          }
+                          selectedIdFrecuencia = encuestaSeleccionada['idFrecuencia'];
+
                         });
 
                         if (newValue != null) {
