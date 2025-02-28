@@ -77,6 +77,14 @@ const String ENDPOINT_ACTUALIZAR_TIPOS_EXTINTORES = "/tiposExtintores/actualizar
 const String ENDPOINT_ELIMINAR_TIPOS_EXTINTORES = "/tiposExtintores/eliminar";
 const String ENDPOINT_DESHABILITAR_TIPOS_EXTINTORES = "/tiposExtintores/deshabilitar";
 
+// Tokens
+const String ENDPOINT_LISTAR_TOKENS = "/tokens/listar";
+const String ENDPOINT_REGISTRAR_TOKENS = "/tokens/registro";
+const String ENDPOINT_OBTENER_TOKENS = "/tokens/obtener";
+const String ENDPOINT_ACTUALIZAR_TOKENS = "/tokens/actualizar";
+const String ENDPOINT_ELIMINAR_TOKENS = "/tokens/eliminar";
+const String ENDPOINT_DESHABILITAR_TOKENS = "/tokens/deshabilitar";
+
 // Logs Generales
 const String ENDPOINT_REGISTRO_LOGS = "/logs/registro";
 const String ENDPOINT_LISTAR_LOGS = "/logs/listar";
@@ -84,3 +92,6 @@ const String ENDPOINT_OBTENER_NO_LOGS = "/logs/obtenerNoLog";
 const String ENDPOINT_OBTENER_LOGS = "/logs/obtener";
 const String ENDPOINT_ELIMINAR_LOGS = "/logs/eliminar";
 const String ENDPOINT_ACTUALIZAR_LOGS = "/logs/actualizar";
+
+// Enviar notificaciones
+const String ENDPOINT_ENVIAR_NOTIFICACION = "/notificaciones/enviar";

@@ -294,6 +294,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       if (response['status'] == 200) {
         var dataTemp = {
           'idFrecuencia': selectedIdFrecuencia,
+          'idCliente': data['idCliente'],
           'idEncuesta': data['idEncuesta'],
           'estado': "true",
         };

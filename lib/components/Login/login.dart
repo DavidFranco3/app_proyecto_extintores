@@ -86,8 +86,7 @@ class _LoginPageState extends State<LoginPage> {
 
       print('User Name: $userName');
       _showMessage("Bienvenido $userName");
-      LogsInformativos("Se ha iniciado sesion con el usuario $userName" , {});
-
+      LogsInformativos("Se ha iniciado sesion con el usuario $userName", {});
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
 

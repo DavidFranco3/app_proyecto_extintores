@@ -9,6 +9,7 @@ import '../../page/Clientes/clientes.dart';
 import '../../page/Encuestas/encuestas.dart';
 import '../../page/Inspecciones/inspecciones.dart';
 import '../../page/Usuarios/usuarios.dart';
+import '../../page/ProgramaInspecciones/programa_inspecciones.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -71,6 +72,12 @@ class MenuLateral extends StatelessWidget {
             Icons.person,
             'Clientes',
             ClientesPage(),
+          ),
+          _buildListTile(
+            context,
+            Icons.fact_check, // Ícono representativo de inspección
+            'Programa de inspección',
+            ProgramaInspeccionesPage(),
           ),
           _buildListTile(
             context,

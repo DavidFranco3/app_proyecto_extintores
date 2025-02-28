@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "783249423336",
-    "project_id": "extintores-4412a",
-    "storage_bucket": "extintores-4412a.firebasestorage.app"
+    "project_number": "186337770542",
+    "project_id": "extintores-71c0b",
+    "storage_bucket": "extintores-71c0b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:783249423336:android:46bce65294bfecfbca825d",
+        "mobilesdk_app_id": "1:186337770542:android:d26a42f66730a9008933bf",
         "android_client_info": {
           "package_name": "com.example.prueba"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBy6rH5LkLEmQynT8d0VVAkDyubgEODUhw"
+          "current_key": "AIzaSyCGEwnqUriH51OL7UUN6D7n9-FA6Rd17qw"
         }
       ],
       "services": {

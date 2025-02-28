@@ -5,6 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'components/Login/login.dart';
 import 'components/Home/home.dart';
+import 'api/auth.dart';
+import 'api/tokens.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 // 📌 Clave global para manejar el contexto en los diálogos
@@ -16,7 +18,8 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 // 📌 Manejo de notificaciones en segundo plano o cerrada
 Future<void> _onBackgroundMessage(RemoteMessage message) async {
-  print("📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
+  print(
+      "📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
 }
 
 Future<void> main() async {
@@ -39,38 +42,72 @@ Future<void> main() async {
 
   // 📩 Escuchar notificaciones en primer plano
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
+    print(
+        "📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
 
     // 📌 Mostrar notificación en la barra de estado
-    mostrarNotificacionLocal(
-      message.notification?.title ?? "Sin título",
-      message.notification?.body ?? "Sin mensaje"
-    );
+    mostrarNotificacionLocal(message.notification?.title ?? "Sin título",
+        message.notification?.body ?? "Sin mensaje");
 
     // 📌 Mostrar alerta en la app
-    mostrarAlertaNotificacion(
-      message.notification?.title ?? "Notificación",
-      message.notification?.body ?? "Mensaje"
-    );
+    mostrarAlertaNotificacion(message.notification?.title ?? "Notificación",
+        message.notification?.body ?? "Mensaje");
   });
 
   // 📩 Manejar notificación cuando la app se abre desde el segundo plano
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print("📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
+    print(
+        "📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
   });
 
   runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
+Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
+  try {
+    final authService = AuthService();
+
+    // Obtener el id del usuario
+    final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
+    print('ID Usuario obtenido: $idUsuario');
+
+    return {'idUsuario': idUsuario};
+  } catch (e) {
+    print('Error al obtener datos comunes: $e');
+    rethrow; // Lanza el error para que lo maneje la función que lo llamó
+  }
+}
+
 // 📌 Obtener y almacenar el token FCM
 Future<void> obtenerTokenFCM() async {
   try {
+    final String? tokenn = await AuthService().getTokenApi();
+    print('Token obtenido para logout: $tokenn');
+
+    // Forzar que el token no sea null
+    if (tokenn == null) {
+      throw Exception("Token de autenticación es nulo");
+    }
+
+    // Obtener los datos comunes utilizando el token
+    final datosComunes = await obtenerDatosComunes(tokenn);
+    print('Datos comunes obtenidos para logout: $datosComunes');
+
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
+    var formData = {
+      "idUsuario": datosComunes["idUsuario"], 
+      "token": token,
+      "estado": "true"
+    };
+
+    final tokensService = TokensService();
+
     if (token != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fcm_token', token);
       print("📌 Token FCM obtenido y guardado: $token");
+      tokensService.registraTokens(formData);
     } else {
       print("❌ No se pudo obtener el token de FCM.");
     }
@@ -97,7 +134,8 @@ Future<void> configurarNotificacionesLocales() async {
 void mostrarNotificacionLocal(String title, String body) async {
   const AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails(
-    'canal_id', 'canal_nombre',
+    'canal_id',
+    'canal_nombre',
     importance: Importance.high,
     priority: Priority.high,
     ticker: 'ticker',
@@ -145,7 +183,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey,  // 📌 Necesario para mostrar alertas sin problemas
+      navigatorKey:
+          navigatorKey, // 📌 Necesario para mostrar alertas sin problemas
       debugShowCheckedModeBanner: false,
       supportedLocales: [
         Locale('es', 'ES'), // Español

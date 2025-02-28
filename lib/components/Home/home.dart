@@ -7,6 +7,9 @@ import '../../api/inspecciones.dart';
 import '../../api/inspecciones_proximas.dart';
 import '../../page/Inspecciones/inspecciones.dart';
 import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
+import '../../api/tokens.dart';
+import '../../api/notificaciones.dart';
+import 'dart:async';
 
 class HomePage extends StatefulWidget {
   @override
@@ -17,12 +20,46 @@ class _HomePageState extends State<HomePage> {
   bool loading = true;
   List<Map<String, dynamic>> dataInspecciones = [];
   List<Map<String, dynamic>> dataInspeccionesProximas = [];
+  List<Map<String, dynamic>> dataInspeccionesProximas2 = [];
+  List<Map<String, dynamic>> dataTokens = [];
+  
 
   @override
   void initState() {
     super.initState();
     getInspecciones();
     getInspeccionesProximas();
+    getTokens();
+  }
+
+  Future<void> getTokens() async {
+    try {
+      final tokensService = TokensService();
+      final List<dynamic> response = await tokensService.listarTokens();
+
+      // Filtrar los tokens donde tipo sea "administrador"
+      final List<dynamic> filteredResponse = response.where((item) {
+        return item['usuario']['tipo'] == 'inspector';
+      }).toList();
+
+      // Si la respuesta filtrada tiene datos, formateamos los datos y los asignamos al estado
+      if (filteredResponse.isNotEmpty) {
+        setState(() {
+          dataTokens = formatModelTokens(filteredResponse);
+          loading = false; // Desactivar el estado de carga
+        });
+      } else {
+        setState(() {
+          dataTokens = []; // Lista vacía
+          loading = false; // Desactivar el estado de carga
+        });
+      }
+    } catch (e) {
+      print("Error al obtener los tokens: $e");
+      setState(() {
+        loading = false; // En caso de error, desactivar el estado de carga
+      });
+    }
   }
 
   Future<void> getInspecciones() async {
@@ -52,29 +89,63 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> getInspeccionesProximas() async {
-    try {
-      final inspeccionesProximasService = InspeccionesProximasService();
-      final List<dynamic> response =
-          await inspeccionesProximasService.listarInspeccionesProximas();
+  try {
+    final inspeccionesProximasService = InspeccionesProximasService();
+    final List<dynamic> response =
+        await inspeccionesProximasService.listarInspeccionesProximas();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataInspeccionesProximas = formatModelInspeccionesProximas(response);
-          loading = false; // Desactivar el estado de carga
-        });
-      } else {
-        setState(() {
-          dataInspeccionesProximas = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
-      }
-    } catch (e) {
-      print("Error al obtener las inspeccionesProximas: $e");
+    // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
+    if (response.isNotEmpty) {
+      List<Map<String, dynamic>> formattedData =
+          formatModelInspeccionesProximas(response);
+
+      // Obtener la fecha actual
+      DateTime fechaActual = DateTime.now();
+
+      // Filtrar inspecciones con proximaInspeccion en 3 días o menos
+      List<Map<String, dynamic>> inspeccionesFiltradas =
+          formattedData.where((item) {
+        DateTime proximaFecha = DateTime.parse(item['proximaInspeccion']);
+        return proximaFecha.difference(fechaActual).inDays <= 3 &&
+            proximaFecha.isAfter(fechaActual);
+      }).toList();
+
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataInspeccionesProximas = formattedData; // Guardar todos los datos
+        dataInspeccionesProximas2 =
+            inspeccionesFiltradas; // Guardar solo las próximas en 3 días o menos
+        loading = false; // Desactivar el estado de carga
+      });
+    } else {
+      setState(() {
+        dataInspeccionesProximas = []; // Lista vacía
+        dataInspeccionesProximas2 = [];
+        loading = false; // Desactivar el estado de carga
       });
     }
+  } catch (e) {
+    print("Error al obtener las inspeccionesProximas: $e");
+    setState(() {
+      loading = false; // En caso de error, desactivar el estado de carga
+    });
+  }
+}
+  // Función para formatear los datos de las inspecciones
+  List<Map<String, dynamic>> formatModelTokens(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      dataTemp.add({
+        'id': item['_id'],
+        'idUsuario': item['idUsuario'],
+        'token': item['token'],
+        'usuario': item['usuario']['nombre'],
+        'tipo': item['usuario']['tipo'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      });
+    }
+    return dataTemp;
   }
 
   // Función para formatear los datos de las inspecciones
@@ -120,9 +191,44 @@ class _HomePageState extends State<HomePage> {
     return dataTemp;
   }
 
-  bool mostrarMasHechas = false;
-  bool mostrarMasProximas = false;
-  bool mostrarMasFueraTiempo = false;
+  Timer? _notificationTimer; // Para evitar múltiples timers
+
+// ✅ Enviar solicitud HTTP al backend de forma eficiente
+Future<void> enviarNotificacionAlBackend() async {
+  final notificacionesService = NotificacionesService();
+  List<Future<void>> requests = [];
+
+  for (var tokenData in dataTokens) {
+    for (var inspeccionData in dataInspeccionesProximas2) {
+      final formData = {
+        "titulo": "Recordatorio de inspección",
+        "token": tokenData["token"],
+        "mensaje":
+            "Se debe realizar la inspección de ${inspeccionData["cuestionario"]["nombre"]}"
+      };
+
+      // Agregar la solicitud a la lista para ejecutarlas en paralelo
+      requests.add(notificacionesService.enviarNotificacion(formData));
+    }
+  }
+
+  try {
+    await Future.wait(requests); // Ejecutar todas las solicitudes en paralelo
+  } catch (e) {
+    print("Error al enviar notificaciones: $e");
+  }
+}
+
+// ✅ Programar la llamada al backend cada 24 horas evitando múltiples timers
+void scheduleDailyNotification() {
+  if (_notificationTimer != null && _notificationTimer!.isActive) {
+    return; // Evita que se cree otro timer si ya hay uno activo
+  }
+
+  _notificationTimer = Timer.periodic(Duration(hours: 24), (_) async {
+    await enviarNotificacionAlBackend();
+  });
+}
 
   @override
   Widget build(BuildContext context) {

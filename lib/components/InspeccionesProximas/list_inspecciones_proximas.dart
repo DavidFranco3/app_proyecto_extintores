@@ -40,6 +40,7 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Cliente'},
       {'name': 'Frecuencia'},
       {'name': 'Encuesta'},
       {'name': 'Proxima inspeccion'},
@@ -56,6 +57,7 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
             child: DataTableCustom(
               datos: widget.inspeccionesProximas.map((row) {
                 return {
+                  'Cliente': row['cliente'],
                   'Frecuencia': row['frecuencia'],
                   'Encuesta': row['cuestionario'],
                   'Proxima inspeccion': formatDate(row['proximaInspeccion']),
