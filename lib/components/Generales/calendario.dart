@@ -24,13 +24,6 @@ class _CalendarioState extends State<Calendario> {
     return dateFormat.format(date);
   }
 
-  // Cambiar el formato de la vista (día, mes, año)
-  void _changeCalendarFormat(CalendarFormat format) {
-    setState(() {
-      _calendarFormat = format;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // Calcular el primer y último día según el año actual

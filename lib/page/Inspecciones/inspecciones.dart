@@ -101,7 +101,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Inspecciones"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Inspección"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

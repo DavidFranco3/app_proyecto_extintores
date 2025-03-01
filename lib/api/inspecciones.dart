@@ -32,6 +32,34 @@ class InspeccionesService {
     }
   }
 
+  Future<List<dynamic>> listarInspeccionesResultados(idEncuesta) async {
+    try {
+      final response = await http.get(
+        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES_RESULTADOS_ENCUESTAS + '/$idEncuesta'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data is List) {
+          return data; // Retornar la lista directamente
+        } else {
+          print("Error: La respuesta no es una lista.");
+          return [];
+        }
+      } else {
+        print("Error: Código de estado ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error al obtener las inspecciones: $e");
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>> registraInspecciones(
       Map<String, dynamic> data) async {
     final response = await http.post(

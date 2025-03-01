@@ -10,17 +10,54 @@ import '../../page/Encuestas/encuestas.dart';
 import '../../page/Inspecciones/inspecciones.dart';
 import '../../page/Usuarios/usuarios.dart';
 import '../../page/ProgramaInspecciones/programa_inspecciones.dart';
+import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
+import '../../page/GraficaInspecciones/grafica_inspecciones.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
 import '../../api/auth.dart';
+import '../../api/usuarios.dart';
 
-class MenuLateral extends StatelessWidget {
-  final String currentPage; // Variable para identificar la página actual
+class MenuLateral extends StatefulWidget {
+  final String currentPage;
 
-  // Constructor para recibir la página actual
   MenuLateral({required this.currentPage});
+
+  @override
+  _MenuLateralState createState() => _MenuLateralState();
+}
+
+class _MenuLateralState extends State<MenuLateral> {
+  String? tipoUsuario;
+
+  @override
+  void initState() {
+    super.initState();
+    _obtenerTipoUsuario();
+  }
+
+  Future<void> _obtenerTipoUsuario() async {
+    try {
+      final authService = AuthService();
+      final usuarioService = UsuariosService();
+      final token = await authService.getTokenApi();
+
+      if (token == null) throw Exception("Token de autenticación es nulo");
+      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
+      Map<String, dynamic>? user =
+          await usuarioService.obtenerUsuario2(idUsuario);
+
+      if (user == null)
+        throw Exception("No se pudieron obtener los datos del usuario.");
+
+      setState(() {
+        tipoUsuario = user['tipo'];
+      });
+    } catch (e) {
+      print('Error al obtener tipo de usuario: $e');
+    }
+  }
 
   Future<void> _logout(BuildContext context) async {
     try {
@@ -61,94 +98,172 @@ class MenuLateral extends StatelessWidget {
               ),
             ),
           ),
-          _buildListTile(
-            context,
-            Icons.home,
-            'Inicio',
-            HomePage(),
-          ),
-          _buildListTile(
-            context,
-            Icons.person,
-            'Clientes',
-            ClientesPage(),
-          ),
-          _buildListTile(
-            context,
-            Icons.fact_check, // Ícono representativo de inspección
-            'Programa de inspección',
-            ProgramaInspeccionesPage(),
-          ),
-          _buildListTile(
-            context,
-            Icons.fact_check, // Ícono representativo de inspección
-            'Inspección',
-            InspeccionesPage(),
-          ),
-          _buildListTile(
-            context,
-            Icons.poll, // Icono relacionado con encuestas
-            'Crear encuesta',
-            EncuestasPage(),
-          ),
-          _buildListTile(
-            context,
-            FontAwesomeIcons.list,
-            'Clasificaciones',
-            ClasificacionesPage(),
-          ),
-          _buildListTile(
-            context,
-            Icons.calendar_today,
-            'Frecuencias',
-            FrecuenciasPage(),
-          ),
-          // Menú principal para Extintores con opciones desplegables
-          ExpansionTile(
-            leading: Icon(FontAwesomeIcons.fireAlt),
-            title: Text(
-              'Extintores',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+          // Verifica el tipo de usuario para mostrar el menú correspondiente
+          if (tipoUsuario == 'administrador') ...[
+            _buildListTile(
+              context,
+              Icons.home,
+              'Inicio',
+              HomePage(),
             ),
-            dense: true,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero), // Elimina la línea inferior
-            collapsedShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero), // Elimina la línea superior
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 20.0),
-                child: Column(
-                  children: [
-                    _buildListTile(
-                      context,
-                      FontAwesomeIcons.fireExtinguisher,
-                      'Extintores',
-                      ExtintoresPage(),
-                    ),
-                    _buildListTile(
-                      context,
-                      FontAwesomeIcons.wrench,
-                      'Tipos de extintores',
-                      TiposExtintoresPage(),
-                    ),
-                  ],
-                ),
+            _buildListTile(
+              context,
+              Icons.person,
+              'Clientes',
+              ClientesPage(),
+            ),
+            // Submenú de Inspecciones
+            ExpansionTile(
+              leading: Icon(Icons.check_box_outline_blank),
+              title: Text(
+                'Inspecciones',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
               ),
-            ],
-          ),
-          _buildListTile(
-            context,
-            FontAwesomeIcons.person,
-            'Usuarios',
-            UsuariosPage(),
-          ),
-          _buildListTile(
-            context,
-            FontAwesomeIcons.fileLines,
-            'Logs',
-            LogsPage(),
-          ),
+              dense: true,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero), // Elimina la línea inferior
+              collapsedShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero), // Elimina la línea superior
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: Column(
+                    children: [
+                      _buildListTile(
+                        context,
+                        Icons.poll, // Icono relacionado con encuestas
+                        'Crear Encuesta',
+                        EncuestasPage(),
+                      ),
+                      _buildListTile(
+                        context,
+                        Icons
+                            .report_problem, // Ícono representativo de inspección
+                        'Inspección',
+                        InspeccionesPage(),
+                      ),
+                      _buildListTile(
+                        context,
+                        Icons
+                            .next_week_sharp, // Ícono representativo de inspección
+                        'Inspecciónes Proximas',
+                        InspeccionesProximasPage(),
+                      ),
+                      _buildListTile(
+                        context,
+                        Icons.date_range, // Ícono representativo de programa
+                        'Programa de Inspección',
+                        ProgramaInspeccionesPage(),
+                      ),
+                      _buildListTile(
+                        context,
+                        Icons.show_chart, // Ícono representativo de gráfico
+                        'Gráfico de Inspecciones',
+                        GraficaInspeccionesPage(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            _buildListTile(
+              context,
+              FontAwesomeIcons.list,
+              'Clasificaciones',
+              ClasificacionesPage(),
+            ),
+            _buildListTile(
+              context,
+              Icons.calendar_today,
+              'Frecuencias',
+              FrecuenciasPage(),
+            ),
+            // Menú principal para Extintores con opciones desplegables
+            ExpansionTile(
+              leading: Icon(FontAwesomeIcons.fireAlt),
+              title: Text(
+                'Extintores',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+              ),
+              dense: true,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero), // Elimina la línea inferior
+              collapsedShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero), // Elimina la línea superior
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: Column(
+                    children: [
+                      _buildListTile(
+                        context,
+                        FontAwesomeIcons.fireExtinguisher,
+                        'Extintores',
+                        ExtintoresPage(),
+                      ),
+                      _buildListTile(
+                        context,
+                        FontAwesomeIcons.wrench,
+                        'Tipos de Extintores',
+                        TiposExtintoresPage(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            _buildListTile(
+              context,
+              FontAwesomeIcons.person,
+              'Usuarios',
+              UsuariosPage(),
+            ),
+            _buildListTile(
+              context,
+              FontAwesomeIcons.fileLines,
+              'Logs',
+              LogsPage(),
+            ),
+          ]
+          // Menú para Inspector
+          else if (tipoUsuario == 'inspector') ...[
+            _buildListTile(
+              context,
+              Icons.home,
+              'Inicio',
+              HomePage(),
+            ),
+            _buildListTile(
+              context,
+              Icons.poll, // Icono relacionado con encuestas
+              'Crear Encuesta',
+              EncuestasPage(),
+            ),
+            _buildListTile(
+              context,
+              Icons.report_problem, // Ícono representativo de inspección
+              'Inspección',
+              InspeccionesPage(),
+            ),
+            _buildListTile(
+              context,
+              Icons.next_week_sharp, // Ícono representativo de inspección
+              'Inspecciónes Proximas',
+              InspeccionesProximasPage(),
+            ),
+            _buildListTile(
+              context,
+              Icons.date_range, // Ícono representativo de programa
+              'Programa de Inspección',
+              ProgramaInspeccionesPage(),
+            ),
+            _buildListTile(
+              context,
+              Icons.show_chart, // Ícono representativo de gráfico
+              'Gráfico de Inspecciones',
+              GraficaInspeccionesPage(),
+            ),
+          ],
           ListTile(
             leading: Icon(Icons.logout),
             title: Text('Cerrar sesión'),
@@ -167,19 +282,19 @@ class MenuLateral extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: currentPage == title
+        color: widget.currentPage == title
             ? Colors.white
             : null, // Cambia el color del ícono si es la página activa
       ),
       title: Text(
         title,
         style: TextStyle(
-          color: currentPage == title
+          color: widget.currentPage == title
               ? Colors.white
               : null, // Cambia el color del texto si es la página activa
         ),
       ),
-      tileColor: currentPage == title
+      tileColor: widget.currentPage == title
           ? Colors.blue
           : null, // Cambia el color de fondo si es la página activa
       onTap: () {

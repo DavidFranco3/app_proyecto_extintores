@@ -314,7 +314,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     return Scaffold(
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Crear encuesta"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Crear Encuesta"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(

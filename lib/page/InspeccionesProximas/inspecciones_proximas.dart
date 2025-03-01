@@ -82,8 +82,10 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
         'id': item['_id'],
         'idFrecuencia': item['idFrecuencia'],
         'idEncuesta': item['idEncuesta'],
+        'idCliente': item['idCliente'],
         'cuestionario': item['cuestionario']['nombre'],
         'frecuencia': item['frecuencia']['nombre'],
+        'cliente': item['cliente']['nombre'],
         'proximaInspeccion': item['nuevaInspeccion'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
@@ -97,7 +99,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "InspeccionesProximas"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Inspecciones Proximas"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

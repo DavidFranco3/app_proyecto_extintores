@@ -98,7 +98,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Encuestas"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Crear Encuesta"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
