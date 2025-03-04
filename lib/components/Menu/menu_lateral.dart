@@ -90,7 +90,7 @@ class _MenuLateralState extends State<MenuLateral> {
         children: [
           Container(
             height: 80, // Reduciendo el tamaño
-            color: Colors.blue,
+            color: const Color.fromARGB(255, 112, 114, 113),
             child: Center(
               child: Text(
                 '',
@@ -295,7 +295,7 @@ class _MenuLateralState extends State<MenuLateral> {
         ),
       ),
       tileColor: widget.currentPage == title
-          ? Colors.blue
+          ? Color.fromARGB(255, 233, 71, 66)
           : null, // Cambia el color de fondo si es la página activa
       onTap: () {
         Navigator.pop(context);

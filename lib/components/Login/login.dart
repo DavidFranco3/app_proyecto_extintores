@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: 150,
                 height: 150,
                 child: Image.asset(
-                  'lib/assets/img/isologo_1.png',
+                  'lib/assets/img/logo_login.png',
                   fit: BoxFit.contain,
                 ),
               ),

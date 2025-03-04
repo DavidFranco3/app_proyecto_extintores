@@ -1,11 +1,11 @@
-import 'dart:io';
-import 'dart:ui';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/rendering.dart'; // Necesario para RenderRepaintBoundary
-import 'package:flutter/services.dart'; // Importante para ImageByteFormat
+import 'package:printing/printing.dart';
+import 'package:flutter/rendering.dart';  // ← ESTE IMPORT ES IMPORTANTE
 
 class GraficaBarras extends StatefulWidget {
   final List<Map<String, dynamic>> dataInspecciones;
@@ -19,7 +19,7 @@ class GraficaBarras extends StatefulWidget {
 class _GraficaBarrasState extends State<GraficaBarras> {
   late PageController _pageController;
   int paginaActual = 0;
-  GlobalKey _repaintKey = GlobalKey();
+  GlobalKey _chartKey = GlobalKey(); // Clave para capturar el gráfico como imagen
 
   @override
   void initState() {
@@ -33,43 +33,53 @@ class _GraficaBarrasState extends State<GraficaBarras> {
     super.dispose();
   }
 
-  // Método para capturar el gráfico como imagen
-  Future<Uint8List> _captureImage() async {
-    RenderRepaintBoundary boundary =
-        _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    var image = await boundary.toImage(pixelRatio: 3.0);
-    ByteData? byteData = await image.toByteData(format: ImageByteFormat.png); // Aquí usamos ImageByteFormat.png
-    return byteData!.buffer.asUint8List();
+  Future<Uint8List?> _captureChart() async {
+    RenderRepaintBoundary? boundary =
+        _chartKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary != null) {
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    }
+    return null;
   }
 
-  // Método para guardar el PDF
-  Future<void> _generatePdf() async {
-    final pdf = pw.Document();
+Future<void> _generatePdf() async {
+  final pdf = pw.Document();
 
-    // Capturar la imagen del gráfico
-    final image = await _captureImage();
+  for (var i = 0; i < widget.dataInspecciones.length; i++) {
+    setState(() {
+      paginaActual = i;
+    });
 
-    // Obtener directorio de documentos
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File("${dir.path}/grafica.pdf");
+    await Future.delayed(Duration(milliseconds: 500)); // Esperar a que se renderice el gráfico
 
-    // Crear el PDF
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Center(
-            child: pw.Image(
-              pw.MemoryImage(image),
-            ),
-          );
-        },
-      ),
-    );
-
-    // Guardar el PDF
-    await file.writeAsBytes(await pdf.save());
-    print("PDF guardado en: ${file.path}");
+    Uint8List? chartImage = await _captureChart();
+    if (chartImage != null) {
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Center(
+              child: pw.Container(
+                width: PdfPageFormat.a4.width * 0.9, // Ajusta al 90% del ancho de la página
+                height: PdfPageFormat.a4.height * 0.7, // Ajusta el alto para ocupar más espacio
+                alignment: pw.Alignment.center,
+                child: pw.Image(
+                  pw.MemoryImage(chartImage),
+                  fit: pw.BoxFit.contain, // Ajusta la imagen sin recortar
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
   }
+
+  await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -93,51 +103,59 @@ class _GraficaBarrasState extends State<GraficaBarras> {
               },
               itemBuilder: (context, index) {
                 var preguntaActual = widget.dataInspecciones[index];
-                var si = preguntaActual['si'];
-                var no = preguntaActual['no'];
+                var si = (preguntaActual['si'] ?? 0).toDouble();
+                var no = (preguntaActual['no'] ?? 0).toDouble();
 
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: RepaintBoundary(
-                    key: _repaintKey,
-                    child: BarChart(
-                      BarChartData(
-                        titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: true, reservedSize: 40),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 70,
-                              getTitlesWidget: (value, meta) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: SizedBox(
-                                    width: 250,
-                                    child: Text(
-                                      preguntaActual['pregunta'],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontSize: 12),
-                                      softWrap: true,
-                                      overflow: TextOverflow.visible,
-                                    ),
+                    key: _chartKey, // Clave para capturar la imagen
+                    child: Column(
+                      children: [
+                        Text(
+                          preguntaActual['pregunta'],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 20),
+                        Expanded(
+                          child: BarChart(
+                            BarChartData(
+                              titlesData: FlTitlesData(
+                                leftTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 40,
+                                    getTitlesWidget: (value, meta) {
+                                      switch (value.toInt()) {
+                                        case 0:
+                                          return Text("Sí", style: TextStyle(fontSize: 14));
+                                        case 1:
+                                          return Text("No", style: TextStyle(fontSize: 14));
+                                        default:
+                                          return Container();
+                                      }
+                                    },
                                   ),
-                                );
-                              },
+                                ),
+                              ),
+                              barGroups: [
+                                BarChartGroupData(
+                                  x: 0,
+                                  barRods: [BarChartRodData(toY: si, color: Colors.blue)],
+                                ),
+                                BarChartGroupData(
+                                  x: 1,
+                                  barRods: [BarChartRodData(toY: no, color: Colors.red)],
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        barGroups: [
-                          BarChartGroupData(
-                            x: 0,
-                            barRods: [
-                              BarChartRodData(toY: si.toDouble(), color: Colors.blue),
-                              BarChartRodData(toY: no.toDouble(), color: Colors.red),
-                            ],
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 );
@@ -171,6 +189,17 @@ class _GraficaBarrasState extends State<GraficaBarras> {
               ),
             ],
           ),
+          SizedBox(height: 20),
+          ElevatedButton.icon(
+            icon: Icon(Icons.picture_as_pdf),
+            label: Text("Generar PDF"),
+            onPressed: _generatePdf, // Generar PDF
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              textStyle: TextStyle(fontSize: 16),
+            ),
+          ),
+          SizedBox(height: 20),
         ],
       ),
     );

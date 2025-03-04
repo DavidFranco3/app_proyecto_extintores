@@ -302,6 +302,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
         final inspeccionesProximasService = InspeccionesProximasService();
         await inspeccionesProximasService
             .registraInspeccionesProximas(dataTemp);
+
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
@@ -546,8 +547,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             (encuesta) => encuesta['id'] == newValue,
                           );
 
-                          selectedIdFrecuencia = encuestaSeleccionada['idFrecuencia'];
-
+                          selectedIdFrecuencia =
+                              encuestaSeleccionada['idFrecuencia'];
                         });
 
                         if (newValue != null) {
@@ -724,11 +725,15 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                               fontWeight: FontWeight.bold),
                                         ),
                                         SizedBox(height: 10),
-                                        Signature(
-                                          controller: _controller,
-                                          height: 300,
-                                          backgroundColor:
-                                              Colors.grey, // Fondo transparente
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Signature(
+                                            controller: _controller,
+                                            height: 300,
+                                            backgroundColor: Colors
+                                                .transparent, // Fondo transparente
+                                          ),
                                         ),
                                         SizedBox(
                                             height:

@@ -30,7 +30,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.blue, // Color del header
+      backgroundColor: const Color.fromARGB(255, 112, 114, 113), // Color del header
       title: Row(
         children: [
           Spacer(), // Empuja los elementos a la derecha

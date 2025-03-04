@@ -256,7 +256,7 @@ void scheduleDailyNotification() {
                       children: [
                         // 🟢 Inspecciones Hechas
                         Card(
-                          color: Colors.green,
+                          color: const Color.fromARGB(3,4,6,255),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -309,7 +309,7 @@ void scheduleDailyNotification() {
 
                         // 🔹 Inspecciones Próximas
                         Card(
-                          color: Colors.orange,
+                          color: const Color.fromARGB(112,114,113,25),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
