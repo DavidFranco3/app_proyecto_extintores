@@ -2,16 +2,21 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
 import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
+import 'auth.dart';
+
+final authService = AuthService();
 
 class EncuestaInspeccionService {
 // Listar encuesta de Inspección
   Future<List<dynamic>> listarEncuestaInspeccion() async {
     try {
+      final token = await authService.getTokenApi();
       final response = await http.get(
         Uri.parse(API_HOST + ENDPOINT_LISTAR_ENCUESTA_INSPECCION),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -37,11 +42,13 @@ class EncuestaInspeccionService {
 // Registrar encuesta de Inspección
   Future<Map<String, dynamic>> registraEncuestaInspeccion(
       Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.post(
       Uri.parse(API_HOST + ENDPOINT_REGISTRAR_ENCUESTA_INSPECCION),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -54,11 +61,13 @@ class EncuestaInspeccionService {
 
 // Obtener encuesta de Inspección por ID
   Future<Map<String, dynamic>> obtenerEncuestaInspeccion(String id) async {
+    final token = await authService.getTokenApi();
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_OBTENER_ENCUESTA_INSPECCION + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -72,11 +81,13 @@ class EncuestaInspeccionService {
 // Actualizar encuesta de Inspección
   Future<Map<String, dynamic>> actualizarEncuestaInspeccion(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_ENCUESTA_INSPECCION + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -90,11 +101,13 @@ class EncuestaInspeccionService {
 // Eliminar encuesta de Inspección
   Future<Map<String, dynamic>> eliminarEncuestaInspeccion(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.delete(
       Uri.parse(API_HOST + ENDPOINT_ELIMINAR_ENCUESTA_INSPECCION + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -109,11 +122,13 @@ class EncuestaInspeccionService {
 // Deshabilitar encuesta de Inspección
   Future<Map<String, dynamic>> deshabilitarEncuestaInspeccion(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_ENCUESTA_INSPECCION + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );

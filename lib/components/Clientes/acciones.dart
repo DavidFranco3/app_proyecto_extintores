@@ -4,6 +4,9 @@ import '../../api/clientes.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import '../../api/dropbox.dart';
+import 'dart:io';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -25,6 +28,7 @@ class _AccionesState extends State<Acciones> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   late TextEditingController _nombreController;
+  late TextEditingController _imagenController;
   late TextEditingController _correoController;
   late TextEditingController _telefonoController;
   late TextEditingController _calleController;
@@ -36,6 +40,20 @@ class _AccionesState extends State<Acciones> {
   late TextEditingController _cpostalController;
   late TextEditingController _referenciaController;
 
+  final ImagePicker _picker = ImagePicker();
+  XFile? _image; // Variable para almacenar la imagen seleccionada
+
+  // Método para seleccionar una imagen desde la galería
+  Future<void> _pickImage() async {
+    final XFile? pickedImage =
+        await _picker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      _image = pickedImage; // Asignar la imagen seleccionada a la variable
+      print("que hay aca?");
+      print(_image!.path);
+    });
+  }
+
   late List<Map<String, dynamic>> _estadosFuture = [];
   Map<String, List<String>> _municipiosMap = {};
 
@@ -46,6 +64,7 @@ class _AccionesState extends State<Acciones> {
     cargarMunicipios();
 
     _nombreController = TextEditingController();
+    _imagenController = TextEditingController();
     _correoController = TextEditingController();
     _telefonoController = TextEditingController();
     _calleController = TextEditingController();
@@ -59,6 +78,7 @@ class _AccionesState extends State<Acciones> {
 
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _nombreController.text = widget.data['nombre'] ?? '';
+      _imagenController.text = widget.data['imagen'] ?? '';
       _correoController.text = widget.data['correo'] ?? '';
       _telefonoController.text = widget.data['telefono'] ?? '';
       _calleController.text = widget.data['calle'] ?? '';
@@ -107,6 +127,7 @@ class _AccionesState extends State<Acciones> {
   @override
   void dispose() {
     _nombreController.dispose();
+    _imagenController.dispose();
     _correoController.dispose();
     _telefonoController.dispose();
     _calleController.dispose();
@@ -133,6 +154,7 @@ class _AccionesState extends State<Acciones> {
 
     var dataTemp = {
       'nombre': data['nombre'],
+      'imagen': data['imagen'],
       'correo': data['correo'],
       'telefono': data['telefono'],
       'direccion': {
@@ -185,6 +207,7 @@ class _AccionesState extends State<Acciones> {
 
     var dataTemp = {
       'nombre': data['nombre'],
+      'imagen': data['imagen'],
       'correo': data['correo'],
       'telefono': data['telefono'],
       'direccion': {
@@ -275,10 +298,32 @@ class _AccionesState extends State<Acciones> {
     );
   }
 
-  void _onSubmit() {
+  void _onSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
+      final dropboxService = DropboxService();
+      String imagenFile = "";
+      if (_image != null) {
+        // Llamas a la función que espera un Uint8List y obtienes la ruta
+        String filePath = _image!.path;
+
+        if (filePath.isNotEmpty) {
+          imagenFile = filePath;
+          String? sharedLink =
+              await dropboxService.uploadImageToDropbox(imagenFile, "clientes");
+          if (sharedLink != null) {
+            _imagenController.text =
+                sharedLink; // Guardar el enlace de la firma
+          }
+        } else {
+          print('No se pudo guardar el logo del cliente de forma correcta');
+        }
+      } else {
+        print('El logo del cliente es nulo');
+      }
+
       var formData = {
         'nombre': _nombreController.text,
+        'imagen': _imagenController.text,
         'correo': _correoController.text,
         'telefono': _telefonoController.text,
         'calle': _calleController.text,
@@ -321,6 +366,45 @@ class _AccionesState extends State<Acciones> {
       key: _formKey,
       child: Column(
         children: [
+          Text(
+            "Logo de la empresa",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          GestureDetector(
+            onTap:
+                _pickImage, // Al hacer tap, se activa el selector de imágenes
+            child: Container(
+              width: double.infinity, // Ancho del contenedor
+              height: 250, // Altura fija
+              decoration: BoxDecoration(
+                color: Colors.grey[200], // Fondo gris claro
+                border: Border.all(color: Colors.grey), // Borde gris
+                borderRadius: BorderRadius.circular(10), // Bordes redondeados
+              ),
+              child: _image == null
+                  ? Center(
+                      child: Icon(
+                        Icons.cloud_upload,
+                        size: 50,
+                        color: Colors.blueAccent,
+                      ),
+                    ) // Si no hay imagen seleccionada
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        File(_image!.path),
+                        fit: BoxFit.cover, // Ajusta la imagen al contenedor
+                      ),
+                    ),
+            ),
+          ),
+          SizedBox(height: 10),
+          if (_image !=
+              null) // Muestra un mensaje cuando se haya seleccionado una imagen
+            Text(
+              "Imagen seleccionada",
+              style: TextStyle(color: Colors.green, fontSize: 16),
+            ),
           TextFormField(
             controller: _nombreController,
             decoration: InputDecoration(labelText: 'Nombre'),

@@ -361,7 +361,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       if (filePath.isNotEmpty) {
         imagenFile = filePath;
         String? sharedLink =
-            await dropboxService.uploadImageToDropbox(imagenFile);
+            await dropboxService.uploadImageToDropbox(imagenFile, "inspecciones");
         if (sharedLink != null) {
           linkFirma = sharedLink; // Guardar el enlace de la firma
           print("Enlace de la firma: $linkFirma");
@@ -377,7 +377,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     if (imagePaths.isNotEmpty) {
       for (var imagePath in imagePaths) {
         String? sharedLink =
-            await dropboxService.uploadImageToDropbox(imagePath);
+            await dropboxService.uploadImageToDropbox(imagePath, "inspecciones");
         if (sharedLink != null) {
           uploadedImageLinks
               .add(sharedLink); // Guardar el enlace de la imagen adicional

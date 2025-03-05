@@ -2,15 +2,20 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
 import './endpoints.dart';
+import 'auth.dart';
+
+final authService = AuthService();
 
 class InspeccionesService {
   Future<List<dynamic>> listarInspecciones() async {
     try {
+      final token = await authService.getTokenApi();
       final response = await http.get(
         Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
       if (response.statusCode == 200) {
@@ -34,11 +39,15 @@ class InspeccionesService {
 
   Future<List<dynamic>> listarInspeccionesResultados(idEncuesta) async {
     try {
+      final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES_RESULTADOS_ENCUESTAS + '/$idEncuesta'),
+        Uri.parse(API_HOST +
+            ENDPOINT_LISTAR_INSPECCIONES_RESULTADOS_ENCUESTAS +
+            '/$idEncuesta'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
       if (response.statusCode == 200) {
@@ -62,11 +71,13 @@ class InspeccionesService {
 
   Future<Map<String, dynamic>> registraInspecciones(
       Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.post(
       Uri.parse(API_HOST + ENDPOINT_REGISTRAR_INSPECCIONES),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -77,11 +88,13 @@ class InspeccionesService {
   }
 
   Future<http.Response> obtenerInspecciones(String params) async {
+    final token = await authService.getTokenApi();
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_OBTENER_INSPECCIONES + '/$params'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
     return response;
@@ -89,11 +102,13 @@ class InspeccionesService {
 
   Future<http.Response> actualizarInspecciones(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_INSPECCIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -102,11 +117,13 @@ class InspeccionesService {
 
   Future<http.Response> eliminarInspecciones(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.delete(
       Uri.parse(API_HOST + ENDPOINT_ELIMINAR_INSPECCIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -115,11 +132,13 @@ class InspeccionesService {
 
   Future<Map<String, dynamic>> actualizaDeshabilitarInspecciones(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_INSPECCIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -130,12 +149,14 @@ class InspeccionesService {
   }
 
   Future<Map<String, dynamic>> sendEmail(String id) async {
+    final token = await authService.getTokenApi();
     final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF + '/$id';
 
     final response = await http.get(
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -146,21 +167,5 @@ class InspeccionesService {
 
   String urlDownloadPDF(String id) {
     return API_HOST + ENDPOINT_DESCARGAR_PDF + '/$id';
-  }
-
-  Future<Map<String, dynamic>>  urlDownloadZIP(String id, String email) async {
-    final String apiUrl = API_HOST + ENDPOINT_ENVIAR_ZIP + '/$id/$email';
-
-    
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    );
-
-    return {
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
   }
 }

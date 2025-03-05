@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Encuestas/list_encuestas.dart';
-import '../CrearEncuesta/crearEncuesta.dart';
+import '../CrearEncuesta/crear_encuesta.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';

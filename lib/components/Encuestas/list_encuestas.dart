@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
-import '../../page/CrearEncuesta/crearEncuesta.dart'; // Asegúrate de que el archivo correcto esté importado
+import '../../page/CrearEncuesta/crear_encuesta.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
 
 class TblEncuestas extends StatefulWidget {

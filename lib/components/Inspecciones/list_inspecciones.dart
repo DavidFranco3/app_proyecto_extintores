@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'acciones.dart';
-import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
+import '../Generales/list_view.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:open_file/open_file.dart';
@@ -106,73 +106,6 @@ Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
         _showMessage("Correo enviado");
       } else {
         _showMessage("Error al enviar correo");
-      }
-    } catch (e) {
-      _showMessage("Error: ${e.toString()}");
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  Future<void> showEmailModal(
-    Map<String, dynamic> row) async {
-    TextEditingController emailController = TextEditingController();
-
-    // 📌 Mostrar el modal
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Ingresar Correo"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: "Correo electrónico",
-                  hintText: "Ingresa el correo",
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el modal sin hacer nada
-              },
-              child: Text("Cancelar"),
-            ),
-            TextButton(
-              onPressed: () {
-                // 📌 Validar el correo
-                String email = emailController.text.trim();
-                if (email.isNotEmpty) {
-                  // 📌 Ejecutar la función con el correo
-                  downloadAndOpenZip(row, email);
-                  Navigator.of(context).pop(); // Cerrar el modal
-                } else {
-                  print("❌ Por favor ingresa un correo válido.");
-                }
-              },
-              child: Text("Aceptar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> downloadAndOpenZip(
-      Map<String, dynamic> row, String email) async {
-    try {
-      final inspeccionesService = InspeccionesService();
-      var response = await inspeccionesService.urlDownloadZIP(row["id"], email);
-
-      if (response['status'] == 200) {
-        _showMessage("Zip enviado");
-      } else {
-        _showMessage("Error al enviar el zip");
       }
     } catch (e) {
       _showMessage("Error: ${e.toString()}");
@@ -289,12 +222,6 @@ Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
                           color: Colors
                               .orange), // Ícono más relacionado con el correo
                       onPressed: () => handleSendEmail(row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.fileZipper,
-                          color: Colors
-                              .yellow), // Ícono más relacionado con el correo
-                      onPressed: () => showEmailModal(row['_originalRow']),
                     ),
                   ],
                 );

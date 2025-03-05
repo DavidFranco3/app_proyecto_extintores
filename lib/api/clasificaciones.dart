@@ -1,17 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
+import 'auth.dart';
 import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
 
+final authService = AuthService();
+
 class ClasificacionesService {
-  // Listar clasificaciones
+  // Listar clasificacionhes
   Future<List<dynamic>> listarClasificaciones() async {
+    final token = await authService.getTokenApi();
     try {
       final response = await http.get(
         Uri.parse(API_HOST + ENDPOINT_LISTAR_CLASIFICACIONES),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -37,11 +42,13 @@ class ClasificacionesService {
   // Registrar clasificaciones
   Future<Map<String, dynamic>> registrarClasificaciones(
       Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.post(
       Uri.parse(API_HOST + ENDPOINT_REGISTRAR_CLASIFICACIONES),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode(data),
     );
@@ -54,11 +61,13 @@ class ClasificacionesService {
 
   // Obtener clasificaciones por ID
   Future<Map<String, dynamic>> obtenerClasificaciones(String id) async {
+    final token = await authService.getTokenApi();
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_OBTENER_CLASIFICACIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -72,11 +81,13 @@ class ClasificacionesService {
   // Actualizar clasificación
   Future<Map<String, dynamic>> actualizarClasificaciones(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_CLASIFICACIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode(data),
     );
@@ -89,11 +100,13 @@ class ClasificacionesService {
 
   // Eliminar clasificación
   Future<Map<String, dynamic>> eliminarClasificaciones(String id) async {
+    final token = await authService.getTokenApi();
     final response = await http.delete(
       Uri.parse(API_HOST + ENDPOINT_ELIMINAR_CLASIFICACIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -106,11 +119,13 @@ class ClasificacionesService {
   // Deshabilitar clasificación
   Future<Map<String, dynamic>> deshabilitarClasificaciones(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_CLASIFICACIONES + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode(data),
     );

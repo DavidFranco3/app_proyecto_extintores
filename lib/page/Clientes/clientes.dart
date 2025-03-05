@@ -112,6 +112,7 @@ void openRegistroModal() {
       dataTemp.add({
         'id': item['_id'],
         'nombre': item['nombre'],
+        'imagen': item['imagen'],
         'correo': item['correo'],
         'telefono': item['telefono'],
         'calle': item['direccion']['calle'],

@@ -5,8 +5,6 @@ import '../../api/usuarios.dart';
 
 Future<Map<String, dynamic>> _obtenerDatosComunes(String token) async {
   try {
-    print("aqui esta el token");
-    print(token);
     final authService = AuthService();
     final usuarioService = UsuariosService();
 

@@ -2,16 +2,21 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/constants.dart';
 import 'endpoints.dart';
+import 'auth.dart';
+
+final authService = AuthService();
 
 class UsuariosService {
   // Listar usuarios
   Future<List<dynamic>> listarUsuarios() async {
     try {
+      final token = await authService.getTokenApi();
       final response = await http.get(
         Uri.parse(API_HOST + ENDPOINT_LISTAR_USUARIO),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -37,11 +42,13 @@ class UsuariosService {
   // Registrar usuario
   Future<Map<String, dynamic>> registraUsuarios(
       Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.post(
       Uri.parse(API_HOST + ENDPOINT_REGISTRAR_USUARIO),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -53,23 +60,27 @@ class UsuariosService {
 
   // Obtener datos del usuario por ID
   Future<http.Response> obtenerUsuario(String id) async {
+    final token = await authService.getTokenApi();
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
     return response;
   }
 
   Future<Map<String, dynamic>?> obtenerUsuario2(String id) async {
+    final token = await authService.getTokenApi();
     try {
       final response = await http.get(
         Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS + '/$id'),
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -89,11 +100,13 @@ class UsuariosService {
 
   // Obtener datos del usuario por email
   Future<http.Response> obtenerUsuarioEmail(String email) async {
+    final token = await authService.getTokenApi();
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS_EMAIL + '/$email'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
     return response;
@@ -102,11 +115,13 @@ class UsuariosService {
   // Actualizar usuario
   Future<Map<String, dynamic>> actualizarUsuario(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_USUARIO + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -119,11 +134,13 @@ class UsuariosService {
   // Eliminar usuario
   Future<Map<String, dynamic>> eliminarUsuario(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.delete(
       Uri.parse(API_HOST + ENDPOINT_ELIMINAR_USUARIO + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -136,11 +153,13 @@ class UsuariosService {
   // Deshabilitar usuario
   Future<Map<String, dynamic>> actualizaDeshabilitarUsuario(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_USUARIO + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );

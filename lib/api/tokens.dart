@@ -2,15 +2,20 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
 import 'endpoints.dart';
+import 'auth.dart';
+
+final authService = AuthService();
 
 class TokensService {
   Future<List<dynamic>> listarTokens() async {
     try {
+      final token = await authService.getTokenApi();
       final response = await http.get(
         Uri.parse(API_HOST + ENDPOINT_LISTAR_TOKENS),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
       if (response.statusCode == 200) {
@@ -32,13 +37,14 @@ class TokensService {
     }
   }
 
-  Future<Map<String, dynamic>> registraTokens(
-      Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> registraTokens(Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.post(
       Uri.parse(API_HOST + ENDPOINT_REGISTRAR_TOKENS),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -49,11 +55,13 @@ class TokensService {
   }
 
   Future<http.Response> obtenerTokens(String params) async {
+    final token = await authService.getTokenApi();
     final response = await http.get(
       Uri.parse(API_HOST + ENDPOINT_OBTENER_TOKENS + '/$params'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
     return response;
@@ -61,11 +69,13 @@ class TokensService {
 
   Future<Map<String, dynamic>> actualizarTokens(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_TOKENS + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );
@@ -77,11 +87,13 @@ class TokensService {
 
   Future<Map<String, dynamic>> eliminarTokens(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.delete(
       Uri.parse(API_HOST + ENDPOINT_ELIMINAR_TOKENS + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
     return {
@@ -92,11 +104,13 @@ class TokensService {
 
   Future<Map<String, dynamic>> actualizaDeshabilitarTokens(
       String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
     final response = await http.put(
       Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_TOKENS + '/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
       body: json.encode(data),
     );

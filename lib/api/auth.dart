@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:jwt_decoder/jwt_decoder.dart';
-import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
-import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
-import 'package:jwt_decode/jwt_decode.dart';
+import 'package:jwt_decoder/jwt_decoder.dart'; // Reemplazamos jwt_decode por jwt_decoder
+import 'endpoints.dart'; 
+import '../utils/constants.dart'; 
 
 class AuthService {
   // Validar inicio de sesión
@@ -49,30 +48,22 @@ class AuthService {
   // Obtener los datos del usuario logueado
   Future<Map<String, dynamic>?> isUserLoggedApi() async {
     String? token = await getTokenApi();
-    if (token == null) {
+    if (token == null || isTokenExpired(token)) {
       await logoutApi();
       return null;
     }
 
-    if (isTokenExpired(token)) {
-      await logoutApi();
-      return null;
-    }
-
-    return JwtDecoder.decode(token); // Decodificar el token
+    return JwtDecoder.decode(token); // Decodificar el token usando jwt_decoder
   }
 
   // Verificar si el token ha expirado
   bool isTokenExpired(String token) {
-    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-    final DateTime expiryDate =
-        DateTime.fromMillisecondsSinceEpoch(decodedToken['exp'] * 1000);
-    return DateTime.now().isAfter(expiryDate);
+    return JwtDecoder.isExpired(token); // Usando jwt_decoder para verificar expiración
   }
 
   // Obtener el usuario logueado a partir del token
   String obtenerIdUsuarioLogueado(String token) {
-    Map<String, dynamic> decodedToken = Jwt.parseJwt(token);
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);  // Usando jwt_decoder
     return decodedToken['_'];
   }
 }

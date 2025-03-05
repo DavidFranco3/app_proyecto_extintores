@@ -268,7 +268,7 @@ class _AccionesState extends State<Acciones> {
         if (filePath.isNotEmpty) {
           imagenFile = filePath;
           String? sharedLink =
-              await dropboxService.uploadImageToDropbox(imagenFile);
+              await dropboxService.uploadImageToDropbox(imagenFile, "usuarios");
           if (sharedLink != null) {
             linkFirma = sharedLink; // Guardar el enlace de la firma
           }
