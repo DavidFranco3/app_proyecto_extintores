@@ -11,7 +11,7 @@
     </queries>
     <application
         android:usesCleartextTraffic="true"
-        android:label="AGOO"
+        android:label="AGGO"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
