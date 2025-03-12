@@ -90,6 +90,10 @@ flutter:
   uses-material-design: true
   assets:
   - lib/assets/img/logo_login.png
+  - lib/assets/img/formula.png
+  - lib/assets/img/logo_nfpa.png
+  - lib/assets/img/logo_app.png
+  - lib/assets/img/certificado.png
   - lib/assets/catalogosJSON/estadosPais.json
   - lib/assets/catalogosJSON/municipiosEstadosPais.json
 

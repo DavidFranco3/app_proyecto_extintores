@@ -9,6 +9,7 @@ import 'package:dio/dio.dart';
 import '../../api/inspecciones.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import './pdf.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -38,64 +39,65 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 
-Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
-  setState(() => isLoading = true);
+  Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
+    setState(() => isLoading = true);
 
-  try {
-    final inspeccionesService = InspeccionesService();
-    String fileURL = inspeccionesService.urlDownloadPDF(row["id"]);
+    try {
+      final inspeccionesService = InspeccionesService();
+      String fileURL = inspeccionesService.urlDownloadPDF(row["id"]);
 
-    if (fileURL.isEmpty) {
-      throw Exception("La URL del archivo es inválida.");
-    }
-
-    var dio = Dio();
-
-    // **Solicitar permisos de almacenamiento**
-    if (Platform.isAndroid) {
-      var status = await Permission.storage.request();
-      if (!status.isGranted) {
-        throw Exception("Permiso de almacenamiento denegado.");
+      if (fileURL.isEmpty) {
+        throw Exception("La URL del archivo es inválida.");
       }
+
+      var dio = Dio();
+
+      // **Solicitar permisos de almacenamiento**
+      if (Platform.isAndroid) {
+        var status = await Permission.storage.request();
+        if (!status.isGranted) {
+          throw Exception("Permiso de almacenamiento denegado.");
+        }
+      }
+
+      // **Obtener la carpeta de descargas adecuada**
+      Directory? downloadsDir;
+      if (Platform.isAndroid) {
+        downloadsDir = await getExternalStorageDirectory();
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      if (downloadsDir == null) {
+        throw Exception("No se pudo obtener el directorio de descargas.");
+      }
+
+      if (!downloadsDir.existsSync()) {
+        downloadsDir.createSync(recursive: true);
+      }
+
+      String filePath =
+          "${downloadsDir.path}/Encuesta_de_inspección_${row["id"]}.pdf";
+
+      print("Descargando archivo en: $filePath");
+
+      // **Descargar el archivo**
+      await dio.download(fileURL, filePath);
+
+      // **Verificar si el archivo se descargó**
+      File file = File(filePath);
+      if (await file.exists()) {
+        OpenFile.open(filePath);
+        print("Archivo guardado correctamente en: $filePath");
+      } else {
+        throw Exception("El archivo no se descargó correctamente.");
+      }
+    } catch (e) {
+      print("Error al descargar el PDF: $e");
+    } finally {
+      setState(() => isLoading = false);
     }
-
-    // **Obtener la carpeta de descargas adecuada**
-    Directory? downloadsDir;
-    if (Platform.isAndroid) {
-      downloadsDir = await getExternalStorageDirectory();
-    } else if (Platform.isIOS) {
-      downloadsDir = await getApplicationDocumentsDirectory();
-    }
-
-    if (downloadsDir == null) {
-      throw Exception("No se pudo obtener el directorio de descargas.");
-    }
-
-    if (!downloadsDir.existsSync()) {
-      downloadsDir.createSync(recursive: true);
-    }
-
-    String filePath = "${downloadsDir.path}/Encuesta_de_inspección_${row["id"]}.pdf";
-
-    print("Descargando archivo en: $filePath");
-
-    // **Descargar el archivo**
-    await dio.download(fileURL, filePath);
-
-    // **Verificar si el archivo se descargó**
-    File file = File(filePath);
-    if (await file.exists()) {
-      OpenFile.open(filePath);
-      print("Archivo guardado correctamente en: $filePath");
-    } else {
-      throw Exception("El archivo no se descargó correctamente.");
-    }
-  } catch (e) {
-    print("Error al descargar el PDF: $e");
-  } finally {
-    setState(() => isLoading = false);
   }
-}
 
   Future<void> handleSendEmail(Map<String, dynamic> row) async {
     try {
@@ -219,9 +221,20 @@ Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
                     ),
                     IconButton(
                       icon: FaIcon(FontAwesomeIcons.envelope,
-                          color: Colors
-                              .orange), // Ícono más relacionado con el correo
+                          color: const Color.fromRGBO(255, 152, 0, 1)), // Ícono más relacionado con el correo
                       onPressed: () => handleSendEmail(row['_originalRow']),
+                    ),
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.filePdf,
+                          color: Colors
+                              .blue), // Ícono más relacionado con el correo
+                      onPressed: () => PdfGenerator.guardarPDF(row['_originalRow']),
+                    ),
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.envelope,
+                          color: Colors
+                              .blue), // Ícono más relacionado con el correo
+                      onPressed: () => PdfGenerator.enviarPdfAlBackend(context, row['_originalRow']),
                     ),
                   ],
                 );

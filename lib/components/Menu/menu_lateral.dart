@@ -12,6 +12,7 @@ import '../../page/Usuarios/usuarios.dart';
 import '../../page/ProgramaInspecciones/programa_inspecciones.dart';
 import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
 import '../../page/GraficaInspecciones/grafica_inspecciones.dart';
+import '../../page/EncuestasDatos/encuestas_datos.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -134,6 +135,12 @@ class _MenuLateralState extends State<MenuLateral> {
                         Icons.poll, // Icono relacionado con encuestas
                         'Crear Encuesta',
                         EncuestasPage(),
+                      ),
+                      _buildListTile(
+                        context,
+                        Icons.poll, // Icono relacionado con encuestas
+                        'Crear Encuesta Datos',
+                        EncuestasDatosPage(),
                       ),
                       _buildListTile(
                         context,

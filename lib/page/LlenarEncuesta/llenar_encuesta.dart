@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../api/encuesta_inspeccion.dart';
+import '../../api/encuesta_datos_inspeccion.dart';
 import '../../api/inspecciones.dart';
 import '../../api/auth.dart';
 import '../../api/clientes.dart';
@@ -13,10 +14,10 @@ import '../../page/Inspecciones/inspecciones.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
-import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
 
 class EncuestaPage extends StatefulWidget {
   final VoidCallback showModal;
@@ -36,8 +37,11 @@ class EncuestaPage extends StatefulWidget {
 
 class _EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
+  List<Pregunta> preguntas2 = [];
   List<Map<String, dynamic>> dataEncuestas = [];
+  List<Map<String, dynamic>> dataEncuestasAbiertas = [];
   String? selectedEncuestaId;
+  String? selectedEncuestaAbiertaId;
   bool loading = true;
   bool _isLoading = false;
   int currentPage = 0; // Para controlar la página actual
@@ -46,13 +50,15 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Map<String, dynamic>> dataClientes = [];
   String? selectedIdFrecuencia;
 
-  List<String> uploadedImageLinks =
-      []; // Array para guardar los enlaces de las imágenes
+  List<Map<String, dynamic>> uploadedImageLinks =
+      []; // Array para guardar objetos con enlaces y comentarios
+
   String linkFirma = "";
 
   late TextEditingController usuarioController;
   late TextEditingController clienteController;
   late TextEditingController comentariosController;
+  late TextEditingController comentariosImagenController;
 
   final SignatureController _controller = SignatureController(
     penStrokeWidth: 3,
@@ -65,6 +71,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     super.initState();
     getEncuestas();
     getClientes();
+    getEncuestasAbiertas();
 
     _pageController.addListener(() {
       setState(() {
@@ -230,12 +237,65 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
+  Future<void> getEncuestasAbiertas() async {
+    try {
+      final encuestaDatosInspeccionService = EncuestaDatosInspeccionService();
+      final List<dynamic> response =
+          await encuestaDatosInspeccionService.listarEncuestaDatosInspeccion();
+
+      if (response.isNotEmpty) {
+        setState(() {
+          dataEncuestasAbiertas = formatModelEncuestasAbiertas(response);
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataEncuestasAbiertas = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las encuestas: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  // Función para formatear los datos de las encuestas
+  List<Map<String, dynamic>> formatModelEncuestasAbiertas(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      dataTemp.add({
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'preguntas': item['preguntas'],
+      });
+    }
+    return dataTemp;
+  }
+
   // Actualiza las preguntas cuando se selecciona una encuesta
   void actualizarPreguntas(String encuestaId) {
     final encuesta =
         dataEncuestas.firstWhere((encuesta) => encuesta['id'] == encuestaId);
     setState(() {
       preguntas = (encuesta['preguntas'] as List<dynamic>).map((pregunta) {
+        return Pregunta(
+          titulo: pregunta['titulo'],
+          observaciones: pregunta['observaciones'],
+          opciones: List<String>.from(pregunta['opciones']),
+        );
+      }).toList();
+    });
+  }
+
+  // Actualiza las preguntas cuando se selecciona una encuesta
+  void actualizarPreguntas2(String encuestaAbiertaId) {
+    final encuesta =
+        dataEncuestasAbiertas.firstWhere((encuesta) => encuesta['id'] == encuestaAbiertaId);
+    setState(() {
+      preguntas2 = (encuesta['preguntas'] as List<dynamic>).map((pregunta) {
         return Pregunta(
           titulo: pregunta['titulo'],
           observaciones: pregunta['observaciones'],
@@ -253,6 +313,18 @@ class _EncuestaPageState extends State<EncuestaPage> {
           i,
           i + preguntasPorPagina > preguntas.length
               ? preguntas.length
+              : i + preguntasPorPagina));
+    }
+    return paginas;
+  }
+
+    List<List<Pregunta>> dividirPreguntasEnPaginas2() {
+    List<List<Pregunta>> paginas = [];
+    for (int i = 0; i < preguntas2.length; i += preguntasPorPagina) {
+      paginas.add(preguntas2.sublist(
+          i,
+          i + preguntasPorPagina > preguntas2.length
+              ? preguntas2.length
               : i + preguntasPorPagina));
     }
     return paginas;
@@ -360,8 +432,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
       if (filePath.isNotEmpty) {
         imagenFile = filePath;
-        String? sharedLink =
-            await dropboxService.uploadImageToDropbox(imagenFile, "inspecciones");
+        String? sharedLink = await dropboxService.uploadImageToDropbox(
+            imagenFile, "inspecciones");
         if (sharedLink != null) {
           linkFirma = sharedLink; // Guardar el enlace de la firma
           print("Enlace de la firma: $linkFirma");
@@ -376,11 +448,22 @@ class _EncuestaPageState extends State<EncuestaPage> {
 // Subir imágenes adicionales si hay imágenes seleccionadas
     if (imagePaths.isNotEmpty) {
       for (var imagePath in imagePaths) {
-        String? sharedLink =
-            await dropboxService.uploadImageToDropbox(imagePath, "inspecciones");
-        if (sharedLink != null) {
-          uploadedImageLinks
-              .add(sharedLink); // Guardar el enlace de la imagen adicional
+        // Asegúrate de que imagePath sea un mapa con las claves correctas
+        String? imagePathStr = imagePath["imagePath"];
+        String? comentario = imagePath["comentario"];
+
+        if (imagePathStr != null) {
+          String? sharedLink = await dropboxService.uploadImageToDropbox(
+              imagePathStr, "inspecciones");
+          if (sharedLink != null) {
+            // Crear un mapa con el sharedLink y el comentario
+            var imageInfo = {
+              "sharedLink": sharedLink,
+              "comentario": comentario,
+            };
+            // Agregar el mapa a la lista
+            uploadedImageLinks.add(imageInfo);
+          }
         }
       }
     }
@@ -447,22 +530,51 @@ class _EncuestaPageState extends State<EncuestaPage> {
     );
   }
 
-// Definir la lista de rutas de las imágenes
-  List<String> imagePaths = [];
+  final ImagePicker _picker = ImagePicker();
+  XFile? _image; // Imagen en vista previa
+  TextEditingController _comentarioController = TextEditingController();
+  TextEditingController _valorController = TextEditingController();
 
-// Función para seleccionar varias imágenes
-  Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
+  // Lista para almacenar imágenes y comentarios
+  List<Map<String, dynamic>> imagePaths = [];
 
-    // Seleccionar múltiples imágenes
-    final List<XFile>? pickedFiles = await picker.pickMultiImage();
+  // Método para seleccionar imagen
+  Future<void> _pickImage() async {
+    final XFile? pickedImage =
+        await _picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFiles != null) {
+    if (pickedImage != null) {
       setState(() {
-        imagePaths = pickedFiles.map((file) => file.path).toList();
+        _image = pickedImage; // Muestra la imagen en vista previa
       });
-      // Aquí puedes hacer lo que necesites con el array de enlaces, como guardarlos en tu base de datos
-      print('Enlaces de imágenes subidas: $uploadedImageLinks');
+    }
+  }
+
+  // Método para agregar imagen con comentario y limpiar vista previa
+  void _agregarImagen() {
+    if (_image != null &&
+        _comentarioController.text.isNotEmpty &&
+        _valorController.text.isNotEmpty) {
+      setState(() {
+        // Agregar imagen y comentario a la lista
+        imagePaths.add({
+          "imagePath": _image!.path,
+          "comentario": _comentarioController.text,
+          "valor": _valorController.text,
+        });
+
+        // Limpiar vista previa y comentario
+        _image = null;
+        _comentarioController.clear();
+        _valorController.clear();
+      });
+
+      print("Imagen agregada: ${imagePaths.last}");
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Selecciona una imagen y escribe un comentario")),
+      );
     }
   }
 
@@ -474,6 +586,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       body: loading
           ? Load()
           : SingleChildScrollView(
+              // Añadimos SingleChildScrollView
               child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
@@ -482,7 +595,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     // Título
                     Center(
                       child: Text(
-                        "Inspeccion",
+                        "Inspección",
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.bold),
                       ),
@@ -499,39 +612,23 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           padding: EdgeInsets.symmetric(vertical: 12),
                           minimumSize: Size(200, 50), // Tamaño fijo
                         ),
-                        child:
-                            _isLoading // Si está cargando, mostrar el Spinner, si no, el texto normal
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SpinKitFadingCircle(
-                                        color: const Color.fromARGB(
-                                            255, 241, 8, 8),
-                                        size: 24,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text("Guardando..."), // Texto de carga
-                                    ],
-                                  )
-                                : Text(
-                                    "Guardar Inspección"), // Texto normal cuando no está cargando
-                      ),
-                    ),
-
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : returnPrincipalPage, // Deshabilitar el botón "Cancelar" mientras carga
                         child: _isLoading
-                            ? SpinKitFadingCircle(
-                                color: const Color.fromARGB(255, 241, 8, 8),
-                                size: 24,
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SpinKitFadingCircle(
+                                    color: const Color.fromARGB(255, 241, 8, 8),
+                                    size: 24,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text("Guardando..."), // Texto de carga
+                                ],
                               )
-                            : Text("Cancelar"),
+                            : Text(
+                                "Guardar Inspección"), // Texto normal cuando no está cargando
                       ),
                     ),
-                    SizedBox(height: 20), // Espacio debajo del botón
+                    SizedBox(height: 20),
 
                     // Dropdown de Encuesta
                     DropdownButtonFormField<String>(
@@ -542,7 +639,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           selectedEncuestaId = newValue;
                           currentPage = 0;
 
-                          // Buscar la encuesta seleccionada y obtener idFrecuencia
                           final encuestaSeleccionada = dataEncuestas.firstWhere(
                             (encuesta) => encuesta['id'] == newValue,
                           );
@@ -562,7 +658,29 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         );
                       }).toList(),
                     ),
+                    SizedBox(height: 10),
 
+                    // Dropdown de Encuesta
+                    DropdownButtonFormField<String>(
+                      value: selectedEncuestaAbiertaId,
+                      hint: Text('Selecciona una encuesta abierta'),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedEncuestaAbiertaId = newValue;
+                          currentPage = 0;
+                        });
+
+                        if (newValue != null) {
+                          actualizarPreguntas(newValue);
+                        }
+                      },
+                      items: dataEncuestasAbiertas.map((encuesta) {
+                        return DropdownMenuItem<String>(
+                          value: encuesta['id'],
+                          child: Text(encuesta['nombre']!),
+                        );
+                      }).toList(),
+                    ),
                     SizedBox(height: 10),
 
                     // Dropdown de Cliente
@@ -589,7 +707,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     ),
                     SizedBox(height: 10),
 
-                    // Si hay encuesta seleccionada y preguntas disponibles
+                    // Agregar más Dropdowns si es necesario
                     if (selectedEncuestaId != null && preguntas.isNotEmpty)
                       SizedBox(
                         height:
@@ -597,7 +715,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: dividirPreguntasEnPaginas().length +
-                              3, // +2 por la nueva página de imagen
+                              4, // +2 por la nueva página de imagen
                           itemBuilder: (context, pageIndex) {
                             if (pageIndex <
                                 dividirPreguntasEnPaginas().length) {
@@ -676,35 +794,124 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                 ),
                               );
                             } else if (pageIndex ==
-                                dividirPreguntasEnPaginas().length + 1) {
+                                dividirPreguntasEnPaginas().length + 2) {
                               return Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Carga de Imágenes",
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(height: 10),
-                                      ElevatedButton(
-                                        onPressed: _pickImages,
-                                        child: Text("Seleccionar Imágenes"),
-                                      ),
-                                      SizedBox(height: 20),
-                                      // Mostrar la cantidad de imágenes cargadas
-                                      if (imagePaths.isNotEmpty)
-                                        Text(
-                                          "Imágenes cargadas: ${imagePaths.length}",
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500),
+                                  child: SingleChildScrollView(
+                                    // Permite desplazamiento cuando el contenido excede la pantalla
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Center(
+                                          child: Text(
+                                            "Carga de Imágenes",
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
-                                    ],
+
+                                        SizedBox(height: 10),
+
+                                        // Centrar la parte de carga de imágenes
+                                        Center(
+                                          child: GestureDetector(
+                                            onTap:
+                                                _pickImage, // Asegúrate de implementar este método
+                                            child: Container(
+                                              width: double.infinity,
+                                              height: 250,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[200],
+                                                border: Border.all(
+                                                    color: Colors.grey),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: _image == null
+                                                  ? Center(
+                                                      child: Icon(
+                                                        Icons.cloud_upload,
+                                                        size: 50,
+                                                        color:
+                                                            Colors.blueAccent,
+                                                      ),
+                                                    )
+                                                  : ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                      child: Image.file(
+                                                        File(_image!.path),
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 16),
+
+                                        // Campo de texto para comentario
+                                        TextField(
+                                          controller: _comentarioController,
+                                          decoration: InputDecoration(
+                                              labelText: "Comentario"),
+                                        ),
+                                        SizedBox(height: 16),
+
+                                        TextField(
+                                          controller: _valorController,
+                                          decoration: InputDecoration(
+                                            labelText: "Valor",
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: <TextInputFormatter>[
+                                            FilteringTextInputFormatter
+                                                .digitsOnly
+                                          ],
+                                        ),
+                                        SizedBox(height: 16),
+
+                                        // Centrar el botón de agregar
+                                        Center(
+                                          child: ElevatedButton(
+                                            onPressed:
+                                                _agregarImagen, // Verifica que este método maneje la lógica correctamente
+                                            child: Text("Agregar"),
+                                          ),
+                                        ),
+                                        SizedBox(height: 16),
+
+                                        // Lista de imágenes con comentarios
+                                        if (imagePaths
+                                            .isNotEmpty) // Asegúrate de que la lista no esté vacía
+                                          ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: imagePaths.length,
+                                            itemBuilder: (context, index) {
+                                              return Card(
+                                                margin: EdgeInsets.symmetric(
+                                                    vertical: 8),
+                                                child: ListTile(
+                                                  leading: Image.file(
+                                                    File(imagePaths[index]
+                                                        ["imagePath"]),
+                                                    width: 50,
+                                                    height: 50,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                  title: Text(
+                                                    '${imagePaths[index]["comentario"]} - ${imagePaths[index]["valor"]}',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
@@ -760,7 +967,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         ),
                       ),
 
-                    // Paginación para las preguntas
+                    SizedBox(height: 10),
+
+                    // Si hay encuesta seleccionada y preguntas disponibles
                     if (preguntas.isNotEmpty)
                       Padding(
                         padding: EdgeInsets.all(16.0),

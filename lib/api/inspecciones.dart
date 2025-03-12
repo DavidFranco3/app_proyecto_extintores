@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
 import './endpoints.dart';
+import 'dart:io';
 import 'auth.dart';
 
 final authService = AuthService();
@@ -164,6 +165,48 @@ class InspeccionesService {
       'status': response.statusCode, // Retorna la respuesta del servidor
     };
   }
+
+Future<Map<String, dynamic>> sendEmail2(String id, String pdfFilePath) async {
+  final token = await authService.getTokenApi();
+  final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF2 + '/$id';
+
+  try {
+    // Leer el archivo PDF como bytes desde el sistema de archivos
+    final pdfFile = File(pdfFilePath); // Ruta donde se guarda el archivo PDF
+    final bytes = await pdfFile.readAsBytes();  // Leemos el archivo como bytes
+
+    // Crear la solicitud POST con el archivo y el ID
+    final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+      ..headers.addAll({
+        'Content-Type': 'multipart/form-data',
+        'Authorization': 'Bearer $token',  // Añadir el token en el header
+      })
+      // Agregar el archivo PDF
+      ..files.add(http.MultipartFile.fromBytes('pdf', bytes, filename: 'documento.pdf'))
+      // Agregar el ID como un campo del formulario
+      ..fields['id'] = id;
+
+    // Enviar la solicitud
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      return {
+        'status': response.statusCode,
+        'message': 'PDF enviado exitosamente',
+      };
+    } else {
+      return {
+        'status': response.statusCode,
+        'message': 'Error al enviar el PDF: ${response.statusCode}',
+      };
+    }
+  } catch (e) {
+    return {
+      'status': 500, // Error interno si ocurre alguna excepción
+      'message': 'Error al enviar el PDF: $e',
+    };
+  }
+}
 
   String urlDownloadPDF(String id) {
     return API_HOST + ENDPOINT_DESCARGAR_PDF + '/$id';

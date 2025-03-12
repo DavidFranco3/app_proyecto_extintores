@@ -1,11 +1,13 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:flutter/rendering.dart';  // ← ESTE IMPORT ES IMPORTANTE
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 
 class GraficaBarras extends StatefulWidget {
   final List<Map<String, dynamic>> dataInspecciones;
@@ -77,8 +79,29 @@ Future<void> _generatePdf() async {
     }
   }
 
-  await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  try {
+    // Obtener el directorio donde guardar el archivo
+    final outputDirectory = await getExternalStorageDirectory();
+    if (outputDirectory != null) {
+      // Definir el path donde se guardará el archivo
+      final filePath = "${outputDirectory.path}/graficos.pdf";
+
+      // Guardar el archivo en el dispositivo
+      final file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+
+      print("PDF guardado en: $filePath");
+
+      // Abrir el PDF con el visor predeterminado
+      await OpenFile.open(filePath);
+    } else {
+      print("No se pudo obtener el directorio de almacenamiento.");
+    }
+  } catch (e) {
+    print("Error al guardar y abrir el PDF: $e");
+  }
 }
+
 
 
   @override

@@ -1,49 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../api/inspecciones.dart';
-import '../../components/Inspecciones/list_inspecciones.dart';
-import '../LlenarEncuesta/llenar_encuesta.dart';
+import '../../api/encuesta_datos_inspeccion.dart';
+import '../../components/DatosEncuestas/list_datos_encuestas.dart';
+import '../CrearEncuestaDatos/crear_encuesta_datos.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class InspeccionesPage extends StatefulWidget {
+class EncuestasDatosPage extends StatefulWidget {
   @override
-  _InspeccionesPageState createState() => _InspeccionesPageState();
+  _EncuestasDatosPageState createState() => _EncuestasDatosPageState();
 }
 
-class _InspeccionesPageState extends State<InspeccionesPage> {
+class _EncuestasDatosPageState extends State<EncuestasDatosPage> {
   bool loading = true;
-  List<Map<String, dynamic>> dataInspecciones = [];
+  List<Map<String, dynamic>> dataEncuestas = [];
 
   @override
   void initState() {
     super.initState();
-    getInspecciones();
-    print("inspecciones: ${dataInspecciones}");
+    getEncuestas();
   }
 
-  Future<void> getInspecciones() async {
+  Future<void> getEncuestas() async {
     try {
-      final inspeccionesService = InspeccionesService();
+      final encuestaDatosInspeccionService = EncuestaDatosInspeccionService();
       final List<dynamic> response =
-          await inspeccionesService.listarInspecciones();
+          await encuestaDatosInspeccionService.listarEncuestaDatosInspeccion();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
-          print("veamos que hay aca ${response}");
-          dataInspecciones = formatModelInspecciones(response);
+          dataEncuestas = formatModelEncuestas(response);
           loading = false; // Desactivar el estado de carga
         });
       } else {
         setState(() {
-          dataInspecciones = []; // Lista vacía
+          dataEncuestas = []; // Lista vacía
           loading = false; // Desactivar el estado de carga
         });
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      print("Error al obtener las encuestas: $e");
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
@@ -57,15 +55,15 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => EncuestaPage(
+          builder: (context) => CrearEncuestaDatosScreen(
               showModal: () {
                 Navigator.pop(context); // Esto cierra el modal
               },
-              onCompleted: getInspecciones,
+              onCompleted: getEncuestas,
               accion: "registrar",
               data: null)),
     ).then((_) {
-      getInspecciones(); // Actualizar inspecciones al regresar de la página
+      getEncuestas(); // Actualizar encuestas al regresar de la página
     });
   }
 
@@ -76,24 +74,14 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     });
   }
 
-  // Función para formatear los datos de las inspecciones
-  List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
+  // Función para formatear los datos de las encuestas
+  List<Map<String, dynamic>> formatModelEncuestas(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
         'id': item['_id'],
-        'idUsuario': item['idUsuario'],
-        'idCliente': item['idCliente'],
-        'idEncuesta': item['idEncuesta'],
-        'encuesta': item['encuesta'],
-        'imagenes': item['imagenes'],
-        'comentarios': item['comentarios'],
-        'usuario': item['usuario']['nombre'],
-        'cliente': item['cliente']['nombre'],
-        'imagen_cliente': item['cliente']['imagen'],
-        'firma_usuario': item['usuario']['firma'],
-        'cuestionario': item['cuestionario']['nombre'],
-        'usuarios': item['usuario'],
+        'nombre': item['nombre'],
+        'preguntas': item['preguntas'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
@@ -106,7 +94,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Inspección"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Crear Encuesta Datos"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -117,7 +105,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspecciones",
+                      "Encuestas de Datos",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
@@ -138,12 +126,12 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                   ),
                 ),
                 Expanded(
-                  child: TblInspecciones(
+                  child: TblDatosEncuestas(
                     showModal: () {
                       Navigator.pop(context); // Esto cierra el modal
                     },
-                    inspecciones: dataInspecciones,
-                    onCompleted: getInspecciones,
+                    encuestas: dataEncuestas,
+                    onCompleted: getEncuestas,
                   ),
                 ),
               ],
@@ -162,19 +150,15 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
 class Pregunta {
   String titulo;
   String observaciones;
-  List<String> opciones;
-
   Pregunta({
     required this.titulo,
     required this.observaciones,
-    required this.opciones,
   });
 
   Map<String, dynamic> toJson() {
     return {
       "titulo": titulo,
       "observaciones": observaciones,
-      "opciones": opciones,
     };
   }
 
@@ -182,7 +166,6 @@ class Pregunta {
     return Pregunta(
       titulo: json['titulo'] ?? '',
       observaciones: json['observaciones'] ?? '',
-      opciones: List<String>.from(json['opciones'] ?? []),
     );
   }
 }

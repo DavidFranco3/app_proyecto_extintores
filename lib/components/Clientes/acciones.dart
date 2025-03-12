@@ -366,45 +366,47 @@ class _AccionesState extends State<Acciones> {
       key: _formKey,
       child: Column(
         children: [
-          Text(
-            "Logo de la empresa",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          GestureDetector(
-            onTap:
-                _pickImage, // Al hacer tap, se activa el selector de imágenes
-            child: Container(
-              width: double.infinity, // Ancho del contenedor
-              height: 250, // Altura fija
-              decoration: BoxDecoration(
-                color: Colors.grey[200], // Fondo gris claro
-                border: Border.all(color: Colors.grey), // Borde gris
-                borderRadius: BorderRadius.circular(10), // Bordes redondeados
-              ),
-              child: _image == null
-                  ? Center(
-                      child: Icon(
-                        Icons.cloud_upload,
-                        size: 50,
-                        color: Colors.blueAccent,
-                      ),
-                    ) // Si no hay imagen seleccionada
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(
-                        File(_image!.path),
-                        fit: BoxFit.cover, // Ajusta la imagen al contenedor
-                      ),
-                    ),
-            ),
-          ),
-          SizedBox(height: 10),
-          if (_image !=
-              null) // Muestra un mensaje cuando se haya seleccionado una imagen
+          if (!isEliminar) ...[
             Text(
-              "Imagen seleccionada",
-              style: TextStyle(color: Colors.green, fontSize: 16),
+              "Logo de la empresa",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            GestureDetector(
+              onTap:
+                  _pickImage, // Al hacer tap, se activa el selector de imágenes
+              child: Container(
+                width: double.infinity, // Ancho del contenedor
+                height: 250, // Altura fija
+                decoration: BoxDecoration(
+                  color: Colors.grey[200], // Fondo gris claro
+                  border: Border.all(color: Colors.grey), // Borde gris
+                  borderRadius: BorderRadius.circular(10), // Bordes redondeados
+                ),
+                child: _image == null
+                    ? Center(
+                        child: Icon(
+                          Icons.cloud_upload,
+                          size: 50,
+                          color: Colors.blueAccent,
+                        ),
+                      ) // Si no hay imagen seleccionada
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(
+                          File(_image!.path),
+                          fit: BoxFit.cover, // Ajusta la imagen al contenedor
+                        ),
+                      ),
+              ),
+            ),
+            SizedBox(height: 10),
+            if (_image !=
+                null) // Muestra un mensaje cuando se haya seleccionado una imagen
+              Text(
+                "Imagen seleccionada",
+                style: TextStyle(color: Colors.green, fontSize: 16),
+              ),
+          ],
           TextFormField(
             controller: _nombreController,
             decoration: InputDecoration(labelText: 'Nombre'),
