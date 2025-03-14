@@ -37,7 +37,7 @@ class EncuestaPage extends StatefulWidget {
 
 class _EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
-  List<Pregunta> preguntas2 = [];
+  List<Pregunta2> preguntas2 = [];
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> dataEncuestasAbiertas = [];
   String? selectedEncuestaId;
@@ -296,10 +296,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
         dataEncuestasAbiertas.firstWhere((encuesta) => encuesta['id'] == encuestaAbiertaId);
     setState(() {
       preguntas2 = (encuesta['preguntas'] as List<dynamic>).map((pregunta) {
-        return Pregunta(
+        return Pregunta2(
           titulo: pregunta['titulo'],
           observaciones: pregunta['observaciones'],
-          opciones: List<String>.from(pregunta['opciones']),
         );
       }).toList();
     });
@@ -318,8 +317,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return paginas;
   }
 
-    List<List<Pregunta>> dividirPreguntasEnPaginas2() {
-    List<List<Pregunta>> paginas = [];
+    List<List<Pregunta2>> dividirPreguntasEnPaginas2() {
+    List<List<Pregunta2>> paginas = [];
     for (int i = 0; i < preguntas2.length; i += preguntasPorPagina) {
       paginas.add(preguntas2.sublist(
           i,
@@ -671,7 +670,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         });
 
                         if (newValue != null) {
-                          actualizarPreguntas(newValue);
+                          actualizarPreguntas2(newValue);
                         }
                       },
                       items: dataEncuestasAbiertas.map((encuesta) {
@@ -714,11 +713,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             300, // Si no quieres que sea fijo, quita el height aquí
                         child: PageView.builder(
                           controller: _pageController,
-                          itemCount: dividirPreguntasEnPaginas().length +
+                          itemCount: dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length +
                               4, // +2 por la nueva página de imagen
                           itemBuilder: (context, pageIndex) {
                             if (pageIndex <
-                                dividirPreguntasEnPaginas().length) {
+                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length -1) {
                               var preguntasPagina =
                                   dividirPreguntasEnPaginas()[pageIndex];
                               return ListView.builder(
@@ -769,6 +768,54 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             } else if (pageIndex ==
                                 dividirPreguntasEnPaginas().length) {
                               // Página de comentarios finales
+                              var indexEnPagina2 = pageIndex - dividirPreguntasEnPaginas().length;
+                              var preguntasPagina =
+                                  dividirPreguntasEnPaginas2()[indexEnPagina2];
+                              return ListView.builder(
+                                itemCount: preguntasPagina.length,
+                                itemBuilder: (context, index) {
+                                  return Card(
+                                    margin: EdgeInsets.all(10),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(10.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            preguntasPagina[index].titulo,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
+                                          TextFormField(
+                                            decoration: InputDecoration(
+                                              labelText: 'Ingresa el valor',
+                                            ),
+                                            keyboardType: TextInputType
+                                                .number, // Solo permite números en el teclado
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly, // Solo números
+                                              LengthLimitingTextInputFormatter(
+                                                  5), // Máximo 5 caracteres
+                                            ],
+                                            onChanged: (value) {
+                                              setState(() {
+                                                preguntasPagina[index]
+                                                    .respuesta = value;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            } else if (pageIndex ==
+                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length + 1) {
+                              // Página de comentarios finales
                               return Padding(
                                 padding: EdgeInsets.all(16.0),
                                 child: Column(
@@ -794,7 +841,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                 ),
                               );
                             } else if (pageIndex ==
-                                dividirPreguntasEnPaginas().length + 2) {
+                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length + 2) {
                               return Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
@@ -915,7 +962,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                   ),
                                 ),
                               );
-                            } else {
+                            } else if (pageIndex ==
+                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length) {
                               // Página para cargar imagen
                               return Center(
                                 child: Padding(
@@ -989,7 +1037,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             IconButton(
                               icon: Icon(Icons.arrow_forward),
                               onPressed: currentPage <
-                                      dividirPreguntasEnPaginas().length + 2
+                                      dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length + 2
                                   ? () {
                                       _pageController.nextPage(
                                           duration: Duration(milliseconds: 300),
@@ -1018,6 +1066,18 @@ class Pregunta {
     required this.titulo,
     required this.observaciones,
     required this.opciones,
+    this.respuesta = '',
+  });
+}
+
+class Pregunta2 {
+  String titulo;
+  String observaciones;
+  String respuesta;
+
+  Pregunta2({
+    required this.titulo,
+    required this.observaciones,
     this.respuesta = '',
   });
 }
