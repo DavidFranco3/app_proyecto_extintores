@@ -341,6 +341,18 @@ class _EncuestaPageState extends State<EncuestaPage> {
     }).toList();
   }
 
+  List<Map<String, String>> obtenerRespuestasAbiertasParaGuardar() {
+    return preguntas2.map((pregunta) {
+      return {
+        "pregunta": pregunta.titulo,
+        "observaciones": pregunta.observaciones,
+        "respuesta": pregunta.respuesta.isNotEmpty
+            ? pregunta.respuesta
+            : "No respondida",
+      };
+    }).toList();
+  }
+
   void _guardarEncuesta(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
@@ -351,6 +363,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       'idCliente': data['idCliente'],
       'idEncuesta': data['idEncuesta'],
       'encuesta': data['preguntas'],
+      'encuestaAbierta': data['preguntasAbiertas'],
       'comentarios': data['comentarios'],
       'imagenes': data['imagenes'],
       'firmaCliente': data['firmaCliente'],
@@ -476,12 +489,16 @@ class _EncuestaPageState extends State<EncuestaPage> {
     List<Map<String, String>> respuestasAguardar =
         obtenerRespuestasParaGuardar();
 
+        List<Map<String, String>> respuestasAbiertasAguardar =
+        obtenerRespuestasAbiertasParaGuardar();
+
     // Crear el formulario con los datos
     var formData = {
       "idUsuario": datosComunes["idUsuario"],
       "idCliente": clienteController.text,
       "idEncuesta": selectedEncuestaId,
       "preguntas": respuestasAguardar,
+      "preguntasAbiertas": respuestasAbiertasAguardar,
       "imagenes":
           uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
       "comentarios": comentariosController.text,
