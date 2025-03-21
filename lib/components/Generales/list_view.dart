@@ -11,11 +11,30 @@ class DataTableCustom extends StatelessWidget {
     this.accionesBuilder,
   });
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
+    if (datos.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(
+            'No hay registros',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scrollbar(
+      controller: _scrollController,
       thumbVisibility: true,
       child: ListView.builder(
+        controller: _scrollController,
         shrinkWrap: true,
         physics: BouncingScrollPhysics(),
         itemCount: datos.length,
@@ -31,22 +50,25 @@ class DataTableCustom extends StatelessWidget {
                 children: [
                   ...columnas.map((col) {
                     final columnName = col['name'];
-                    return Row(
-                      children: [
-                        Text(
-                          '${columnName}: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueGrey,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Text(
+                            '$columnName: ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueGrey,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            row[columnName]?.toString() ?? 'N/A',
-                            style: TextStyle(fontSize: 16),
+                          Expanded(
+                            child: Text(
+                              row[columnName]?.toString() ?? 'N/A',
+                              style: TextStyle(fontSize: 16),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     );
                   }).toList(),
                   if (accionesBuilder != null)

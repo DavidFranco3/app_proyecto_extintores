@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "285332690543",
-    "project_id": "appextintores-34e9f",
-    "storage_bucket": "appextintores-34e9f.firebasestorage.app"
+    "project_number": "617711073689",
+    "project_id": "aggoapp",
+    "storage_bucket": "aggoapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:285332690543:android:81efa5563e3223080fdf9a",
+        "mobilesdk_app_id": "1:617711073689:android:d30e69b61a6debbb927b08",
         "android_client_info": {
           "package_name": "com.example.prueba"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA6rR8OyPAIxeDQsVeADxXBRpOSgmwMWkc"
+          "current_key": "AIzaSyASwZz13ZeqL9Z7K4I8Zmi8onbXe0HN42E"
         }
       ],
       "services": {

@@ -115,8 +115,8 @@ class _MenuLateralState extends State<MenuLateral> {
             ),
             _buildListTile(
               context,
-              Icons.person,
-              'Inspeccion Anual',
+              Icons.fact_check, // Ícono más relacionado
+              'Inspección Anual',
               InspeccionEspecialPage(),
             ),
             // Submenú de Inspecciones

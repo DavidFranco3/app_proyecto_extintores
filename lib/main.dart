@@ -8,6 +8,7 @@ import 'components/Home/home.dart';
 import 'api/auth.dart';
 import 'api/tokens.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'components/Generales/flushbar_helper.dart';
 
 // 📌 Clave global para manejar el contexto en los diálogos
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -96,7 +97,7 @@ Future<void> obtenerTokenFCM() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     var formData = {
-      "idUsuario": datosComunes["idUsuario"], 
+      "idUsuario": datosComunes["idUsuario"],
       "token": token,
       "estado": "true"
     };
@@ -155,22 +156,11 @@ void mostrarNotificacionLocal(String title, String body) async {
 // 📌 Mostrar alerta de notificación dentro de la app
 void mostrarAlertaNotificacion(String title, String body) {
   if (navigatorKey.currentContext != null) {
-    showDialog(
+    showCustomFlushbar(
       context: navigatorKey.currentContext!,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(body),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Aceptar"),
-            )
-          ],
-        );
-      },
+      title: title,
+      message: body,
+      backgroundColor: Colors.green,
     );
   }
 }
