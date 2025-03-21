@@ -37,7 +37,6 @@ class EncuestaPage extends StatefulWidget {
 
 class _EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
-  List<Pregunta2> preguntas2 = [];
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> dataEncuestasAbiertas = [];
   String? selectedEncuestaId;
@@ -290,20 +289,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
     });
   }
 
-  // Actualiza las preguntas cuando se selecciona una encuesta
-  void actualizarPreguntas2(String encuestaAbiertaId) {
-    final encuesta =
-        dataEncuestasAbiertas.firstWhere((encuesta) => encuesta['id'] == encuestaAbiertaId);
-    setState(() {
-      preguntas2 = (encuesta['preguntas'] as List<dynamic>).map((pregunta) {
-        return Pregunta2(
-          titulo: pregunta['titulo'],
-          observaciones: pregunta['observaciones'],
-        );
-      }).toList();
-    });
-  }
-
   // Dividir las preguntas en páginas de 5
   List<List<Pregunta>> dividirPreguntasEnPaginas() {
     List<List<Pregunta>> paginas = [];
@@ -317,32 +302,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return paginas;
   }
 
-    List<List<Pregunta2>> dividirPreguntasEnPaginas2() {
-    List<List<Pregunta2>> paginas = [];
-    for (int i = 0; i < preguntas2.length; i += preguntasPorPagina) {
-      paginas.add(preguntas2.sublist(
-          i,
-          i + preguntasPorPagina > preguntas2.length
-              ? preguntas2.length
-              : i + preguntasPorPagina));
-    }
-    return paginas;
-  }
-
   List<Map<String, String>> obtenerRespuestasParaGuardar() {
     return preguntas.map((pregunta) {
-      return {
-        "pregunta": pregunta.titulo,
-        "observaciones": pregunta.observaciones,
-        "respuesta": pregunta.respuesta.isNotEmpty
-            ? pregunta.respuesta
-            : "No respondida",
-      };
-    }).toList();
-  }
-
-  List<Map<String, String>> obtenerRespuestasAbiertasParaGuardar() {
-    return preguntas2.map((pregunta) {
       return {
         "pregunta": pregunta.titulo,
         "observaciones": pregunta.observaciones,
@@ -363,7 +324,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
       'idCliente': data['idCliente'],
       'idEncuesta': data['idEncuesta'],
       'encuesta': data['preguntas'],
-      'encuestaAbierta': data['preguntasAbiertas'],
       'comentarios': data['comentarios'],
       'imagenes': data['imagenes'],
       'firmaCliente': data['firmaCliente'],
@@ -489,16 +449,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
     List<Map<String, String>> respuestasAguardar =
         obtenerRespuestasParaGuardar();
 
-        List<Map<String, String>> respuestasAbiertasAguardar =
-        obtenerRespuestasAbiertasParaGuardar();
-
     // Crear el formulario con los datos
     var formData = {
       "idUsuario": datosComunes["idUsuario"],
       "idCliente": clienteController.text,
       "idEncuesta": selectedEncuestaId,
       "preguntas": respuestasAguardar,
-      "preguntasAbiertas": respuestasAbiertasAguardar,
       "imagenes":
           uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
       "comentarios": comentariosController.text,
@@ -676,29 +632,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     ),
                     SizedBox(height: 10),
 
-                    // Dropdown de Encuesta
-                    DropdownButtonFormField<String>(
-                      value: selectedEncuestaAbiertaId,
-                      hint: Text('Selecciona una encuesta abierta'),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedEncuestaAbiertaId = newValue;
-                          currentPage = 0;
-                        });
-
-                        if (newValue != null) {
-                          actualizarPreguntas2(newValue);
-                        }
-                      },
-                      items: dataEncuestasAbiertas.map((encuesta) {
-                        return DropdownMenuItem<String>(
-                          value: encuesta['id'],
-                          child: Text(encuesta['nombre']!),
-                        );
-                      }).toList(),
-                    ),
-                    SizedBox(height: 10),
-
                     // Dropdown de Cliente
                     DropdownButtonFormField<String>(
                       value: clienteController.text.isEmpty
@@ -730,11 +663,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             300, // Si no quieres que sea fijo, quita el height aquí
                         child: PageView.builder(
                           controller: _pageController,
-                          itemCount: dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length +
-                              4, // +2 por la nueva página de imagen
+                          itemCount: dividirPreguntasEnPaginas().length +
+                              3, // +2 por la nueva página de imagen
                           itemBuilder: (context, pageIndex) {
                             if (pageIndex <
-                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length -1) {
+                                dividirPreguntasEnPaginas().length) {
                               var preguntasPagina =
                                   dividirPreguntasEnPaginas()[pageIndex];
                               return ListView.builder(
@@ -785,54 +718,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             } else if (pageIndex ==
                                 dividirPreguntasEnPaginas().length) {
                               // Página de comentarios finales
-                              var indexEnPagina2 = pageIndex - dividirPreguntasEnPaginas().length;
-                              var preguntasPagina =
-                                  dividirPreguntasEnPaginas2()[indexEnPagina2];
-                              return ListView.builder(
-                                itemCount: preguntasPagina.length,
-                                itemBuilder: (context, index) {
-                                  return Card(
-                                    margin: EdgeInsets.all(10),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(10.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            preguntasPagina[index].titulo,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
-                                          ),
-                                          TextFormField(
-                                            decoration: InputDecoration(
-                                              labelText: 'Ingresa el valor',
-                                            ),
-                                            keyboardType: TextInputType
-                                                .number, // Solo permite números en el teclado
-                                            inputFormatters: [
-                                              FilteringTextInputFormatter
-                                                  .digitsOnly, // Solo números
-                                              LengthLimitingTextInputFormatter(
-                                                  5), // Máximo 5 caracteres
-                                            ],
-                                            onChanged: (value) {
-                                              setState(() {
-                                                preguntasPagina[index]
-                                                    .respuesta = value;
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            } else if (pageIndex ==
-                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length + 1) {
-                              // Página de comentarios finales
                               return Padding(
                                 padding: EdgeInsets.all(16.0),
                                 child: Column(
@@ -858,7 +743,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                 ),
                               );
                             } else if (pageIndex ==
-                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length + 2) {
+                                dividirPreguntasEnPaginas().length + 2) {
                               return Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
@@ -979,37 +864,33 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                   ),
                                 ),
                               );
-                            } else if (pageIndex ==
-                                dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length) {
+                            } else {
                               // Página para cargar imagen
-                              return Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: SingleChildScrollView(
-                                    // Permite desplazamiento si es necesario
+                              return SafeArea(
+                                child: SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
+                                        const Text(
                                           "Firma del cliente",
                                           style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                        SizedBox(height: 10),
+                                        const SizedBox(height: 10),
                                         ClipRRect(
                                           borderRadius:
                                               BorderRadius.circular(10),
                                           child: Signature(
                                             controller: _controller,
                                             height: 300,
-                                            backgroundColor: Colors
-                                                .transparent, // Fondo transparente
+                                            backgroundColor: Colors.transparent,
                                           ),
                                         ),
-                                        SizedBox(
-                                            height:
-                                                20), // Espacio entre la firma y los botones
+                                        const SizedBox(height: 20),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceEvenly,
@@ -1017,8 +898,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                             ElevatedButton(
                                               onPressed: _isLoading
                                                   ? null
-                                                  : () => _controller.clear(),
-                                              child: Text("Limpiar Firma"),
+                                                  : _controller.clear,
+                                              child:
+                                                  const Text("Limpiar Firma"),
                                             ),
                                           ],
                                         ),
@@ -1054,7 +936,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             IconButton(
                               icon: Icon(Icons.arrow_forward),
                               onPressed: currentPage <
-                                      dividirPreguntasEnPaginas().length + dividirPreguntasEnPaginas2().length + 2
+                                      dividirPreguntasEnPaginas().length + 2
                                   ? () {
                                       _pageController.nextPage(
                                           duration: Duration(milliseconds: 300),
@@ -1083,18 +965,6 @@ class Pregunta {
     required this.titulo,
     required this.observaciones,
     required this.opciones,
-    this.respuesta = '',
-  });
-}
-
-class Pregunta2 {
-  String titulo;
-  String observaciones;
-  String respuesta;
-
-  Pregunta2({
-    required this.titulo,
-    required this.observaciones,
     this.respuesta = '',
   });
 }

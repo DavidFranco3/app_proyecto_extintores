@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../api/inspecciones.dart';
-import '../../components/Inspecciones/list_inspecciones.dart';
-import '../LlenarEncuesta/llenar_encuesta.dart';
+import '../../api/inspeccion_anual.dart';
+import '../../components/InspeccionEspecial/list_inspeccion_especial.dart';
+import '../InspeccionAnual/inspeccion_anual.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class InspeccionesPage extends StatefulWidget {
+class InspeccionEspecialPage extends StatefulWidget {
   @override
-  _InspeccionesPageState createState() => _InspeccionesPageState();
+  _InspeccionEspecialPageState createState() => _InspeccionEspecialPageState();
 }
 
-class _InspeccionesPageState extends State<InspeccionesPage> {
+class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataInspecciones = [];
 
@@ -24,9 +24,8 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
 
   Future<void> getInspecciones() async {
     try {
-      final inspeccionesService = InspeccionesService();
-      final List<dynamic> response =
-          await inspeccionesService.listarInspecciones();
+      final inspeccionAnualService = InspeccionAnualService();
+      final List<dynamic> response = await inspeccionAnualService.listarInspeccionAnual();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -41,7 +40,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      print("Error al obtener los clientes: $e");
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
@@ -50,12 +49,12 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
 
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
-  // Función para abrir el modal de registro con el formulario de Acciones
+   // Función para abrir el modal de registro con el formulario de Acciones
   void openRegistroPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => EncuestaPage(
+          builder: (context) => InspeccionAnualPage(
               showModal: () {
                 Navigator.pop(context); // Esto cierra el modal
               },
@@ -63,7 +62,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
               accion: "registrar",
               data: null)),
     ).then((_) {
-      getInspecciones(); // Actualizar inspecciones al regresar de la página
+      // Actualizar inspecciones al regresar de la página
     });
   }
 
@@ -74,24 +73,16 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     });
   }
 
-  // Función para formatear los datos de las inspecciones
+  // Función para formatear los datos de las clientes
   List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
         'id': item['_id'],
-        'idUsuario': item['idUsuario'],
+        'titulo': item['titulo'],
         'idCliente': item['idCliente'],
-        'idEncuesta': item['idEncuesta'],
-        'encuesta': item['encuesta'],
-        'imagenes': item['imagenes'],
-        'comentarios': item['comentarios'],
-        'usuario': item['usuario']['nombre'],
+        'datos': item['datos'],
         'cliente': item['cliente']['nombre'],
-        'imagen_cliente': item['cliente']['imagen'],
-        'firma_usuario': item['usuario']['firma'],
-        'cuestionario': item['cuestionario']['nombre'],
-        'usuarios': item['usuario'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
@@ -104,7 +95,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Inspección"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Inspeccion Anual"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -115,7 +106,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspecciones",
+                      "Inspeccion Anual",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
@@ -136,12 +127,14 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                   ),
                 ),
                 Expanded(
-                  child: TblInspecciones(
+                  child: TblInspeccionEspecial(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(
+                          context); // Cierra el modal después de registrar
                     },
-                    inspecciones: dataInspecciones,
-                    onCompleted: getInspecciones,
+                    inspeccionAnual: dataInspecciones,
+                    onCompleted:
+                        getInspecciones, // Pasa la función para que se pueda llamar desde el componente
                   ),
                 ),
               ],
@@ -153,34 +146,6 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
               child: Icon(Icons.close),
             )
           : null,
-    );
-  }
-}
-
-class Pregunta {
-  String titulo;
-  String observaciones;
-  List<String> opciones;
-
-  Pregunta({
-    required this.titulo,
-    required this.observaciones,
-    required this.opciones,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      "titulo": titulo,
-      "observaciones": observaciones,
-      "opciones": opciones,
-    };
-  }
-
-  factory Pregunta.fromJson(Map<String, dynamic> json) {
-    return Pregunta(
-      titulo: json['titulo'] ?? '',
-      observaciones: json['observaciones'] ?? '',
-      opciones: List<String>.from(json['opciones'] ?? []),
     );
   }
 }

@@ -17,6 +17,7 @@ class PdfGenerator {
       SnackBar(content: Text(message)),
     );
   }
+  
 // Función para formatear fechas
   static String formatDate(String date) {
     // Parseamos la fecha guardada en la base de datos

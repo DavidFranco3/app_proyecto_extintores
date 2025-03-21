@@ -10,6 +10,7 @@ import '../../api/inspecciones.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import './pdf.dart';
+import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -177,6 +178,18 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 
+  void openRegistroPage(Map<String, dynamic> row) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            GraficaDatosInspeccionesPage(idInspeccion: row["id"]),
+      ),
+    ).then((_) {
+      // Puedes agregar lógica aquí si necesitas hacer algo cuando regresas de la página
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
@@ -221,20 +234,29 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                     ),
                     IconButton(
                       icon: FaIcon(FontAwesomeIcons.envelope,
-                          color: const Color.fromRGBO(255, 152, 0, 1)), // Ícono más relacionado con el correo
+                          color: const Color.fromRGBO(255, 152, 0,
+                              1)), // Ícono más relacionado con el correo
                       onPressed: () => handleSendEmail(row['_originalRow']),
                     ),
                     IconButton(
                       icon: FaIcon(FontAwesomeIcons.filePdf,
                           color: Colors
                               .blue), // Ícono más relacionado con el correo
-                      onPressed: () => PdfGenerator.guardarPDF(row['_originalRow']),
+                      onPressed: () =>
+                          PdfGenerator.guardarPDF(row['_originalRow']),
                     ),
                     IconButton(
                       icon: FaIcon(FontAwesomeIcons.envelope,
                           color: Colors
                               .blue), // Ícono más relacionado con el correo
-                      onPressed: () => PdfGenerator.enviarPdfAlBackend(context, row['_originalRow']),
+                      onPressed: () => PdfGenerator.enviarPdfAlBackend(
+                          context, row['_originalRow']),
+                    ),
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.chartLine,
+                          color: Colors
+                              .blue), // Ícono más relacionado con el correo
+                      onPressed: () => openRegistroPage(row['_originalRow']),
                     ),
                   ],
                 );
