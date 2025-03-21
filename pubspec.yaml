@@ -61,6 +61,7 @@ dependencies:
   pdf: ^3.10.4
   printing: ^5.11.0
   flutter_launcher_icons: ^0.14.3
+  another_flushbar: ^1.12.30
 
 flutter_icons:
   android: true

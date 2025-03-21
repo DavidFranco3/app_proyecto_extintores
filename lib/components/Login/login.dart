@@ -7,6 +7,7 @@ import '../../api/usuarios.dart';
 import '../../utils/validations.dart';
 import '../Home/home.dart';
 import 'dart:convert';
+import '../Generales/flushbar_helper.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -35,23 +36,27 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showMessage("Completa todos los campos.");
+      showCustomFlushbar(
+        context: context,
+        title: "Completa todos los campos",
+        message: "Completa correctamente todos los campos del formulario",
+        backgroundColor: Colors.yellow,
+      );
       return;
     }
 
     if (!isEmailValid(email)) {
-      _showMessage("Correo no válido.");
+      showCustomFlushbar(
+        context: context,
+        title: "Correo no valido",
+        message: "Ingresa un correo con un formato valido",
+        backgroundColor: Colors.yellow,
+      );
       return;
     }
 
@@ -84,8 +89,15 @@ class _LoginPageState extends State<LoginPage> {
 
       final userName = userData['nombre'] ?? 'Usuario';
 
-      print('User Name: $userName');
-      _showMessage("Bienvenido $userName");
+      showCustomFlushbar(
+        context: context,
+        title: "Bienvenido ${userName}",
+        message:
+            "Bienvenido ${userName} recueda que la sesion expira automaticamente despues de 24 horas",
+        backgroundColor: Colors.green,
+      );
+      // Esperar un pequeño retraso antes de navegar
+      await Future.delayed(Duration(seconds: 2));
       LogsInformativos("Se ha iniciado sesion con el usuario $userName", {});
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
@@ -96,7 +108,12 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (ex) {
       print('Error en login: $ex');
-      _showMessage("Error al iniciar sesión.");
+      showCustomFlushbar(
+        context: context,
+        title: "Error al iniciar sesion",
+        message: ex.toString(),
+        backgroundColor: Colors.red,
+      );
     } finally {
       setState(() {
         _isLoading = false;

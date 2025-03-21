@@ -1,16 +1,16 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:flutter/rendering.dart'; // ← ESTE IMPORT ES IMPORTANTE
+import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import '../../api/inspeccion_anual.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import '../Generales/flushbar_helper.dart';
 
 class GraficaLineas extends StatefulWidget {
   final List<Map<String, dynamic>> encuestaAbierta;
@@ -31,12 +31,6 @@ class _GraficaLineasState extends State<GraficaLineas> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: paginaActual);
-  }
-
-  static void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   @override
@@ -243,9 +237,19 @@ class _GraficaLineasState extends State<GraficaLineas> {
         print(response);
 
         if (response['status'] == 200) {
-          _showMessage(context, "Correo enviado");
+          showCustomFlushbar(
+              context: context,
+              title: "Correo enviado",
+              message: "El PDF fue enviado exitosamente al correo del cliente",
+              backgroundColor: Colors.green,
+            );
         } else {
-          _showMessage(context, "Error al enviar correo");
+          showCustomFlushbar(
+              context: context,
+              title: "Error al enviar el correo",
+              message: "Hubo un problema al enviar el PDF por correo",
+              backgroundColor: Colors.red,
+            );
         }
       }
     } catch (e) {

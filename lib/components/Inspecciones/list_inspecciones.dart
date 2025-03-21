@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import './pdf.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
+import '../Generales/flushbar_helper.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -33,12 +34,6 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   Widget? contentModal;
   String? titulosModal;
   bool isLoading = false;
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
 
   Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
     setState(() => isLoading = true);
@@ -106,12 +101,27 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       var response = await inspeccionesService.sendEmail(row["id"]);
 
       if (response['status'] == 200) {
-        _showMessage("Correo enviado");
+        showCustomFlushbar(
+          context: context,
+          title: "Correo enviado",
+          message: "El PDF fue enviado exitosamente al correo del cliente",
+          backgroundColor: Colors.green,
+        );
       } else {
-        _showMessage("Error al enviar correo");
+        showCustomFlushbar(
+          context: context,
+          title: "Error al enviar el correo",
+          message: "Hubo un problema al enviar el PDF por correo",
+          backgroundColor: Colors.red,
+        );
       }
-    } catch (e) {
-      _showMessage("Error: ${e.toString()}");
+    } catch (error) {
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     } finally {
       isLoading = false;
     }
@@ -251,12 +261,6 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               .blue), // Ícono más relacionado con el correo
                       onPressed: () => PdfGenerator.enviarPdfAlBackend(
                           context, row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.chartLine,
-                          color: Colors
-                              .blue), // Ícono más relacionado con el correo
-                      onPressed: () => openRegistroPage(row['_originalRow']),
                     ),
                   ],
                 );

@@ -10,14 +10,9 @@ import 'package:pdf/pdf.dart'; // Importa la librería PdfColors
 import 'dart:math';
 import '../../api/inspecciones.dart';
 import 'package:flutter/material.dart';
+import '../Generales/flushbar_helper.dart';
 
 class PdfGenerator {
-  static void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-  
 // Función para formatear fechas
   static String formatDate(String date) {
     // Parseamos la fecha guardada en la base de datos
@@ -1371,7 +1366,8 @@ class PdfGenerator {
   }
 
 // Función estática para enviar el PDF al servidor
-  static Future<void> enviarPdfAlBackend(BuildContext context, Map<String, dynamic> data) async {
+  static Future<void> enviarPdfAlBackend(
+      BuildContext context, Map<String, dynamic> data) async {
     try {
       final inspeccionesService = InspeccionesService();
       // Llamar a la función para generar y guardar el PDF
@@ -1381,13 +1377,25 @@ class PdfGenerator {
       // Leer el archivo PDF generado como bytes
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
-        final file = File("${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
-        var response = await inspeccionesService.sendEmail2(data["id"], file.path);
+        final file = File(
+            "${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
+        var response =
+            await inspeccionesService.sendEmail2(data["id"], file.path);
         if (response['status'] == 200) {
-        _showMessage(context, "Correo enviado");
-      } else {
-        _showMessage(context, "Error al enviar correo");
-      }
+          showCustomFlushbar(
+            context: context,
+            title: "Correo enviado",
+            message: "El PDF fue enviado exitosamente al correo del cliente",
+            backgroundColor: Colors.green,
+          );
+        } else {
+          showCustomFlushbar(
+            context: context,
+            title: "Error al enviar el correo",
+            message: "Hubo un problema al enviar el PDF por correo",
+            backgroundColor: Colors.red,
+          );
+        }
       }
     } catch (e) {
       print('Error al enviar el PDF: $e');
@@ -1400,7 +1408,8 @@ class PdfGenerator {
       // Leer el archivo PDF generado como bytes
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
-        final file = File("${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
+        final file = File(
+            "${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
         // Abrir el PDF con el visor predeterminado
         await OpenFile.open(file.path);
       }

@@ -8,6 +8,7 @@ import '../../components/Header/header.dart';
 import '../../components/Logs/logs_informativos.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../Encuestas/encuestas.dart';
+import '../../components/Generales/flushbar_helper.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -184,25 +185,39 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
+          returnPrincipalPage();
         });
         LogsInformativos(
             "Se ha registrado la encuesta ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Encuesta agregada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "La encuesta fue agregada correctamente",
+          backgroundColor: Colors.green,
+        );
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
-        _showDialog("Error al agregar la encuesta", Icons.error, Colors.red);
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un error al agregar la encuesta",
+          backgroundColor: Colors.red,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red,
-          error.toString()); // Muestra el error de manera más explícita
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -227,25 +242,39 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
+          returnPrincipalPage();
         });
         LogsInformativos(
             "Se ha actualizado la encuesta ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Encuesta actualizada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Actualizacion exitosa",
+          message: "Los datos de la encuesta fueron actualizados correctamente",
+          backgroundColor: Colors.green,
+        );
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
-        _showDialog("Error al actualizar la encuesta", Icons.error, Colors.red);
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un error al actualizar la encuesta",
+          backgroundColor: Colors.red,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red,
-          error.toString()); // Muestra el error de manera más explícita
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -262,34 +291,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       _editarEncuesta(widget.data["id"], formData);
     }
     // Aquí podrías enviar la encuesta a Firebase o una API
-  }
-
-  void _showDialog(String title, IconData icon, Color color,
-      [String message = '']) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Row(
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 10),
-              Text(message),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                returnPrincipalPage();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   String get buttonLabel {

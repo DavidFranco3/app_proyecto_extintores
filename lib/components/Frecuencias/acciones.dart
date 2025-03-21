@@ -3,6 +3,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/frecuencias.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:flutter/services.dart';
+import '../Generales/flushbar_helper.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -74,21 +75,35 @@ class _AccionesState extends State<Acciones> {
         LogsInformativos(
             "Se ha registrado la frecuencia ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Frecuencia agregada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "La frecuencia fue agregada correctamente",
+          backgroundColor: Colors.green,
+        );
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
-        _showDialog("Error al agregar la frecuencia", Icons.error, Colors.red);
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un error al agregar la clasificacion",
+          backgroundColor: Colors.red,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red,
-          error.toString()); // Muestra el error de manera más explícita
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -109,18 +124,28 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha modificado la frecuencia ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Frecuencia actualizada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Actualizacion exitosa",
+          message: "Los datos de la frecuencia fueron agregados correctamente",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -138,47 +163,29 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha eliminado la frecuencia ${data['nombre']} correctamente",
             {});
-        _showDialog(
-            "Frecuencia eliminada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminacion exitosa",
+          message: "Se han eliminado correctamente los datos de la frecuencia",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
-  }
-
-  void _showDialog(String title, IconData icon, Color color,
-      [String message = '']) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Row(
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 10),
-              Text(message),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                closeRegistroModal();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _onSubmit() {

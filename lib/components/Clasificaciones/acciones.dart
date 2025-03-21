@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/clasificaciones.dart';
 import '../Logs/logs_informativos.dart';
+import '../Generales/flushbar_helper.dart';
 
 class Acciones extends StatefulWidget {
-final VoidCallback showModal;
-final Function onCompleted;
+  final VoidCallback showModal;
+  final Function onCompleted;
   final String accion;
   final dynamic data;
 
-  Acciones({required this.showModal, required this.onCompleted, required this.accion, required this.data});
+  Acciones(
+      {required this.showModal,
+      required this.onCompleted,
+      required this.accion,
+      required this.data});
 
   @override
   _AccionesState createState() => _AccionesState();
@@ -42,8 +47,8 @@ class _AccionesState extends State<Acciones> {
 
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
-      widget.showModal(); // Llama a setShow con el valor booleano
-      widget.onCompleted();
+    widget.showModal(); // Llama a setShow con el valor booleano
+    widget.onCompleted();
   }
 
   void _guardarClasificacion(Map<String, dynamic> data) async {
@@ -66,26 +71,39 @@ class _AccionesState extends State<Acciones> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
-        LogsInformativos(
-            "Se ha registrado la clasificacion ${data['nombre']} correctamente",
-            dataTemp);
-        _showDialog(
-            "Clasificacion agregada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "La clasificacion fue agregada correctamente",
+          backgroundColor: Colors.green,
+        );
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
-        _showDialog(
-            "Error al agregar la clasificación", Icons.error, Colors.red);
+        LogsInformativos(
+            "Se ha agreado la clasificacion ${data['nombre']} correctamente",
+            dataTemp);
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un error al agregar la clasificacion",
+          backgroundColor: Colors.red,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red,
-          error.toString()); // Muestra el error de manera más explícita
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -106,18 +124,28 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha modificado la clasificacion ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog("Clasificacion actualizada correctamente", Icons.check,
-            Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Actualizacion exitosa",
+          message: "Los datos de la clasificacion fueron actualizados correctamente",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -135,46 +163,30 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
-            "Se ha eliminado la clasificacion ${data['nombre']} correctamente", {});
-        _showDialog(
-            "Clasificacion eliminada correctamente", Icons.check, Colors.green);
+            "Se ha eliminado la clasificacion ${data['nombre']} correctamente",
+            {});
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminacion exitosa",
+          message:
+              "Se han eliminado correctamente los datos de la clasificacion",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
-  }
-
-  void _showDialog(String title, IconData icon, Color color,
-      [String message = '']) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Row(
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 10),
-              Text(message),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                closeRegistroModal();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _onSubmit() {

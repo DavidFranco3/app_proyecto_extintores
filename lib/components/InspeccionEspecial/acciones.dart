@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/inspeccion_anual.dart';
 import '../Logs/logs_informativos.dart';
+import '../Generales/flushbar_helper.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -65,46 +66,28 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha eliminado la inspeccion anual ${data['id']} correctamente", {});
-        _showDialog(
-            "inspeccion anual eliminada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminacion exitosa",
+          message: "Se han eliminado correctamente los datos de la inspeccion especial",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+     showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
-  }
-
-  void _showDialog(String title, IconData icon, Color color,
-      [String message = '']) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Row(
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 10),
-              Text(message),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                closeRegistroModal();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _onSubmit() {

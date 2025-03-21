@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../api/dropbox.dart';
 import 'dart:io';
+import '../Generales/flushbar_helper.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -42,6 +43,7 @@ class _AccionesState extends State<Acciones> {
 
   final ImagePicker _picker = ImagePicker();
   XFile? _image; // Variable para almacenar la imagen seleccionada
+  String? imageUrl; // Para la URL de la imagen desde Dropbox
 
   // Método para seleccionar una imagen desde la galería
   Future<void> _pickImage() async {
@@ -49,8 +51,7 @@ class _AccionesState extends State<Acciones> {
         await _picker.pickImage(source: ImageSource.gallery);
     setState(() {
       _image = pickedImage; // Asignar la imagen seleccionada a la variable
-      print("que hay aca?");
-      print(_image!.path);
+      imageUrl = null;
     });
   }
 
@@ -76,6 +77,8 @@ class _AccionesState extends State<Acciones> {
     _cpostalController = TextEditingController();
     _referenciaController = TextEditingController();
 
+    
+
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _nombreController.text = widget.data['nombre'] ?? '';
       _imagenController.text = widget.data['imagen'] ?? '';
@@ -89,6 +92,7 @@ class _AccionesState extends State<Acciones> {
       _municipioController.text = widget.data['municipio'] ?? '';
       _cpostalController.text = widget.data['cPostal'] ?? '';
       _referenciaController.text = widget.data['referencia'] ?? '';
+      imageUrl = widget.data['imagen'].replaceAll('dl=0', 'raw=1');
     }
   }
 
@@ -178,25 +182,39 @@ class _AccionesState extends State<Acciones> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha registrado la cliente ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Cliente agregada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "El cliente fue agregado correctamente",
+          backgroundColor: Colors.green,
+        );
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
-        _showDialog("Error al agregar la cliente", Icons.error, Colors.red);
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un error al agregar la clasificacion",
+          backgroundColor: Colors.red,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red,
-          error.toString()); // Muestra el error de manera más explícita
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -228,18 +246,28 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha modificado la cliente ${data['nombre']} correctamente",
             dataTemp);
-        _showDialog(
-            "Cliente actualizada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Actualizacion exitosa",
+          message: "Los datos del cliente fueron actualizados correctamente",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -256,49 +284,34 @@ class _AccionesState extends State<Acciones> {
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha eliminado la cliente ${data['nombre']} correctamente", {});
-        _showDialog(
-            "Cliente eliminada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminacion exitosa",
+          message: "Se han eliminado correctamente los datos del cliente",
+          backgroundColor: Colors.green,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red, error.toString());
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
-  void _showDialog(String title, IconData icon, Color color,
-      [String message = '']) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Row(
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 10),
-              Text(message),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                closeRegistroModal();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _onSubmit() async {
+    setState(() {
+      _isLoading = true;
+    });
     if (_formKey.currentState?.validate() ?? false) {
       final dropboxService = DropboxService();
       String imagenFile = "";
@@ -335,8 +348,6 @@ class _AccionesState extends State<Acciones> {
         'cPostal': _cpostalController.text,
         'referencia': _referenciaController.text,
       };
-
-      print(formData);
 
       if (widget.accion == 'registrar') {
         _guardarCliente(formData);
@@ -375,37 +386,44 @@ class _AccionesState extends State<Acciones> {
               onTap:
                   _pickImage, // Al hacer tap, se activa el selector de imágenes
               child: Container(
-                width: double.infinity, // Ancho del contenedor
-                height: 250, // Altura fija
+                width: double.infinity,
+                height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200], // Fondo gris claro
-                  border: Border.all(color: Colors.grey), // Borde gris
-                  borderRadius: BorderRadius.circular(10), // Bordes redondeados
+                  color: Colors.grey[200],
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: _image == null
+                child: _image == null && imageUrl == null
                     ? Center(
                         child: Icon(
                           Icons.cloud_upload,
                           size: 50,
                           color: Colors.blueAccent,
                         ),
-                      ) // Si no hay imagen seleccionada
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.file(
-                          File(_image!.path),
-                          fit: BoxFit.cover, // Ajusta la imagen al contenedor
-                        ),
-                      ),
+                      )
+                    : (_image != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              File(_image!.path),
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              imageUrl!,
+                              fit: BoxFit.cover,
+                            ),
+                          )),
               ),
             ),
             SizedBox(height: 10),
-            if (_image !=
-                null) // Muestra un mensaje cuando se haya seleccionado una imagen
+            if (_image != null || imageUrl != null)
               Text(
                 "Imagen seleccionada",
                 style: TextStyle(color: Colors.green, fontSize: 16),
-              ),
+              )
           ],
           TextFormField(
             controller: _nombreController,

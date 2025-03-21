@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../api/encuesta_inspeccion.dart';
-import '../../api/encuesta_datos_inspeccion.dart';
 import '../../api/inspecciones.dart';
 import '../../api/auth.dart';
 import '../../api/clientes.dart';
@@ -18,6 +17,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
+import '../../components/Generales/flushbar_helper.dart';
 
 class EncuestaPage extends StatefulWidget {
   final VoidCallback showModal;
@@ -70,7 +70,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
     super.initState();
     getEncuestas();
     getClientes();
-    getEncuestasAbiertas();
 
     _pageController.addListener(() {
       setState(() {
@@ -236,44 +235,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
-  Future<void> getEncuestasAbiertas() async {
-    try {
-      final encuestaDatosInspeccionService = EncuestaDatosInspeccionService();
-      final List<dynamic> response =
-          await encuestaDatosInspeccionService.listarEncuestaDatosInspeccion();
-
-      if (response.isNotEmpty) {
-        setState(() {
-          dataEncuestasAbiertas = formatModelEncuestasAbiertas(response);
-          loading = false;
-        });
-      } else {
-        setState(() {
-          dataEncuestasAbiertas = [];
-          loading = false;
-        });
-      }
-    } catch (e) {
-      print("Error al obtener las encuestas: $e");
-      setState(() {
-        loading = false;
-      });
-    }
-  }
-
-  // Función para formatear los datos de las encuestas
-  List<Map<String, dynamic>> formatModelEncuestasAbiertas(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'preguntas': item['preguntas'],
-      });
-    }
-    return dataTemp;
-  }
-
   // Actualiza las preguntas cuando se selecciona una encuesta
   void actualizarPreguntas(String encuestaId) {
     final encuesta =
@@ -350,25 +311,39 @@ class _EncuestaPageState extends State<EncuestaPage> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
+          returnPrincipalPage();
         });
         LogsInformativos(
             "Se ha registrado la inspeccion ${data['idCliente']} correctamente",
             dataTemp);
-        _showDialog(
-            "Inspeccion agregada correctamente", Icons.check, Colors.green);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "Los datos de la encuesta fueron llenados correctamente",
+          backgroundColor: Colors.green,
+        );
       } else {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
-        _showDialog("Error al agregar la inspeccion", Icons.error, Colors.red);
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un problema al llenar la encuesta",
+          backgroundColor: Colors.red,
+        );
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      _showDialog("Oops...", Icons.error, Colors.red,
-          error.toString()); // Muestra el error de manera más explícita
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
     }
   }
 
@@ -472,34 +447,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
     ).then((_) {
       // Actualizar encuestas al regresar de la página
     });
-  }
-
-  void _showDialog(String title, IconData icon, Color color,
-      [String message = '']) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Row(
-            children: [
-              Icon(icon, color: color),
-              SizedBox(width: 10),
-              Text(message),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                returnPrincipalPage();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   final ImagePicker _picker = ImagePicker();
