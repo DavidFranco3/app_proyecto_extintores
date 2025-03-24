@@ -25,8 +25,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
   Future<void> getUsuarios() async {
     try {
       final usuariosService = UsuariosService();
-      final List<dynamic> response =
-          await usuariosService.listarUsuarios();
+      final List<dynamic> response = await usuariosService.listarUsuarios();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -62,7 +61,13 @@ class _UsuariosPageState extends State<UsuariosPage> {
               Expanded(
                 child: Text(
                   'Registrar Usuario',
+                  style: TextStyle(
+                    fontSize: 23, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(
@@ -129,8 +134,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Usuarios"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Usuarios"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

@@ -60,7 +60,13 @@ class _ClientesPageState extends State<ClientesPage> {
               Expanded(
                 child: Text(
                   'Registrar Cliente',
+                  style: TextStyle(
+                    fontSize: 24, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(

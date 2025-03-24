@@ -25,7 +25,8 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
   Future<void> getFrecuencias() async {
     try {
       final frecuenciasService = FrecuenciasService();
-      final List<dynamic> response = await frecuenciasService.listarFrecuencias();
+      final List<dynamic> response =
+          await frecuenciasService.listarFrecuencias();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -60,8 +61,14 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Registrar frecuencia',
+                  'Registrar periodo',
+                  style: TextStyle(
+                    fontSize: 23, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(
@@ -73,27 +80,28 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
             ],
           ),
           content: SingleChildScrollView(
-          child: IntrinsicHeight(
-            child: Column(
-              children: [
-                // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                GestureDetector(
-                  onTap: () {
-                    FocusScope.of(context).unfocus(); // Cierra el teclado al tocar fuera
-                  },
-                  child: Acciones(
-                    showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context)
+                          .unfocus(); // Cierra el teclado al tocar fuera
                     },
-                    onCompleted: getFrecuencias,
-                    accion: "registrar",
-                    data: null,
+                    child: Acciones(
+                      showModal: () {
+                        Navigator.pop(context); // Esto cierra el modal
+                      },
+                      onCompleted: getFrecuencias,
+                      accion: "registrar",
+                      data: null,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
         );
       },
     );
@@ -126,7 +134,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Frecuencias"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Periodos"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -137,7 +145,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Frecuencias",
+                      "Periodos",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita

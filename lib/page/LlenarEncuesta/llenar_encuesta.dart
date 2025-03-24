@@ -523,30 +523,59 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
                     // Botón centrado debajo del título
                     Center(
-                      child: ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : _onSubmit, // Deshabilitar botón mientras carga
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          minimumSize: Size(200, 50), // Tamaño fijo
-                        ),
-                        child: _isLoading
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SpinKitFadingCircle(
-                                    color: const Color.fromARGB(255, 241, 8, 8),
-                                    size: 24,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text("Guardando..."), // Texto de carga
-                                ],
-                              )
-                            : Text(
-                                "Guardar Inspección"), // Texto normal cuando no está cargando
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : _onSubmit, // Deshabilitar botón mientras carga
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                minimumSize: Size(0, 50), // Tamaño flexible
+                              ),
+                              child: _isLoading
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SpinKitFadingCircle(
+                                          color: const Color.fromARGB(
+                                              255, 241, 8, 8),
+                                          size: 24,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text("Guardando..."), // Texto de carga
+                                      ],
+                                    )
+                                  : Text(
+                                      "Guardar Inspección"), // Texto normal cuando no está cargando
+                            ),
+                          ),
+                          SizedBox(width: 10), // Espacio entre los botones
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : returnPrincipalPage, // Deshabilitar durante carga
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                minimumSize: Size(0, 50), // Tamaño flexible
+                              ),
+                              child: _isLoading
+                                  ? SpinKitFadingCircle(
+                                      color:
+                                          const Color.fromARGB(255, 241, 8, 8),
+                                      size: 24,
+                                    )
+                                  : Text("Cancelar"),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+
                     SizedBox(height: 20),
 
                     // Dropdown de Encuesta
@@ -570,6 +599,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           actualizarPreguntas(newValue);
                         }
                       },
+                      isExpanded: true,
                       items: dataEncuestas.map((encuesta) {
                         return DropdownMenuItem<String>(
                           value: encuesta['id'],
@@ -634,27 +664,54 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16),
                                           ),
-                                          SizedBox(height: 10),
-                                          Column(
-                                            children: preguntasPagina[index]
-                                                .opciones
-                                                .map((opcion) {
-                                              return ListTile(
-                                                title: Text(opcion),
-                                                leading: Radio<String>(
-                                                  value: opcion,
-                                                  groupValue:
-                                                      preguntasPagina[index]
-                                                          .respuesta,
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      preguntasPagina[index]
-                                                          .respuesta = value!;
-                                                    });
-                                                  },
-                                                ),
-                                              );
-                                            }).toList(),
+                                          SizedBox(
+                                              height: 5), // Reduce el espacio
+                                          SizedBox(
+                                            height:
+                                                120, // Reduce la altura del ListView
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              physics:
+                                                  ClampingScrollPhysics(), // Evita espacio extra
+                                              itemCount: preguntasPagina[index]
+                                                  .opciones
+                                                  .length,
+                                              itemBuilder: (context, i) {
+                                                final opcion =
+                                                    preguntasPagina[index]
+                                                        .opciones[i];
+                                                return ListTile(
+                                                  contentPadding: EdgeInsets
+                                                      .zero, // Elimina márgenes internos
+                                                  title: Text(opcion),
+                                                  leading: Radio<String>(
+                                                    value: opcion,
+                                                    groupValue:
+                                                        preguntasPagina[index]
+                                                            .respuesta,
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        preguntasPagina[index]
+                                                            .respuesta = value!;
+                                                      });
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          TextField(
+                                            decoration: InputDecoration(
+                                              labelText: "Observaciones",
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            maxLines: 2,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                preguntasPagina[index]
+                                                    .observaciones = value;
+                                              });
+                                            },
                                           ),
                                         ],
                                       ),
@@ -861,38 +918,34 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         ),
                       ),
 
-                    SizedBox(height: 10),
-
                     // Si hay encuesta seleccionada y preguntas disponibles
                     if (preguntas.isNotEmpty)
-                      Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.arrow_back),
-                              onPressed: currentPage > 0
-                                  ? () {
-                                      _pageController.previousPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeIn);
-                                    }
-                                  : null,
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.arrow_forward),
-                              onPressed: currentPage <
-                                      dividirPreguntasEnPaginas().length + 2
-                                  ? () {
-                                      _pageController.nextPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeIn);
-                                    }
-                                  : null,
-                            ),
-                          ],
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back, size: 30),
+                            onPressed: currentPage > 0
+                                ? () {
+                                    _pageController.previousPage(
+                                      duration: Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                : null,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.arrow_forward, size: 30),
+                            onPressed: currentPage <
+                                    dividirPreguntasEnPaginas().length + 2
+                                ? () {
+                                    _pageController.nextPage(
+                                        duration: Duration(milliseconds: 300),
+                                        curve: Curves.easeIn);
+                                  }
+                                : null,
+                          ),
+                        ],
                       ),
                   ],
                 ),

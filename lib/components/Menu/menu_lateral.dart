@@ -86,199 +86,205 @@ class _MenuLateralState extends State<MenuLateral> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          Container(
-            height: 80, // Reduciendo el tamaño
-            color: const Color.fromARGB(255, 112, 114, 113),
-            child: Center(
-              child: Text(
-                '',
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-          ),
-          // Verifica el tipo de usuario para mostrar el menú correspondiente
-          if (tipoUsuario == 'administrador') ...[
-            _buildListTile(
-              context,
-              Icons.home,
-              'Inicio',
-              HomePage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.person,
-              'Clientes',
-              ClientesPage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.fact_check, // Ícono más relacionado
-              'Inspección Anual',
-              InspeccionEspecialPage(),
-            ),
-            // Submenú de Inspecciones
-            ExpansionTile(
-              leading: Icon(Icons.check_box_outline_blank),
-              title: Text(
-                'Inspecciones',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
-              ),
-              dense: true,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero), // Elimina la línea inferior
-              collapsedShape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero), // Elimina la línea superior
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Column(
-                    children: [
-                      _buildListTile(
-                        context,
-                        Icons.poll, // Icono relacionado con encuestas
-                        'Crear Encuesta',
-                        EncuestasPage(),
-                      ),
-                      _buildListTile(
-                        context,
-                        Icons
-                            .report_problem, // Ícono representativo de inspección
-                        'Inspección',
-                        InspeccionesPage(),
-                      ),
-                      _buildListTile(
-                        context,
-                        Icons
-                            .next_week_sharp, // Ícono representativo de inspección
-                        'Inspecciónes Proximas',
-                        InspeccionesProximasPage(),
-                      ),
-                      _buildListTile(
-                        context,
-                        Icons.date_range, // Ícono representativo de programa
-                        'Programa de Inspección',
-                        ProgramaInspeccionesPage(),
-                      ),
-                      _buildListTile(
-                        context,
-                        Icons.show_chart, // Ícono representativo de gráfico
-                        'Gráfico de Inspecciones',
-                        GraficaInspeccionesPage(),
-                      ),
-                    ],
-                  ),
+      child: SizedBox(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              height: 90, // Reduciendo el tamaño
+              color: const Color.fromARGB(255, 112, 114, 113),
+              child: Center(
+                child: Text(
+                  '',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
-              ],
-            ),
-            _buildListTile(
-              context,
-              FontAwesomeIcons.list,
-              'Clasificaciones',
-              ClasificacionesPage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.calendar_today,
-              'Frecuencias',
-              FrecuenciasPage(),
-            ),
-            // Menú principal para Extintores con opciones desplegables
-            ExpansionTile(
-              leading: Icon(FontAwesomeIcons.fireAlt),
-              title: Text(
-                'Extintores',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
               ),
-              dense: true,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero), // Elimina la línea inferior
-              collapsedShape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero), // Elimina la línea superior
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Column(
-                    children: [
-                      _buildListTile(
-                        context,
-                        FontAwesomeIcons.fireExtinguisher,
-                        'Extintores',
-                        ExtintoresPage(),
-                      ),
-                      _buildListTile(
-                        context,
-                        FontAwesomeIcons.wrench,
-                        'Tipos de Extintores',
-                        TiposExtintoresPage(),
-                      ),
-                    ],
-                  ),
+            ),
+            // Verifica el tipo de usuario para mostrar el menú correspondiente
+            if (tipoUsuario == 'administrador') ...[
+              _buildListTile(
+                context,
+                Icons.home,
+                'Inicio',
+                HomePage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.person,
+                'Clientes',
+                ClientesPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.fact_check, // Ícono más relacionado
+                'Inspección Anual',
+                InspeccionEspecialPage(),
+              ),
+              // Submenú de Inspecciones
+              ExpansionTile(
+                leading: Icon(Icons.check_box_outline_blank),
+                title: Text(
+                  'Inspecciones',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
                 ),
-              ],
-            ),
-            _buildListTile(
-              context,
-              FontAwesomeIcons.person,
-              'Usuarios',
-              UsuariosPage(),
-            ),
-            _buildListTile(
-              context,
-              FontAwesomeIcons.fileLines,
-              'Logs',
-              LogsPage(),
-            ),
-          ]
-          // Menú para Inspector
-          else if (tipoUsuario == 'inspector') ...[
-            _buildListTile(
-              context,
-              Icons.home,
-              'Inicio',
-              HomePage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.poll, // Icono relacionado con encuestas
-              'Crear Encuesta',
-              EncuestasPage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.report_problem, // Ícono representativo de inspección
-              'Inspección',
-              InspeccionesPage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.next_week_sharp, // Ícono representativo de inspección
-              'Inspecciónes Proximas',
-              InspeccionesProximasPage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.date_range, // Ícono representativo de programa
-              'Programa de Inspección',
-              ProgramaInspeccionesPage(),
-            ),
-            _buildListTile(
-              context,
-              Icons.show_chart, // Ícono representativo de gráfico
-              'Gráfico de Inspecciones',
-              GraficaInspeccionesPage(),
+                dense: true,
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.zero), // Elimina la línea inferior
+                collapsedShape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.zero), // Elimina la línea superior
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20.0),
+                    child: Column(
+                      children: [
+                        _buildListTile(
+                          context,
+                          Icons.poll, // Icono relacionado con encuestas
+                          'Crear Inspeccion',
+                          EncuestasPage(),
+                        ),
+                        _buildListTile(
+                          context,
+                          Icons
+                              .report_problem, // Ícono representativo de inspección
+                          'Inspección',
+                          InspeccionesPage(),
+                        ),
+                        _buildListTile(
+                          context,
+                          Icons
+                              .next_week_sharp, // Ícono representativo de inspección
+                          'Inspecciones Proximas',
+                          InspeccionesProximasPage(),
+                        ),
+                        _buildListTile(
+                          context,
+                          Icons.date_range, // Ícono representativo de programa
+                          'Programa de Inspección',
+                          ProgramaInspeccionesPage(),
+                        ),
+                        _buildListTile(
+                          context,
+                          Icons.show_chart, // Ícono representativo de gráfico
+                          'Gráfico de Inspecciones',
+                          GraficaInspeccionesPage(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              _buildListTile(
+                context,
+                FontAwesomeIcons.list,
+                'Clasificaciones',
+                ClasificacionesPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.calendar_today,
+                'Periodos',
+                FrecuenciasPage(),
+              ),
+              // Menú principal para Extintores con opciones desplegables
+              ExpansionTile(
+                leading: Icon(FontAwesomeIcons.fireAlt),
+                title: Text(
+                  'Extintores',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+                ),
+                dense: true,
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.zero), // Elimina la línea inferior
+                collapsedShape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.zero), // Elimina la línea superior
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20.0),
+                    child: Column(
+                      children: [
+                        _buildListTile(
+                          context,
+                          FontAwesomeIcons.fireExtinguisher,
+                          'Extintores',
+                          ExtintoresPage(),
+                        ),
+                        _buildListTile(
+                          context,
+                          FontAwesomeIcons.wrench,
+                          'Tipos de Extintores',
+                          TiposExtintoresPage(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              _buildListTile(
+                context,
+                FontAwesomeIcons.person,
+                'Usuarios',
+                UsuariosPage(),
+              ),
+              _buildListTile(
+                context,
+                FontAwesomeIcons.fileLines,
+                'Logs',
+                LogsPage(),
+              ),
+            ]
+            // Menú para Inspector
+            else if (tipoUsuario == 'inspector') ...[
+              _buildListTile(
+                context,
+                Icons.home,
+                'Inicio',
+                HomePage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.poll, // Icono relacionado con encuestas
+                'Crear Inspeccion',
+                EncuestasPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.report_problem, // Ícono representativo de inspección
+                'Inspección',
+                InspeccionesPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.next_week_sharp, // Ícono representativo de inspección
+                'Inspecciónes Proximas',
+                InspeccionesProximasPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.date_range, // Ícono representativo de programa
+                'Programa de Inspección',
+                ProgramaInspeccionesPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.show_chart, // Ícono representativo de gráfico
+                'Gráfico de Inspecciones',
+                GraficaInspeccionesPage(),
+              ),
+            ],
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Cerrar sesión'),
+              onTap: () {
+                _logout(context);
+              },
             ),
           ],
-          ListTile(
-            leading: Icon(Icons.logout),
-            title: Text('Cerrar sesión'),
-            onTap: () {
-              _logout(context);
-            },
-          ),
-        ],
+        ),
       ),
     );
   }

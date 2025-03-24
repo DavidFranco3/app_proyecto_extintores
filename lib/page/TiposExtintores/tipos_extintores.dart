@@ -61,7 +61,13 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
               Expanded(
                 child: Text(
                   'Registrar tipo de extintor',
+                  style: TextStyle(
+                    fontSize: 16, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(
@@ -127,7 +133,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-        currentPage: "Tipos de extintores",
+        currentPage: "Tipos de Extintores",
       ), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos

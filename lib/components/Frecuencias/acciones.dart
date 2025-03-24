@@ -71,6 +71,7 @@ class _AccionesState extends State<Acciones> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
+          closeRegistroModal();
         });
         LogsInformativos(
             "Se ha registrado la frecuencia ${data['nombre']} correctamente",
@@ -85,7 +86,6 @@ class _AccionesState extends State<Acciones> {
         // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
         showCustomFlushbar(
           context: context,
@@ -166,12 +166,12 @@ class _AccionesState extends State<Acciones> {
           closeRegistroModal();
         });
         LogsInformativos(
-            "Se ha eliminado la frecuencia ${data['nombre']} correctamente",
+            "Se ha eliminado el periodo ${data['nombre']} correctamente",
             {});
         showCustomFlushbar(
           context: context,
           title: "Eliminacion exitosa",
-          message: "Se han eliminado correctamente los datos de la frecuencia",
+          message: "Se han eliminado correctamente los datos del periodo",
           backgroundColor: Colors.green,
         );
       }

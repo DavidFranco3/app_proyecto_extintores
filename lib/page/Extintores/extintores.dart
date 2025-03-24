@@ -62,7 +62,13 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
               Expanded(
                 child: Text(
                   'Registrar extintor',
+                  style: TextStyle(
+                    fontSize: 23, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(

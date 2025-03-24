@@ -40,13 +40,13 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
     return dateFormat.format(localDate);
   }
 
-   // Función para abrir el modal de registro con el formulario de Acciones
+  // Función para abrir el modal de registro con el formulario de Acciones
   void openGraficaPage(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => GraficaDatosInspeccionesPage(
-              idInspeccion: row["id"])),
+          builder: (context) =>
+              GraficaDatosInspeccionesPage(idInspeccion: row["id"])),
     ).then((_) {
       // Actualizar inspecciones al regresar de la página
     });
@@ -115,31 +115,62 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.inspeccionAnual.map((row) {
-                return {
-                  'Titulo': row['titulo'],
-                  'Cliente': row['cliente'],
-                  'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
-                  '_originalRow': row,
-                };
-              }).toList(),
-              columnas: columnas,
-              accionesBuilder: (row) {
-                return Row(
-                  children: [
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
-                      onPressed: () => openEliminarModal(row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.chartLine, color: Colors.red),
-                      onPressed: () => openGraficaPage(row['_originalRow']),
-                    ),
-                  ],
-                );
-              },
-            ),
+                datos: widget.inspeccionAnual.map((row) {
+                  return {
+                    'Titulo': row['titulo'],
+                    'Cliente': row['cliente'],
+                    'Creado el': formatDate(row['createdAt'] ?? ''),
+                    'Actualizado el': formatDate(row['updatedAt'] ?? ''),
+                    '_originalRow': row,
+                  };
+                }).toList(),
+                columnas: columnas,
+                accionesBuilder: (row) {
+                  return PopupMenuButton<String>(
+                    icon: FaIcon(
+                      FontAwesomeIcons.bars,
+                      color: Color.fromARGB(255, 27, 40, 223),
+                    ), // Icono del menú
+                    onSelected: (String value) {
+                      if (value == 'eliminar') {
+                        openEliminarModal(row['_originalRow']);
+                      } else if (value == 'grafica') {
+                        openGraficaPage(row['_originalRow']);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'eliminar',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.trash,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Eliminar'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'grafica',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.chartLine,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Ver Gráfica'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }),
           ),
         ),
       ],

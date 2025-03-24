@@ -30,7 +30,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   final _formKey = GlobalKey<FormState>();
   List<Pregunta> preguntas = [];
   TextEditingController preguntaController = TextEditingController();
-  TextEditingController observacionController = TextEditingController();
+  TextEditingController categoriaController = TextEditingController();
   TextEditingController nombreController = TextEditingController();
   TextEditingController frecuenciaController = TextEditingController();
   TextEditingController clasificacionController = TextEditingController();
@@ -48,7 +48,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     List<Pregunta> preguntasss = (widget.data?["preguntas"] as List<dynamic>?)
             ?.map((pregunta) => Pregunta(
                   titulo: pregunta["titulo"] ?? "",
-                  observaciones: pregunta["observaciones"] ?? "",
+                  categoria: pregunta["categoria"] ?? "",
                   opciones: List<String>.from(pregunta["opciones"] ?? []),
                 ))
             .toList() ??
@@ -150,10 +150,9 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     setState(() {
       preguntas.add(Pregunta(
           titulo: preguntaController.text,
-          opciones: List.from(opcionesTemp),
-          observaciones: observacionController.text));
+          categoria: categoriaController.text,
+          opciones: List.from(opcionesTemp)));
       preguntaController.clear();
-      observacionController.clear();
     });
   }
 
@@ -315,7 +314,8 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     return Scaffold(
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Crear Encuesta"), // Usa el menú lateral
+      drawer:
+          MenuLateral(currentPage: "Crear Inspeccion"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
@@ -328,7 +328,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Center(
                         child: Text(
-                          "Encuestas",
+                          "Crear Inspeccion",
                           style: TextStyle(
                             fontSize: 24, // Tamaño grande
                             fontWeight: FontWeight.bold, // Negrita
@@ -430,6 +430,17 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                       ? 'La clasificación es obligatoria'
                                       : null,
                             ),
+                            TextFormField(
+                              controller: categoriaController,
+                              decoration:
+                                  InputDecoration(labelText: "Categoria"),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'La categoria es obligatoria';
+                                }
+                                return null;
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -468,11 +479,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                               decoration:
                                   InputDecoration(labelText: "Pregunta"),
                             ),
-                            TextField(
-                              controller: observacionController,
-                              decoration:
-                                  InputDecoration(labelText: "Observaciones"),
-                            ),
                             SizedBox(height: 10),
                             ListView.builder(
                               shrinkWrap: true,
@@ -484,7 +490,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   child: ListTile(
                                     title: Text(preguntas[index].titulo),
                                     subtitle: Text(
-                                      "Observaciones: ${preguntas[index].observaciones}\n"
+                                      "Categoria: ${preguntas[index].categoria}\n"
                                       "Opciones: ${preguntas[index].opciones.join(", ")}",
                                     ),
                                     trailing: IconButton(
@@ -510,18 +516,18 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
 class Pregunta {
   String titulo;
-  String observaciones;
+  String categoria;
   List<String> opciones;
 
   Pregunta(
       {required this.titulo,
-      required this.observaciones,
+      required this.categoria,
       required this.opciones});
 
   Map<String, dynamic> toJson() {
     return {
       "titulo": titulo,
-      "observaciones": observaciones,
+      "categoria": categoria,
       "opciones": opciones,
     };
   }

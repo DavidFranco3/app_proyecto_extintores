@@ -62,7 +62,13 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
               Expanded(
                 child: Text(
                   'Registrar Clasificación',
+                  style: TextStyle(
+                    fontSize: 18, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(

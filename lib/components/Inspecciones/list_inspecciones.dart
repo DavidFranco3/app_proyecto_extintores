@@ -151,7 +151,13 @@ class _TblInspeccionesState extends State<TblInspecciones> {
               Expanded(
                 child: Text(
                   'Eliminar Inspeccion',
+                 style: TextStyle(
+                    fontSize: 20, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(
@@ -218,54 +224,113 @@ class _TblInspeccionesState extends State<TblInspecciones> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.inspecciones.map((row) {
-                return {
-                  'Usuario': row['usuario'],
-                  'Cliente': row['cliente'],
-                  'Encuesta': row['cuestionario'],
-                  'Comentarios': row['comentarios'],
-                  'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
-                  '_originalRow': row,
-                };
-              }).toList(),
-              columnas: columnas,
-              accionesBuilder: (row) {
-                return Row(
-                  children: [
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
-                      onPressed: () => openEliminarModal(row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.filePdf,
-                          color: Colors.blue), // Ícono más relacionado con PDF
-                      onPressed: () => handleDownloadPDF(row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.envelope,
-                          color: const Color.fromRGBO(255, 152, 0,
-                              1)), // Ícono más relacionado con el correo
-                      onPressed: () => handleSendEmail(row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.filePdf,
-                          color: Colors
-                              .blue), // Ícono más relacionado con el correo
-                      onPressed: () =>
-                          PdfGenerator.guardarPDF(row['_originalRow']),
-                    ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.envelope,
-                          color: Colors
-                              .blue), // Ícono más relacionado con el correo
-                      onPressed: () => PdfGenerator.enviarPdfAlBackend(
-                          context, row['_originalRow']),
-                    ),
-                  ],
-                );
-              },
-            ),
+                datos: widget.inspecciones.map((row) {
+                  return {
+                    'Usuario': row['usuario'],
+                    'Cliente': row['cliente'],
+                    'Encuesta': row['cuestionario'],
+                    'Comentarios': row['comentarios'],
+                    'Creado el': formatDate(row['createdAt'] ?? ''),
+                    'Actualizado el': formatDate(row['updatedAt'] ?? ''),
+                    '_originalRow': row,
+                  };
+                }).toList(),
+                columnas: columnas,
+                accionesBuilder: (row) {
+                  return PopupMenuButton<String>(
+                    icon: FaIcon(
+                      FontAwesomeIcons.bars,
+                      color: Color.fromARGB(255, 27, 40, 223),
+                    ), // Icono del menú
+                    onSelected: (String value) {
+                      if (value == 'eliminar') {
+                        openEliminarModal(row['_originalRow']);
+                      } else if (value == 'pdf') {
+                        handleDownloadPDF(row['_originalRow']);
+                      } else if (value == 'enviarCorreo') {
+                        handleSendEmail(row['_originalRow']);
+                      } else if (value == 'guardarPdf') {
+                        PdfGenerator.guardarPDF(row['_originalRow']);
+                      } else if (value == 'enviarPdfBackend') {
+                        PdfGenerator.enviarPdfAlBackend(
+                            context, row['_originalRow']);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'eliminar',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.trash,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Eliminar'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'pdf',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.filePdf,
+                              color: Colors.blue,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Guardar PDF 1'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'enviarCorreo',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.envelope,
+                              color: Color.fromRGBO(255, 152, 0, 1),
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Enviar PDF 1'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'guardarPdf',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.filePdf,
+                              color: Colors.blue,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Guardar PDF 2'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'enviarPdfBackend',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.envelope,
+                              color: Color.fromRGBO(255, 152, 0, 1),
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Enviar PDF 2'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }),
           ),
         ),
       ],

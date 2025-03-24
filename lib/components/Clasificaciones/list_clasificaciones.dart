@@ -49,7 +49,13 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
               Expanded(
                 child: Text(
                   'Editar Clasificación',
+                  style: TextStyle(
+                    fontSize: 18, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(
@@ -97,7 +103,13 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
               Expanded(
                 child: Text(
                   'Eliminar Clasificación',
+                  style: TextStyle(
+                    fontSize: 18, // Tamaño más pequeño
+                    fontWeight: FontWeight.bold, // Negrita
+                  ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
               IconButton(
@@ -161,16 +173,39 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
               }).toList(),
               columnas: columnas,
               accionesBuilder: (row) {
-                return Row(
-                  children: [
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.pen,
-                          color: const Color.fromARGB(255, 6, 47, 214)),
-                      onPressed: () => openEditarModal(row['_originalRow']),
+                return PopupMenuButton<String>(
+                  icon: FaIcon(FontAwesomeIcons
+                      .bars, color: Color.fromARGB(255, 27, 40, 223)), // Este es el botón faBars que muestra el menú
+                  onSelected: (String value) {
+                    if (value == 'editar') {
+                      openEditarModal(row['_originalRow']);
+                    } else if (value == 'eliminar') {
+                      openEliminarModal(row['_originalRow']);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'editar',
+                      child: Row(
+                        children: [
+                          FaIcon(FontAwesomeIcons.pen,
+                              color: Color(0xFFFFC107), size: 16),
+                          SizedBox(width: 8),
+                          Text('Editar'),
+                        ],
+                      ),
                     ),
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.trash, color: Colors.red),
-                      onPressed: () => openEliminarModal(row['_originalRow']),
+                    PopupMenuItem<String>(
+                      value: 'eliminar',
+                      child: Row(
+                        children: [
+                          FaIcon(FontAwesomeIcons.trash,
+                              color: Color(0xFFDC3545), size: 16),
+                          SizedBox(width: 8),
+                          Text('Eliminar'),
+                        ],
+                      ),
                     ),
                   ],
                 );

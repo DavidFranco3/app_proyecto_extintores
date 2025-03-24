@@ -1,4 +1,4 @@
-package com.example.prueba
+package com.isotech.aggo
 
 import io.flutter.embedding.android.FlutterActivity
 
