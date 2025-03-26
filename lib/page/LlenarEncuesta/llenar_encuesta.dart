@@ -39,7 +39,6 @@ class EncuestaPage extends StatefulWidget {
 class _EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
   List<Map<String, dynamic>> dataEncuestas = [];
-  List<Map<String, dynamic>> dataEncuestasAbiertas = [];
   List<Map<String, dynamic>> dataRamas = [];
   String? selectedEncuestaId;
   String? selectedRamaId;
@@ -241,8 +240,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
   Future<void> getEncuestas(String idRama) async {
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
-      final List<dynamic> response =
-          await encuestaInspeccionService.listarEncuestaInspeccionPorRama(idRama);
+      final List<dynamic> response = await encuestaInspeccionService
+          .listarEncuestaInspeccionPorRama(idRama);
 
       if (response.isNotEmpty) {
         setState(() {
@@ -285,7 +284,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       preguntas = (encuesta['preguntas'] as List<dynamic>).map((pregunta) {
         return Pregunta(
           titulo: pregunta['titulo'],
-          observaciones: pregunta['observaciones'],
+          observaciones: "",
           opciones: List<String>.from(pregunta['opciones']),
         );
       }).toList();
@@ -617,10 +616,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         ],
                       ),
                     ),
-
                     SizedBox(height: 20),
-
-                                        // Dropdown de Encuesta
+                    // Dropdown de Encuesta
                     DropdownButtonFormField<String>(
                       value: selectedRamaId,
                       hint: Text('Selecciona una rama'),
@@ -642,7 +639,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                       }).toList(),
                     ),
                     SizedBox(height: 10),
-
                     // Dropdown de Encuesta
                     DropdownButtonFormField<String>(
                       value: selectedEncuestaId,
