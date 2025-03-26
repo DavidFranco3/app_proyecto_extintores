@@ -149,11 +149,13 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Dias de duracion'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+    int totalRegistros = widget.frecuencias.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -161,12 +163,14 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.frecuencias.map((row) {
+              datos: widget.frecuencias.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Nombre': row['nombre'],
                   'Dias de duracion': row['cantidadDias'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),

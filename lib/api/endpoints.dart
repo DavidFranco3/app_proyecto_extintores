@@ -26,6 +26,14 @@ const String ENDPOINT_ACTUALIZAR_CLIENTES = "/clientes/actualizar";
 const String ENDPOINT_ELIMINAR_CLIENTES = "/clientes/eliminar";
 const String ENDPOINT_DESHABILITAR_CLIENTES = "/clientes/deshabilitar";
 
+// Ramas
+const String ENDPOINT_LISTAR_RAMAS = "/ramas/listar";
+const String ENDPOINT_REGISTRAR_RAMAS = "/ramas/registro";
+const String ENDPOINT_OBTENER_RAMAS = "/ramas/obtener";
+const String ENDPOINT_ACTUALIZAR_RAMAS = "/ramas/actualizar";
+const String ENDPOINT_ELIMINAR_RAMAS = "/ramas/eliminar";
+const String ENDPOINT_DESHABILITAR_RAMAS = "/ramas/deshabilitar";
+
 // Inspeccion anual
 const String ENDPOINT_LISTAR_INSPECCION_ANUAL = "/inspeccionAnual/listar";
 const String ENDPOINT_LISTAR_INSPECCION_ANUAL_ID = "/inspeccionAnual/listarPorId";
@@ -36,8 +44,9 @@ const String ENDPOINT_ELIMINAR_INSPECCION_ANUAL = "/inspeccionAnual/eliminar";
 const String ENDPOINT_DESHABILITAR_INSPECCION_ANUAL = "/inspeccionAnual/deshabilitar";
 const String ENDPOINT_ENVIAR_PDF_INSPECCION_ANUAL = "/inspeccionAnual/enviar-pdf";
 
-// Encuestas de Satisfacción
+// Encuestas de inspeccion
 const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION = "/encuestaInspeccion/listar";
+const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA = "/encuestaInspeccion/listarPorRama";
 const String ENDPOINT_REGISTRAR_ENCUESTA_INSPECCION = "/encuestaInspeccion/registro";
 const String ENDPOINT_OBTENER_ENCUESTA_INSPECCION = "/encuestaInspeccion/obtener";
 const String ENDPOINT_ACTUALIZAR_ENCUESTA_INSPECCION = "/encuestaInspeccion/actualizar";

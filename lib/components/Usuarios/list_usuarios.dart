@@ -149,13 +149,15 @@ class _TblUsuariosState extends State<TblUsuarios> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Email'},
       {'name': 'Telefono'},
       {'name': 'Rol'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+    int totalRegistros = widget.usuarios.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,14 +166,16 @@ class _TblUsuariosState extends State<TblUsuarios> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.usuarios.map((row) {
+              datos: widget.usuarios.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Nombre': row['nombre'],
                   'Email': row['email'],
                   'Telefono': row['telefono'],
                   'Rol': row['tipo'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),

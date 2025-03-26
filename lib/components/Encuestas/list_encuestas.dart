@@ -112,12 +112,15 @@ class _TblEncuestasState extends State<TblEncuestas> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Frecuencia'},
       {'name': 'Clasificacion'},
+      {'name': 'Rama'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+    int totalRegistros = widget.encuestas.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -126,13 +129,16 @@ class _TblEncuestasState extends State<TblEncuestas> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.encuestas.map((row) {
+              datos: widget.encuestas.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Nombre': row['nombre'],
                   'Frecuencia': row['frecuencia'],
                   'Clasificacion': row['clasificacion'],
+                  'Rama': row['rama'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),

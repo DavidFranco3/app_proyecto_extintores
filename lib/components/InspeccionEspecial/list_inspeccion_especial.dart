@@ -103,11 +103,13 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Titulo'},
       {'name': 'Cliente'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+    int totalRegistros = widget.inspeccionAnual.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -115,12 +117,14 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-                datos: widget.inspeccionAnual.map((row) {
+                datos: widget.inspeccionAnual.asMap().entries.map((entry) {
+                  int index = totalRegistros - entry.key;
+                  Map<String, dynamic> row = entry.value;
                   return {
+                    'Registro': index,
                     'Titulo': row['titulo'],
                     'Cliente': row['cliente'],
                     'Creado el': formatDate(row['createdAt'] ?? ''),
-                    'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                     '_originalRow': row,
                   };
                 }).toList(),

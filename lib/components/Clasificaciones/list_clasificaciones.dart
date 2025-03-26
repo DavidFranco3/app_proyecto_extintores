@@ -149,33 +149,36 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Descripción'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
 
+    int totalRegistros = widget.clasificaciones.length;
+
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Envolvemos el SizedBox dentro de Expanded
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.clasificaciones.map((row) {
+              datos: widget.clasificaciones.asMap().entries.map((entry) {
+                int index = totalRegistros -
+                    entry.key; // Restamos al total para invertir el conteo
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Nombre': row['nombre'],
                   'Descripción': row['descripcion'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),
               columnas: columnas,
               accionesBuilder: (row) {
                 return PopupMenuButton<String>(
-                  icon: FaIcon(FontAwesomeIcons
-                      .bars, color: Color.fromARGB(255, 27, 40, 223)), // Este es el botón faBars que muestra el menú
+                  icon: FaIcon(FontAwesomeIcons.bars,
+                      color: Color.fromARGB(255, 27, 40, 223)),
                   onSelected: (String value) {
                     if (value == 'editar') {
                       openEditarModal(row['_originalRow']);

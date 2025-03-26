@@ -137,13 +137,16 @@ class _TblExtintoresState extends State<TblExtintores> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Numero de serie'},
       {'name': 'Extintor'},
       {'name': 'Capacidad'},
       {'name': 'Ultima recarga'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+      int totalRegistros = widget.extintores.length;
+
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,14 +154,16 @@ class _TblExtintoresState extends State<TblExtintores> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.extintores.map((row) {
+              datos: widget.extintores.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Numero de serie': row['numeroSerie'],
                   'Extintor': row['extintor'],
                   'Capacidad': row['capacidad'],
                   'Ultima recarga': row['ultimaRecarga'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),

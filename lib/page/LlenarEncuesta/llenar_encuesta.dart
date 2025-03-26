@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../api/inspecciones.dart';
 import '../../api/auth.dart';
+import '../../api/ramas.dart';
 import '../../api/clientes.dart';
 import '../../api/dropbox.dart';
 import '../../api/inspecciones_proximas.dart';
@@ -39,8 +40,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> dataEncuestasAbiertas = [];
+  List<Map<String, dynamic>> dataRamas = [];
   String? selectedEncuestaId;
-  String? selectedEncuestaAbiertaId;
+  String? selectedRamaId;
   bool loading = true;
   bool _isLoading = false;
   int currentPage = 0; // Para controlar la página actual
@@ -68,7 +70,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   @override
   void initState() {
     super.initState();
-    getEncuestas();
+    getRamas();
     getClientes();
 
     _pageController.addListener(() {
@@ -127,6 +129,46 @@ class _EncuestaPageState extends State<EncuestaPage> {
         loading = false; // En caso de error, desactivar el estado de carga
       });
     }
+  }
+
+  Future<void> getRamas() async {
+    try {
+      final ramasService = RamasService();
+      final List<dynamic> response = await ramasService.listarRamas();
+
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
+      if (response.isNotEmpty) {
+        setState(() {
+          dataRamas = formatModelRamas(response);
+          loading = false; // Desactivar el estado de carga
+        });
+      } else {
+        setState(() {
+          dataRamas = []; // Lista vacía
+          loading = false; // Desactivar el estado de carga
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las ramas: $e");
+      setState(() {
+        loading = false; // En caso de error, desactivar el estado de carga
+      });
+    }
+  }
+
+  // Función para formatear los datos de las clasificaciones
+  List<Map<String, dynamic>> formatModelRamas(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      dataTemp.add({
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      });
+    }
+    return dataTemp;
   }
 
   Future<String> saveImage(Uint8List imageBytes) async {
@@ -196,11 +238,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
-  Future<void> getEncuestas() async {
+  Future<void> getEncuestas(String idRama) async {
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
       final List<dynamic> response =
-          await encuestaInspeccionService.listarEncuestaInspeccion();
+          await encuestaInspeccionService.listarEncuestaInspeccionPorRama(idRama);
 
       if (response.isNotEmpty) {
         setState(() {
@@ -577,6 +619,29 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     ),
 
                     SizedBox(height: 20),
+
+                                        // Dropdown de Encuesta
+                    DropdownButtonFormField<String>(
+                      value: selectedRamaId,
+                      hint: Text('Selecciona una rama'),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedRamaId = newValue;
+                        });
+
+                        if (newValue != null) {
+                          getEncuestas(newValue);
+                        }
+                      },
+                      isExpanded: true,
+                      items: dataRamas.map((rama) {
+                        return DropdownMenuItem<String>(
+                          value: rama['id'],
+                          child: Text(rama['nombre']!),
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 10),
 
                     // Dropdown de Encuesta
                     DropdownButtonFormField<String>(

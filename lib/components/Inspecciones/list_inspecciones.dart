@@ -151,7 +151,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
               Expanded(
                 child: Text(
                   'Eliminar Inspeccion',
-                 style: TextStyle(
+                  style: TextStyle(
                     fontSize: 20, // Tamaño más pequeño
                     fontWeight: FontWeight.bold, // Negrita
                   ),
@@ -209,13 +209,15 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Usuario'},
       {'name': 'Cliente'},
       {'name': 'Encuesta'},
       {'name': 'Comentarios'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+    int totalRegistros = widget.inspecciones.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,14 +226,16 @@ class _TblInspeccionesState extends State<TblInspecciones> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-                datos: widget.inspecciones.map((row) {
+                datos: widget.inspecciones.asMap().entries.map((entry) {
+                  int index = totalRegistros - entry.key;
+                  Map<String, dynamic> row = entry.value;
                   return {
+                    'Registro': index,
                     'Usuario': row['usuario'],
                     'Cliente': row['cliente'],
                     'Encuesta': row['cuestionario'],
                     'Comentarios': row['comentarios'],
                     'Creado el': formatDate(row['createdAt'] ?? ''),
-                    'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                     '_originalRow': row,
                   };
                 }).toList(),

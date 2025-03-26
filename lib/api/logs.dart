@@ -83,7 +83,7 @@ class LogsService {
         return [];
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener los logs: $e");
       return [];
     }
   }

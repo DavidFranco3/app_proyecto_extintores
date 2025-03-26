@@ -112,10 +112,12 @@ class _TblDatosEncuestasState extends State<TblDatosEncuestas> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+    int totalRegistros = widget.encuestas.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -124,19 +126,22 @@ class _TblDatosEncuestasState extends State<TblDatosEncuestas> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.encuestas.map((row) {
+              datos: widget.encuestas.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Nombre': row['nombre'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),
               columnas: columnas,
               accionesBuilder: (row) {
                 return PopupMenuButton<String>(
-                  icon: FaIcon(FontAwesomeIcons
-                      .bars, color: Color.fromARGB(255, 27, 40, 223)), // Este es el botón faBars que muestra el menú
+                  icon: FaIcon(FontAwesomeIcons.bars,
+                      color: Color.fromARGB(255, 27, 40,
+                          223)), // Este es el botón faBars que muestra el menú
                   onSelected: (String value) {
                     if (value == 'editar') {
                       openEditarPage(row['_originalRow']);

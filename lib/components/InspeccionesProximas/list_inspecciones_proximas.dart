@@ -40,13 +40,16 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Cliente'},
       {'name': 'Frecuencia'},
       {'name': 'Encuesta'},
       {'name': 'Proxima inspeccion'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
+
+      int totalRegistros = widget.inspeccionesProximas.length;
+
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -55,14 +58,16 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.inspeccionesProximas.map((row) {
+              datos: widget.inspeccionesProximas.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index,
                   'Cliente': row['cliente'],
                   'Frecuencia': row['frecuencia'],
                   'Encuesta': row['cuestionario'],
                   'Proxima inspeccion': formatDate(row['proximaInspeccion']),
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),

@@ -35,7 +35,7 @@ class InspeccionAnualService {
         return [];
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener las inspecciones anuales: $e");
       return [];
     }
   }
@@ -67,7 +67,7 @@ class InspeccionAnualService {
         return [];
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener las inspeccion anual: $e");
       return [];
     }
   }

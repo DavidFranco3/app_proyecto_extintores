@@ -149,13 +149,15 @@ class _TblClientesState extends State<TblClientes> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
+      {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Email'},
       {'name': 'Telefono'},
       {'name': 'Dirección'},
-      {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
+      {'name': 'Creado el'}
     ];
+
+    int totalRegistros = widget.clientes.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -163,8 +165,11 @@ class _TblClientesState extends State<TblClientes> {
         Expanded(
           child: SingleChildScrollView(
             child: DataTableCustom(
-              datos: widget.clientes.map((row) {
+              datos: widget.clientes.asMap().entries.map((entry) {
+                int index = totalRegistros - entry.key;
+                Map<String, dynamic> row = entry.value;
                 return {
+                  'Registro': index, // Muestra "Registro 1", "Registro 2", etc.
                   'Nombre': row['nombre'],
                   'Email': row['correo'],
                   'Telefono': row['telefono'],
@@ -181,15 +186,15 @@ class _TblClientesState extends State<TblClientes> {
                       " , " +
                       row['estadoDom'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),
               columnas: columnas,
               accionesBuilder: (row) {
                 return PopupMenuButton<String>(
-                  icon: FaIcon(FontAwesomeIcons
-                      .bars, color: Color.fromARGB(255, 27, 40, 223)), // Este es el botón faBars que muestra el menú
+                  icon: FaIcon(FontAwesomeIcons.bars,
+                      color: Color.fromARGB(255, 27, 40,
+                          223)), // Este es el botón faBars que muestra el menú
                   onSelected: (String value) {
                     if (value == 'editar') {
                       openEditarModal(row['_originalRow']);

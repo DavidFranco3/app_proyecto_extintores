@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../api/frecuencias.dart';
 import '../../api/clasificaciones.dart';
+import '../../api/ramas.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -33,10 +34,12 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   TextEditingController categoriaController = TextEditingController();
   TextEditingController nombreController = TextEditingController();
   TextEditingController frecuenciaController = TextEditingController();
+  TextEditingController ramaController = TextEditingController();
   TextEditingController clasificacionController = TextEditingController();
   List<String> opcionesTemp = ["Si", "No"];
   List<Map<String, dynamic>> dataFrecuencias = [];
   List<Map<String, dynamic>> dataClasificaciones = [];
+  List<Map<String, dynamic>> dataRamas = [];
   bool loading = true;
   bool _isLoading = false;
 
@@ -45,6 +48,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     super.initState();
     getFrecuencias();
     getClasificaciones();
+    getRamas();
     List<Pregunta> preguntasss = (widget.data?["preguntas"] as List<dynamic>?)
             ?.map((pregunta) => Pregunta(
                   titulo: pregunta["titulo"] ?? "",
@@ -58,6 +62,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       preguntas = preguntasss;
       nombreController.text = widget.data['nombre'] ?? '';
       frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
+      ramaController.text = widget.data['idRama'] ?? '';
       clasificacionController.text = widget.data['idClasificacion'] ?? '';
     }
   }
@@ -81,7 +86,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener las encuestas: $e");
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
@@ -146,6 +151,46 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     return dataTemp;
   }
 
+  Future<void> getRamas() async {
+    try {
+      final ramasService = RamasService();
+      final List<dynamic> response = await ramasService.listarRamas();
+
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
+      if (response.isNotEmpty) {
+        setState(() {
+          dataRamas = formatModelRamas(response);
+          loading = false; // Desactivar el estado de carga
+        });
+      } else {
+        setState(() {
+          dataRamas = []; // Lista vacía
+          loading = false; // Desactivar el estado de carga
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las ramas: $e");
+      setState(() {
+        loading = false; // En caso de error, desactivar el estado de carga
+      });
+    }
+  }
+
+  // Función para formatear los datos de las clasificaciones
+  List<Map<String, dynamic>> formatModelRamas(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      dataTemp.add({
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      });
+    }
+    return dataTemp;
+  }
+
   void _agregarPregunta() {
     setState(() {
       preguntas.add(Pregunta(
@@ -170,6 +215,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     var dataTemp = {
       'nombre': data['nombre'],
       'idFrecuencia': data['idFrecuencia'],
+      'idRama': data['idRama'],
       'idClasificacion': data['idClasificacion'],
       'preguntas': data['preguntas'],
       'estado': "true",
@@ -228,6 +274,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     var dataTemp = {
       'nombre': data['nombre'],
       'idFrecuencia': data['idFrecuencia'],
+      'idRama': data['idRama'],
       'idClasificacion': data['idClasificacion'],
       'preguntas': data['preguntas'],
     };
@@ -282,6 +329,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       "nombre": nombreController.text,
       "idFrecuencia": frecuenciaController.text,
       "idClasificacion": clasificacionController.text,
+      "idRama": ramaController.text,
       "preguntas": preguntas.map((pregunta) => pregunta.toJson()).toList(),
     };
     if (widget.accion == "registrar") {
@@ -383,6 +431,28 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                 }
                                 return null;
                               },
+                            ),
+                            DropdownButtonFormField<String>(
+                              value: ramaController.text.isEmpty
+                                  ? null
+                                  : ramaController.text,
+                              decoration: InputDecoration(labelText: 'Rama'),
+                              isExpanded: true,
+                              items: dataRamas.map((tipo) {
+                                return DropdownMenuItem<String>(
+                                  value: tipo['id'],
+                                  child: Text(tipo['nombre']),
+                                );
+                              }).toList(),
+                              onChanged: (newValue) {
+                                setState(() {
+                                  ramaController.text = newValue!;
+                                });
+                              },
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'La rama es obligatoria'
+                                      : null,
                             ),
                             DropdownButtonFormField<String>(
                               value: frecuenciaController.text.isEmpty
@@ -520,9 +590,7 @@ class Pregunta {
   List<String> opciones;
 
   Pregunta(
-      {required this.titulo,
-      required this.categoria,
-      required this.opciones});
+      {required this.titulo, required this.categoria, required this.opciones});
 
   Map<String, dynamic> toJson() {
     return {

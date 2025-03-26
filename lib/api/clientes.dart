@@ -34,7 +34,7 @@ class ClientesService {
         return [];
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      print("Error al obtener los clientes: $e");
       return [];
     }
   }
