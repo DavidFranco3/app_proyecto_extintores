@@ -38,7 +38,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Map<String, dynamic>> dataClientes = [];
   String? selectedIdFrecuencia;
 
-    // Lista para almacenar imágenes y comentarios
+  // Lista para almacenar imágenes y comentarios
   List<Map<String, dynamic>> imagePaths = [];
 
   List<Map<String, dynamic>> uploadedImageLinks =
@@ -55,6 +55,26 @@ class _EncuestaPageState extends State<EncuestaPage> {
     penColor: Colors.black,
     exportBackgroundColor: Colors.white,
   );
+
+  void limpiarCampos() {
+    preguntas = [];
+    selectedEncuestaId = null;
+    selectedRamaId = null;
+    selectedIdFrecuencia = null;
+
+    uploadedImageLinks = [];
+
+    imagePaths = [];
+
+    linkFirma = "";
+
+    dataEncuestas = [];
+
+    clienteController.clear();
+    comentariosController.clear();
+
+    _controller.clear();
+  }
 
   @override
   void initState() {
@@ -310,14 +330,32 @@ class _EncuestaPageState extends State<EncuestaPage> {
       _isLoading = true;
     });
 
+    // Validación de datos obligatorios
+    if (selectedEncuestaId == null ||
+        selectedRamaId == null ||
+        clienteController.text.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      showCustomFlushbar(
+        context: context,
+        title: "Campos incompletos",
+        message:
+            "Por favor, completa todos los campos obligatorios antes de continuar.",
+        backgroundColor: Colors.red,
+      );
+      return; // Detiene la ejecución si hay datos faltantes
+    }
+
     var dataTemp = {
       'idUsuario': data['idUsuario'],
       'idCliente': data['idCliente'],
       'idEncuesta': data['idEncuesta'],
       'encuesta': data['preguntas'],
-      'comentarios': data['comentarios'],
-      'imagenes': data['imagenes'],
-      'firmaCliente': data['firmaCliente'],
+      'comentarios': data['comentarios'] ?? "",
+      'imagenes': data['imagenes'] ?? [],
+      'firmaCliente': data['firmaCliente'] ?? "",
       'estado': "true",
     };
 
@@ -325,9 +363,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
       final inspeccionesService = InspeccionesService();
       var response = await inspeccionesService.registraInspecciones(dataTemp);
 
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
       if (response['status'] == 200) {
-        var dataTemp = {
+        var dataFrecuencia = {
           'idFrecuencia': selectedIdFrecuencia,
           'idCliente': data['idCliente'],
           'idEncuesta': data['idEncuesta'],
@@ -336,32 +373,18 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
         final inspeccionesProximasService = InspeccionesProximasService();
         await inspeccionesProximasService
-            .registraInspeccionesProximas(dataTemp);
+            .registraInspeccionesProximas(dataFrecuencia);
 
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          preguntas = [];
-          selectedEncuestaId = null;
-          selectedRamaId = null;
-          selectedIdFrecuencia = null;
-
-          uploadedImageLinks = [];
-
-          imagePaths = [];
-
-          linkFirma = "";
-
-          dataEncuestas = [];
-
-          clienteController.clear();
-          comentariosController.clear();
-
-          _controller.clear();
+          limpiarCampos();
         });
+
         LogsInformativos(
-            "Se ha registrado la inspeccion ${data['idCliente']} correctamente",
-            dataTemp);
+          "Se ha registrado la inspección ${data['idCliente']} correctamente",
+          dataFrecuencia,
+        );
+
         showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
@@ -369,14 +392,15 @@ class _EncuestaPageState extends State<EncuestaPage> {
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
+
         showCustomFlushbar(
           context: context,
-          title: "Hubo un problema",
-          message: "Hubo un problema al llenar la encuesta",
+          title: "Error",
+          message:
+              "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
           backgroundColor: Colors.red,
         );
       }
@@ -384,10 +408,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
       setState(() {
         _isLoading = false;
       });
+
       showCustomFlushbar(
         context: context,
         title: "Oops...",
-        message: error.toString(),
+        message: "Error inesperado: ${error.toString()}",
         backgroundColor: Colors.red,
       );
     }
