@@ -7,7 +7,8 @@ import '../../page/Extintores/extintores.dart';
 import '../../page/Logs/logs.dart';
 import '../../page/Clientes/clientes.dart';
 import '../../page/Encuestas/encuestas.dart';
-import '../../page/Inspecciones/inspecciones.dart';
+import '../../page/InspeccionesPantalla1/inspecciones_pantalla_1.dart';
+import '../../page/LlenarEncuesta/llenar_encuesta.dart';
 import '../../page/Usuarios/usuarios.dart';
 import '../../page/ProgramaInspecciones/programa_inspecciones.dart';
 import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
@@ -147,10 +148,16 @@ class _MenuLateralState extends State<MenuLateral> {
                         ),
                         _buildListTile(
                           context,
+                          Icons.poll, // Icono relacionado con encuestas
+                          'Alta Inspeccion',
+                          EncuestaPage(),
+                        ),
+                        _buildListTile(
+                          context,
                           Icons
                               .report_problem, // Ícono representativo de inspección
-                          'Inspección',
-                          InspeccionesPage(),
+                          'Tabla Inspecciones',
+                          InspeccionesPantalla1Page(),
                         ),
                         _buildListTile(
                           context,
@@ -255,7 +262,7 @@ class _MenuLateralState extends State<MenuLateral> {
                 context,
                 Icons.report_problem, // Ícono representativo de inspección
                 'Inspección',
-                InspeccionesPage(),
+                InspeccionesPantalla1Page(),
               ),
               _buildListTile(
                 context,

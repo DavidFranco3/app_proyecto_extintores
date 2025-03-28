@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/inspecciones.dart';
-import '../../components/Inspecciones/list_inspecciones.dart';
+import '../../components/InspeccionesPantalla2/list_inspecciones_pantalla_2.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 
-class InspeccionesPage extends StatefulWidget {
+class InspeccionesPantalla2Page extends StatefulWidget {
   final VoidCallback showModal;
   final dynamic data;
-  final dynamic data2;
 
-  InspeccionesPage({required this.showModal, required this.data, required this.data2});
+  InspeccionesPantalla2Page({required this.showModal, required this.data});
   @override
-  _InspeccionesPageState createState() => _InspeccionesPageState();
+  _InspeccionesPantalla2PageState createState() =>
+      _InspeccionesPantalla2PageState();
 }
 
-class _InspeccionesPageState extends State<InspeccionesPage> {
+class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
   bool loading = true;
+  bool isAscending = true; // Estado para controlar el orden de la lista
   List<Map<String, dynamic>> dataInspecciones = [];
+  List<Map<String, dynamic>> filteredInspecciones = [];
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -30,32 +33,47 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
   Future<void> getInspecciones() async {
     try {
       final inspeccionesService = InspeccionesService();
-      final List<dynamic> response =
-          await inspeccionesService.listarInspeccionesDatos(widget.data["id"]);
+      final List<dynamic> response = await inspeccionesService
+          .listarInspeccionesPorCliente(widget.data["id"]);
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
         setState(() {
           dataInspecciones = formatModelInspecciones(response);
-          loading = false; // Desactivar el estado de carga
+          filteredInspecciones = List.from(dataInspecciones);
+          loading = false;
         });
       } else {
         setState(() {
-          dataInspecciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
+          dataInspecciones = [];
+          filteredInspecciones = [];
+          loading = false;
         });
       }
     } catch (e) {
       print("Error al obtener las inspecciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  void _filterInspecciones(String query) {
+    setState(() {
+      filteredInspecciones = dataInspecciones
+          .where((inspeccion) => inspeccion['frecuencia']
+              .toLowerCase()
+              .contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
-  // Función para formatear los datos de las inspecciones
+  void _toggleOrder() {
+    setState(() {
+      isAscending = !isAscending;
+      filteredInspecciones = List.from(filteredInspecciones.reversed);
+    });
+  }
+
   List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
@@ -72,6 +90,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         'imagen_cliente': item['cliente']['imagen'],
         'firma_usuario': item['usuario']['firma'],
         'cuestionario': item['cuestionario']['nombre'],
+        'frecuencia': item['cuestionario']['frecuencia']['nombre'],
         'usuarios': item['usuario'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
@@ -85,35 +104,28 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
   void returnPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-          builder: (context) => InspeccionesPantalla2Page(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              data: widget.data2)),
+      MaterialPageRoute(builder: (context) => InspeccionesPantalla1Page()),
     ).then((_) {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Tabla Inspecciones"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Tabla Inspecciones"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Inspecciones",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -133,20 +145,50 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Cliente: ${widget.data["cliente"]}",
+                      "Cliente: ${widget.data["nombre"]}",
                       style: TextStyle(
                         fontSize: 18,
                       ),
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: _filterInspecciones,
+                          decoration: InputDecoration(
+                            labelText: "Buscar periodo",
+                            prefixIcon: Icon(Icons.search),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                        ),
+                        onPressed: _toggleOrder,
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
-                  child: TblInspecciones(
+                  child: TblInspeccionesPantalla2(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(context);
                     },
-                    inspecciones: dataInspecciones,
+                    inspecciones: searchController.text.isEmpty
+                        ? dataInspecciones
+                        : filteredInspecciones,
                     onCompleted: getInspecciones,
+                    data: widget.data
                   ),
                 ),
               ],

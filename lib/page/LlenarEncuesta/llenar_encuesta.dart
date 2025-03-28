@@ -10,7 +10,6 @@ import '../../components/Logs/logs_informativos.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import '../../page/Inspecciones/inspecciones.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
@@ -21,17 +20,6 @@ import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
 
 class EncuestaPage extends StatefulWidget {
-  final VoidCallback showModal;
-  final Function onCompleted;
-  final String accion;
-  final dynamic data;
-
-  EncuestaPage(
-      {required this.showModal,
-      required this.onCompleted,
-      required this.accion,
-      required this.data});
-
   @override
   _EncuestaPageState createState() => _EncuestaPageState();
 }
@@ -50,12 +38,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Map<String, dynamic>> dataClientes = [];
   String? selectedIdFrecuencia;
 
+    // Lista para almacenar imágenes y comentarios
+  List<Map<String, dynamic>> imagePaths = [];
+
   List<Map<String, dynamic>> uploadedImageLinks =
       []; // Array para guardar objetos con enlaces y comentarios
 
   String linkFirma = "";
 
-  late TextEditingController usuarioController;
   late TextEditingController clienteController;
   late TextEditingController comentariosController;
   late TextEditingController comentariosImagenController;
@@ -78,7 +68,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
       });
     });
 
-    usuarioController = TextEditingController();
     clienteController = TextEditingController();
     comentariosController = TextEditingController();
   }
@@ -352,7 +341,23 @@ class _EncuestaPageState extends State<EncuestaPage> {
         // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          returnPrincipalPage();
+          preguntas = [];
+          selectedEncuestaId = null;
+          selectedRamaId = null;
+          selectedIdFrecuencia = null;
+
+          uploadedImageLinks = [];
+
+          imagePaths = [];
+
+          linkFirma = "";
+
+          dataEncuestas = [];
+
+          clienteController.clear();
+          comentariosController.clear();
+
+          _controller.clear();
         });
         LogsInformativos(
             "Se ha registrado la inspeccion ${data['idCliente']} correctamente",
@@ -481,22 +486,10 @@ class _EncuestaPageState extends State<EncuestaPage> {
     _guardarEncuesta(formData);
   }
 
-  void returnPrincipalPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => InspeccionesPage()),
-    ).then((_) {
-      // Actualizar encuestas al regresar de la página
-    });
-  }
-
   final ImagePicker _picker = ImagePicker();
   XFile? _image; // Imagen en vista previa
   TextEditingController _comentarioController = TextEditingController();
   TextEditingController _valorController = TextEditingController();
-
-  // Lista para almacenar imágenes y comentarios
-  List<Map<String, dynamic>> imagePaths = [];
 
   // Método para seleccionar imagen
   Future<void> _pickImage() async {
@@ -542,7 +535,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Inspección"),
+      drawer: MenuLateral(currentPage: "Alta Inspeccion"),
       body: loading
           ? Load()
           : SingleChildScrollView(
@@ -555,7 +548,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     // Título
                     Center(
                       child: Text(
-                        "Inspección",
+                        "Alta de Inspección",
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.bold),
                       ),
@@ -595,24 +588,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             ),
                           ),
                           SizedBox(width: 10), // Espacio entre los botones
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : returnPrincipalPage, // Deshabilitar durante carga
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                minimumSize: Size(0, 50), // Tamaño flexible
-                              ),
-                              child: _isLoading
-                                  ? SpinKitFadingCircle(
-                                      color:
-                                          const Color.fromARGB(255, 241, 8, 8),
-                                      size: 24,
-                                    )
-                                  : Text("Cancelar"),
-                            ),
-                          ),
                         ],
                       ),
                     ),

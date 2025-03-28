@@ -206,18 +206,21 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     });
   }
 
+  String formatEncuesta(List<dynamic> encuesta) {
+    return encuesta.map((item) {
+      return '${item['pregunta']} ${item['respuesta']}';
+    }).join('\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
-      {'name': 'Registro'},
-      {'name': 'Usuario'},
-      {'name': 'Cliente'},
+      {'name': 'Inspector'},
       {'name': 'Encuesta'},
+      {'name': ''},
       {'name': 'Comentarios'},
       {'name': 'Creado el'},
     ];
-
-    int totalRegistros = widget.inspecciones.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -227,13 +230,11 @@ class _TblInspeccionesState extends State<TblInspecciones> {
           child: SingleChildScrollView(
             child: DataTableCustom(
                 datos: widget.inspecciones.asMap().entries.map((entry) {
-                  int index = totalRegistros - entry.key;
                   Map<String, dynamic> row = entry.value;
                   return {
-                    'Registro': index,
-                    'Usuario': row['usuario'],
-                    'Cliente': row['cliente'],
+                    'Inspector': row['usuario'],
                     'Encuesta': row['cuestionario'],
+                    '': formatEncuesta(row['encuesta']),
                     'Comentarios': row['comentarios'],
                     'Creado el': formatDate(row['createdAt'] ?? ''),
                     '_originalRow': row,

@@ -72,6 +72,7 @@ const String ENDPOINT_DESHABILITAR_FRECUENCIAS = "/frecuencias/deshabilitar";
 // Inspecciones
 const String ENDPOINT_LISTAR_INSPECCIONES = "/inspecciones/listar";
 const String ENDPOINT_LISTAR_INSPECCIONES_RESULTADOS_ENCUESTAS = "/inspecciones/listarDatosEncuesta";
+const String ENDPOINT_LISTAR_INSPECCIONES_CLIENTE = "/inspecciones/listarPorCliente";
 const String ENDPOINT_LISTAR_INSPECCIONES_DATOS_ENCUESTAS = "/inspecciones/listarDatosInspeccion";
 const String ENDPOINT_REGISTRAR_INSPECCIONES = "/inspecciones/registro";
 const String ENDPOINT_OBTENER_INSPECCIONES = "/inspecciones/obtener";

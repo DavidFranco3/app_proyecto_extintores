@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/inspecciones_proximas.dart';
 import '../../components/InspeccionesProximas/list_inspecciones_proximas.dart';
-import '../LlenarEncuesta/llenar_encuesta.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
@@ -50,30 +48,6 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
 
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
-  // Función para abrir el modal de registro con el formulario de Acciones
-  void openRegistroPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => EncuestaPage(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              onCompleted: getInspeccionesProximas,
-              accion: "registrar",
-              data: null)),
-    ).then((_) {
-      getInspeccionesProximas(); // Actualizar inspeccionesProximas al regresar de la página
-    });
-  }
-
-// Cierra el modal
-  void closeModal() {
-    setState(() {
-      showModal = false; // Cierra el modal
-    });
-  }
-
   // Función para formatear los datos de las inspeccionesProximas
   List<Map<String, dynamic>> formatModelInspeccionesProximas(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
@@ -119,17 +93,6 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
                   ),
                 ),
                 // Centra el botón de registrar
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroPage, // Abre el modal con el formulario de acciones
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: TblInspeccionesProximas(
                     showModal: () {
@@ -141,13 +104,6 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
-      floatingActionButton: showModal
-          ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
-              child: Icon(Icons.close),
-            )
-          : null,
     );
   }
 }

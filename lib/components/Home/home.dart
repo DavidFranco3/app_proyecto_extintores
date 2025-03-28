@@ -5,7 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../components/Load/load.dart';
 import '../../api/inspecciones.dart';
 import '../../api/inspecciones_proximas.dart';
-import '../../page/Inspecciones/inspecciones.dart';
+import '../../page/InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
 import '../../api/tokens.dart';
 import '../../api/notificaciones.dart';
@@ -292,7 +292,7 @@ void scheduleDailyNotification() {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            InspeccionesPage(),
+                                            InspeccionesPantalla1Page(),
                                       ),
                                     );
                                   },
