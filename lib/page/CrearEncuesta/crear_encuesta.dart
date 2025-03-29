@@ -8,21 +8,33 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Logs/logs_informativos.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../Encuestas/encuestas.dart';
 import '../../components/Generales/flushbar_helper.dart';
+import '../CrearEncuestaPantalla2/crear_encuesta_pantalla_2.dart';
+import '../../components/Generales/pregunta.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
-  final Function onCompleted;
   final String accion;
   final dynamic data;
+  final String nombre;
+  final String rama;
+  final String clasificacion;
+  final String categoria;
+  final List<Map<String, String>> secciones;
+  final Function onCompleted;
 
   @override
-  CrearEncuestaScreen(
-      {required this.showModal,
-      required this.onCompleted,
-      required this.accion,
-      required this.data});
+  CrearEncuestaScreen({
+    required this.showModal,
+    required this.accion,
+    required this.data,
+    required this.nombre,
+    required this.rama,
+    required this.clasificacion,
+    required this.categoria,
+    required this.secciones,
+    required this.onCompleted,
+  });
 
   _CrearEncuestaScreenState createState() => _CrearEncuestaScreenState();
 }
@@ -195,7 +207,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     setState(() {
       preguntas.add(Pregunta(
           titulo: preguntaController.text,
-          categoria: categoriaController.text,
+          categoria: widget.categoria,
           opciones: List.from(opcionesTemp)));
       preguntaController.clear();
     });
@@ -326,10 +338,10 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
   void _publicarEncuesta() {
     var formData = {
-      "nombre": nombreController.text,
-      "idFrecuencia": frecuenciaController.text,
-      "idClasificacion": clasificacionController.text,
-      "idRama": ramaController.text,
+      "nombre": widget.nombre,
+      "idFrecuencia": widget.data["id"],
+      "idClasificacion": widget.clasificacion,
+      "idRama": widget.rama,
       "preguntas": preguntas.map((pregunta) => pregunta.toJson()).toList(),
     };
     if (widget.accion == "registrar") {
@@ -351,7 +363,18 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   void returnPrincipalPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EncuestasPage()),
+      MaterialPageRoute(
+          builder: (context) => CrearEncuestaPantalla2Screen(
+              showModal: widget.showModal,
+              //final Function onCompleted;
+              accion: widget.accion,
+              data: widget.data,
+              nombre: widget.nombre,
+              rama: widget.rama,
+              clasificacion: widget.clasificacion,
+              secciones: widget.secciones,
+              preguntas: preguntas,
+              onCompleted: widget.onCompleted)),
     ).then((_) {
       // Actualizar encuestas al regresar de la página
     });
@@ -404,116 +427,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                               : Text("Cancelar"),
                         ),
                       ],
-                    ),
-
-                    SizedBox(height: 10),
-
-                    // Sección General (Nombre, Frecuencia, Clasificación)
-                    Card(
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Información General",
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 10),
-                            TextFormField(
-                              controller: nombreController,
-                              decoration: InputDecoration(labelText: "Nombre"),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'El nombre es obligatorio';
-                                }
-                                return null;
-                              },
-                            ),
-                            DropdownButtonFormField<String>(
-                              value: ramaController.text.isEmpty
-                                  ? null
-                                  : ramaController.text,
-                              decoration: InputDecoration(labelText: 'Rama'),
-                              isExpanded: true,
-                              items: dataRamas.map((tipo) {
-                                return DropdownMenuItem<String>(
-                                  value: tipo['id'],
-                                  child: Text(tipo['nombre']),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                setState(() {
-                                  ramaController.text = newValue!;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'La rama es obligatoria'
-                                      : null,
-                            ),
-                            DropdownButtonFormField<String>(
-                              value: frecuenciaController.text.isEmpty
-                                  ? null
-                                  : frecuenciaController.text,
-                              decoration:
-                                  InputDecoration(labelText: 'Frecuencia'),
-                              isExpanded: true,
-                              items: dataFrecuencias.map((tipo) {
-                                return DropdownMenuItem<String>(
-                                  value: tipo['id'],
-                                  child: Text(tipo['nombre']),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                setState(() {
-                                  frecuenciaController.text = newValue!;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'La frecuencia es obligatoria'
-                                      : null,
-                            ),
-                            DropdownButtonFormField<String>(
-                              value: clasificacionController.text.isEmpty
-                                  ? null
-                                  : clasificacionController.text,
-                              decoration:
-                                  InputDecoration(labelText: 'Clasificación'),
-                              isExpanded: true,
-                              items: dataClasificaciones.map((tipo) {
-                                return DropdownMenuItem<String>(
-                                  value: tipo['id'],
-                                  child: Text(tipo['nombre']),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                setState(() {
-                                  clasificacionController.text = newValue!;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'La clasificación es obligatoria'
-                                      : null,
-                            ),
-                            TextFormField(
-                              controller: categoriaController,
-                              decoration:
-                                  InputDecoration(labelText: "Categoria"),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'La categoria es obligatoria';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
 
                     // Botón de "Agregar Pregunta" centrado
@@ -581,22 +494,5 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
               ),
             ),
     );
-  }
-}
-
-class Pregunta {
-  String titulo;
-  String categoria;
-  List<String> opciones;
-
-  Pregunta(
-      {required this.titulo, required this.categoria, required this.opciones});
-
-  Map<String, dynamic> toJson() {
-    return {
-      "titulo": titulo,
-      "categoria": categoria,
-      "opciones": opciones,
-    };
   }
 }

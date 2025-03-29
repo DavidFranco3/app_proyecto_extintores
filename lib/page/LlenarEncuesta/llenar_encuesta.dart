@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../api/inspecciones.dart';
+import '../../api/frecuencias.dart';
 import '../../api/auth.dart';
 import '../../api/ramas.dart';
 import '../../api/clientes.dart';
@@ -30,6 +31,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Map<String, dynamic>> dataRamas = [];
   String? selectedEncuestaId;
   String? selectedRamaId;
+  String? selectedFrecuenciaId;
   bool loading = true;
   bool _isLoading = false;
   int currentPage = 0; // Para controlar la página actual
@@ -37,6 +39,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
   final PageController _pageController = PageController();
   List<Map<String, dynamic>> dataClientes = [];
   String? selectedIdFrecuencia;
+
+  List<Map<String, dynamic>> dataFrecuencias = [];
 
   // Lista para almacenar imágenes y comentarios
   List<Map<String, dynamic>> imagePaths = [];
@@ -60,6 +64,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     preguntas = [];
     selectedEncuestaId = null;
     selectedRamaId = null;
+    selectedFrecuenciaId = null;
     selectedIdFrecuencia = null;
 
     uploadedImageLinks = [];
@@ -81,6 +86,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     super.initState();
     getRamas();
     getClientes();
+    getFrecuencias();
 
     _pageController.addListener(() {
       setState(() {
@@ -179,6 +185,48 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
+  Future<void> getFrecuencias() async {
+    try {
+      final frecuenciasService = FrecuenciasService();
+      final List<dynamic> response =
+          await frecuenciasService.listarFrecuencias();
+
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
+      if (response.isNotEmpty) {
+        setState(() {
+          dataFrecuencias = formatModelFrecuencias(response);
+          loading = false;
+        });
+      } else {
+        setState(() {
+          loading = false;
+          dataFrecuencias = [];
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las frecuencias: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  // Función para formatear los datos de las frecuencias
+  List<Map<String, dynamic>> formatModelFrecuencias(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      dataTemp.add({
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'cantidadDias': item['cantidadDias'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      });
+    }
+    return dataTemp;
+  }
+
   Future<String> saveImage(Uint8List imageBytes) async {
     try {
       // Obtener el directorio de caché de la aplicación
@@ -246,11 +294,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
-  Future<void> getEncuestas(String idRama) async {
+  Future<void> getEncuestas(String idRama, String idFrecuencia) async {
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
       final List<dynamic> response = await encuestaInspeccionService
-          .listarEncuestaInspeccionPorRama(idRama);
+          .listarEncuestaInspeccionPorRama(idRama, idFrecuencia);
 
       if (response.isNotEmpty) {
         setState(() {
@@ -333,6 +381,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     // Validación de datos obligatorios
     if (selectedEncuestaId == null ||
         selectedRamaId == null ||
+        selectedFrecuenciaId == null ||
         clienteController.text.isEmpty) {
       setState(() {
         _isLoading = false;
@@ -626,8 +675,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           selectedRamaId = newValue;
                         });
 
-                        if (newValue != null) {
-                          getEncuestas(newValue);
+                        if (newValue != null && selectedFrecuenciaId != null) {
+                          getEncuestas(selectedRamaId!, selectedFrecuenciaId!);
                         }
                       },
                       isExpanded: true,
@@ -638,7 +687,27 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 10),
+                    // Dropdown de Encuesta
+                    DropdownButtonFormField<String>(
+                      value: selectedFrecuenciaId,
+                      hint: Text('Selecciona un periodo'),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedFrecuenciaId = newValue;
+                        });
+
+                        if (newValue != null && selectedRamaId != null) {
+                          getEncuestas(selectedRamaId!, selectedFrecuenciaId!);
+                        }
+                      },
+                      isExpanded: true,
+                      items: dataFrecuencias.map((rama) {
+                        return DropdownMenuItem<String>(
+                          value: rama['id'],
+                          child: Text(rama['nombre']!),
+                        );
+                      }).toList(),
+                    ),
                     // Dropdown de Encuesta
                     DropdownButtonFormField<String>(
                       value: selectedEncuestaId,
@@ -668,8 +737,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         );
                       }).toList(),
                     ),
-                    SizedBox(height: 10),
-
                     // Dropdown de Cliente
                     DropdownButtonFormField<String>(
                       value: clienteController.text.isEmpty
@@ -692,8 +759,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           ? 'El cliente es obligatorio'
                           : null,
                     ),
-                    SizedBox(height: 10),
-
                     // Agregar más Dropdowns si es necesario
                     if (selectedEncuestaId != null && preguntas.isNotEmpty)
                       SizedBox(

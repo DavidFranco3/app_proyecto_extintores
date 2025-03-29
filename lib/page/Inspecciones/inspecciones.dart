@@ -125,7 +125,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                       onPressed:
                           returnPage, // Abre el modal con el formulario de acciones
                       icon: Icon(FontAwesomeIcons.arrowLeft),
-                      label: Text("Volver"),
+                      label: Text("Regresar"),
                     ),
                   ),
                 ),

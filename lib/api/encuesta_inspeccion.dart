@@ -39,11 +39,12 @@ class EncuestaInspeccionService {
     }
   }
 
-    Future<List<dynamic>> listarEncuestaInspeccionPorRama(String idRama) async {
+  Future<List<dynamic>> listarEncuestaInspeccionPorRama(String idRama, String idFrecuencia) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA + '/$idRama'),
+        Uri.parse(API_HOST +
+            ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA + '/$idRama/$idFrecuencia'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/inspecciones.dart';
-import '../../components/InspeccionesPantalla2/list_inspecciones_pantalla_2.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
+import 'package:intl/intl.dart';
+import '../Inspecciones/inspecciones.dart';
 
 class InspeccionesPantalla2Page extends StatefulWidget {
   final VoidCallback showModal;
@@ -23,6 +24,22 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
   List<Map<String, dynamic>> dataInspecciones = [];
   List<Map<String, dynamic>> filteredInspecciones = [];
   TextEditingController searchController = TextEditingController();
+
+  // Función para formatear fechas
+  String formatDate(String date) {
+    // Establecer el idioma a español
+    Intl.defaultLocale = 'es_ES'; // Configuramos la localización a español
+
+    // Parseamos la fecha guardada en la base de datos
+    final parsedDate = DateTime.parse(date);
+
+    // Convertimos la fecha a la hora local
+    final localDate = parsedDate.toLocal();
+
+    // Ahora formateamos la fecha en formato Día de Mes del Año
+    final dateFormat = DateFormat('d MMMM yyyy'); // Formato Día de Mes del Año
+    return dateFormat.format(localDate); // Ejemplo: 17 de Marzo del 2025
+  }
 
   @override
   void initState() {
@@ -108,6 +125,20 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
     ).then((_) {});
   }
 
+  // Función para abrir el modal de registro con el formulario de Acciones
+  void openPantalla2Page(Map<String, dynamic> row) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => InspeccionesPage(
+              showModal: () {
+                Navigator.pop(context); // Esto cierra el modal
+              },
+              data: row,
+              data2: widget.data)),
+    ).then((_) {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,7 +168,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
                       onPressed:
                           returnPage, // Abre el modal con el formulario de acciones
                       icon: Icon(FontAwesomeIcons.arrowLeft),
-                      label: Text("Volver"),
+                      label: Text("Regresar"),
                     ),
                   ),
                 ),
@@ -180,15 +211,60 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
                   ),
                 ),
                 Expanded(
-                  child: TblInspeccionesPantalla2(
-                    showModal: () {
-                      Navigator.pop(context);
+                  child: ListView.builder(
+                    itemCount: searchController.text.isEmpty
+                        ? dataInspecciones.length
+                        : filteredInspecciones.length,
+                    itemBuilder: (context, index) {
+                      var inspeccion = searchController.text.isEmpty
+                          ? dataInspecciones[index]
+                          : filteredInspecciones[index];
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4.0, horizontal: 8.0),
+                        child: SizedBox(
+                          width: double
+                              .infinity, // Hace que el botón ocupe todo el ancho disponible
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    10), // Bordes redondeados
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  vertical:
+                                      16), // Aumenta el tamaño vertical del botón
+                            ),
+                            onPressed: () =>
+                                {openPantalla2Page(inspeccion)},
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment
+                                  .spaceBetween, // Espacio entre texto y el ícono
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "${inspeccion['frecuencia']}: ${formatDate(inspeccion['createdAt'])}",
+                                    textAlign:
+                                        TextAlign.center, // Centra el texto
+                                    style: TextStyle(
+                                      fontSize: 16, // Tamaño de texto
+                                      color: Colors
+                                          .black, // Color de las letras (negro)
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons
+                                      .chevron_right, // Icono que aparece a la derecha
+                                  size: 24, // Tamaño del ícono
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
                     },
-                    inspecciones: searchController.text.isEmpty
-                        ? dataInspecciones
-                        : filteredInspecciones,
-                    onCompleted: getInspecciones,
-                    data: widget.data
                   ),
                 ),
               ],

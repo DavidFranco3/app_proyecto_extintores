@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Encuestas/list_encuestas.dart';
-import '../CrearEncuesta/crear_encuesta.dart';
+import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
@@ -55,7 +55,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => CrearEncuestaScreen(
+          builder: (context) => CrearEncuestaPantalla1Screen(
               showModal: () {
                 Navigator.pop(context); // Esto cierra el modal
               },
@@ -154,12 +154,12 @@ class _EncuestasPageState extends State<EncuestasPage> {
   }
 }
 
-class Pregunta {
+class Preguntaa {
   String titulo;
   String observaciones;
   List<String> opciones;
 
-  Pregunta({
+  Preguntaa({
     required this.titulo,
     required this.observaciones,
     required this.opciones,
@@ -173,8 +173,8 @@ class Pregunta {
     };
   }
 
-  factory Pregunta.fromJson(Map<String, dynamic> json) {
-    return Pregunta(
+  factory Preguntaa.fromJson(Map<String, dynamic> json) {
+    return Preguntaa(
       titulo: json['titulo'] ?? '',
       observaciones: json['observaciones'] ?? '',
       opciones: List<String>.from(json['opciones'] ?? []),

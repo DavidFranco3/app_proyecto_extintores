@@ -39,7 +39,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
     return dateFormat.format(localDate);
   }
 
-  void openEditarPage(row) {
+  /*void openEditarPage(row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -53,7 +53,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
     ).then((_) {
       widget.onCompleted(); // Actualizar encuestas al regresar de la página
     });
-  }
+  }*/
 
   void openEliminarModal(row) {
     showDialog(
@@ -148,13 +148,13 @@ class _TblEncuestasState extends State<TblEncuestas> {
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40,
                           223)), // Este es el botón faBars que muestra el menú
-                  onSelected: (String value) {
+                  /*onSelected: (String value) {
                     if (value == 'editar') {
                       openEditarPage(row['_originalRow']);
                     } else if (value == 'eliminar') {
                       openEliminarModal(row['_originalRow']);
                     }
-                  },
+                  },*/
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
                     PopupMenuItem<String>(
