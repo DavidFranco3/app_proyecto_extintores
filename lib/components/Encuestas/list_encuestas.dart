@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
-import '../../page/CrearEncuesta/crear_encuesta.dart'; // Asegúrate de que el archivo correcto esté importado
 import 'package:intl/intl.dart';
 
 class TblEncuestas extends StatefulWidget {
@@ -38,22 +37,6 @@ class _TblEncuestasState extends State<TblEncuestas> {
     final dateFormat = DateFormat('dd/MM/yyyy hh:mm:ss a'); // Formato 12 horas
     return dateFormat.format(localDate);
   }
-
-  /*void openEditarPage(row) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => CrearEncuestaScreen(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              onCompleted: widget.onCompleted,
-              accion: "editar",
-              data: row)),
-    ).then((_) {
-      widget.onCompleted(); // Actualizar encuestas al regresar de la página
-    });
-  }*/
 
   void openEliminarModal(row) {
     showDialog(
@@ -147,27 +130,9 @@ class _TblEncuestasState extends State<TblEncuestas> {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40,
-                          223)), // Este es el botón faBars que muestra el menú
-                  /*onSelected: (String value) {
-                    if (value == 'editar') {
-                      openEditarPage(row['_originalRow']);
-                    } else if (value == 'eliminar') {
-                      openEliminarModal(row['_originalRow']);
-                    }
-                  },*/
+                          223)), 
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'editar',
-                      child: Row(
-                        children: [
-                          FaIcon(FontAwesomeIcons.pen,
-                              color: Color(0xFFFFC107), size: 16),
-                          SizedBox(width: 8),
-                          Text('Editar'),
-                        ],
-                      ),
-                    ),
                     PopupMenuItem<String>(
                       value: 'eliminar',
                       child: Row(
