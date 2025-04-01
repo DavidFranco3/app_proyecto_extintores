@@ -85,7 +85,7 @@ void openEliminarModal(row) {
       {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Email'},
-      {'name': 'Telefono'},
+      {'name': 'Teléfono'},
       {'name': 'Dirección'},
       {'name': 'Creado el'}
     ];
@@ -105,7 +105,7 @@ void openEliminarModal(row) {
                   'Registro': index, // Muestra "Registro 1", "Registro 2", etc.
                   'Nombre': row['nombre'],
                   'Email': row['correo'],
-                  'Telefono': row['telefono'],
+                  'Teléfono': row['telefono'],
                   'Dirección': "C " +
                       row['calle'] +
                       " " +

@@ -72,7 +72,7 @@ void openEliminarModal(row) {
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
       {'name': 'Registro'},
-      {'name': 'Numero de serie'},
+      {'name': 'Número de serie'},
       {'name': 'Extintor'},
       {'name': 'Capacidad'},
       {'name': 'Ultima recarga'},
@@ -93,7 +93,7 @@ void openEliminarModal(row) {
                 Map<String, dynamic> row = entry.value;
                 return {
                   'Registro': index,
-                  'Numero de serie': row['numeroSerie'],
+                  'Número de serie': row['numeroSerie'],
                   'Extintor': row['extintor'],
                   'Capacidad': row['capacidad'],
                   'Ultima recarga': row['ultimaRecarga'],

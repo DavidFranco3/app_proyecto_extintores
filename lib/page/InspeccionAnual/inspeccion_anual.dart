@@ -341,7 +341,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                               controller: observacionController,
                               decoration: InputDecoration(
                                   labelText:
-                                      "Valores (si es mas de uno separarlo con comas)"),
+                                      "Valores (si es más de uno, separarlo con comas)"),
                               keyboardType: TextInputType.numberWithOptions(
                                   decimal: true),
                               inputFormatters: [

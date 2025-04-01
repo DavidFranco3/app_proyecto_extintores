@@ -73,7 +73,7 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
     List<Map<String, dynamic>> columnas = [
       {'name': 'Registro'},
       {'name': 'Nombre'},
-      {'name': 'Dias de duracion'},
+      {'name': 'Días de duración'},
       {'name': 'Creado el'},
     ];
 
@@ -91,7 +91,7 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
                 return {
                   'Registro': index,
                   'Nombre': row['nombre'],
-                  'Dias de duracion': row['cantidadDias'],
+                  'Días de duración': row['cantidadDias'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
                   '_originalRow': row,
                 };

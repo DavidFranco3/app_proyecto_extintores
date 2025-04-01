@@ -626,7 +626,7 @@ class _AccionesState extends State<Acciones> {
                         TextFormField(
                           controller: _cpostalController,
                           decoration: InputDecoration(
-                            labelText: 'Código Postal',
+                            labelText: 'Código postal',
                           ),
                           keyboardType: TextInputType
                               .number, // Solo permite números en el teclado

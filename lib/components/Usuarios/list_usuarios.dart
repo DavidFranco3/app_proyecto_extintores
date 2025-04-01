@@ -78,7 +78,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
       {'name': 'Registro'},
       {'name': 'Nombre'},
       {'name': 'Email'},
-      {'name': 'Telefono'},
+      {'name': 'Teléfono'},
       {'name': 'Rol'},
       {'name': 'Creado el'},
     ];
@@ -99,7 +99,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
                   'Registro': index,
                   'Nombre': row['nombre'],
                   'Email': row['email'],
-                  'Telefono': row['telefono'],
+                  'Teléfono': row['telefono'],
                   'Rol': row['tipo'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
                   '_originalRow': row,
