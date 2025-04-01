@@ -12,7 +12,8 @@ class InspeccionesPage extends StatefulWidget {
   final dynamic data;
   final dynamic data2;
 
-  InspeccionesPage({required this.showModal, required this.data, required this.data2});
+  InspeccionesPage(
+      {required this.showModal, required this.data, required this.data2});
   @override
   _InspeccionesPageState createState() => _InspeccionesPageState();
 }
@@ -98,8 +99,8 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Tabla Inspecciones"), // Usa el menú lateral
+      drawer: MenuLateral(
+          currentPage: "Tabla de inspecciones"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

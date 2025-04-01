@@ -610,7 +610,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Alta Inspeccion"),
+      drawer: MenuLateral(currentPage: "Alta de inspección"),
       body: loading
           ? Load()
           : SingleChildScrollView(

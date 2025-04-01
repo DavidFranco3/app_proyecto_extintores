@@ -88,7 +88,7 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Programa de Inspección"), // Menú lateral
+      drawer: MenuLateral(currentPage: "Programa de inspección"), // Menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

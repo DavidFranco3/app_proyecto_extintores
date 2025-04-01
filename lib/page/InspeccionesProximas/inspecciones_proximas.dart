@@ -73,7 +73,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Inspecciones Proximas"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Inspecciones próximas"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -84,7 +84,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspecciones Proximas",
+                      "Inspecciones próximas",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
@@ -104,34 +104,6 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
                 ),
               ],
             ),
-    );
-  }
-}
-
-class Pregunta {
-  String titulo;
-  String observaciones;
-  List<String> opciones;
-
-  Pregunta({
-    required this.titulo,
-    required this.observaciones,
-    required this.opciones,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      "titulo": titulo,
-      "observaciones": observaciones,
-      "opciones": opciones,
-    };
-  }
-
-  factory Pregunta.fromJson(Map<String, dynamic> json) {
-    return Pregunta(
-      titulo: json['titulo'] ?? '',
-      observaciones: json['observaciones'] ?? '',
-      opciones: List<String>.from(json['opciones'] ?? []),
     );
   }
 }

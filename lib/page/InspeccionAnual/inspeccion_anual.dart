@@ -197,7 +197,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
       drawer:
-          MenuLateral(currentPage: "Inspeccion Anual"), // Usa el menú lateral
+          MenuLateral(currentPage: "Inspección anual"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
@@ -210,7 +210,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Center(
                         child: Text(
-                          "Inspecciones anuales",
+                          "Inspeccion anua",
                           style: TextStyle(
                             fontSize: 24, // Tamaño grande
                             fontWeight: FontWeight.bold, // Negrita

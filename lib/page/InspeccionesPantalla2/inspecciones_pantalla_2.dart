@@ -143,7 +143,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Tabla Inspecciones"),
+      drawer: MenuLateral(currentPage: "Tabla de inspecciones"),
       body: loading
           ? Load()
           : Column(

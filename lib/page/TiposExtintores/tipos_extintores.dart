@@ -96,7 +96,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-        currentPage: "Tipos de Extintores",
+        currentPage: "Tipos de extintores",
       ), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos

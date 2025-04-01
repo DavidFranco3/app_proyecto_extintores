@@ -132,7 +132,7 @@ class _CrearEncuestaPantalla2ScreenState
     return Scaffold(
       key: _formKey,
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Crear Inspección"),
+      drawer: MenuLateral(currentPage: "Crear inspección"),
       body: loading
           ? Load()
           : SingleChildScrollView(
@@ -148,7 +148,7 @@ class _CrearEncuestaPantalla2ScreenState
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              "Crear Inspección",
+                              "Crear inspección",
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,

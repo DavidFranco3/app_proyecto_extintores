@@ -117,8 +117,8 @@ class _MenuLateralState extends State<MenuLateral> {
               ),
               _buildListTile(
                 context,
-                Icons.fact_check, // Ícono más relacionado
-                'Inspección Anual',
+                Icons.fact_check,
+                'Inspección anual',
                 InspeccionEspecialPage(),
               ),
               // Submenú de Inspecciones
@@ -143,40 +143,40 @@ class _MenuLateralState extends State<MenuLateral> {
                         _buildListTile(
                           context,
                           Icons.poll, // Icono relacionado con encuestas
-                          'Crear Inspeccion',
+                          'Crear inspección',
                           EncuestasPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons
                               .assignment, // Icono relacionado con inspecciones
-                          'Alta Inspeccion',
+                          'Alta de inspección',
                           EncuestaPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons
                               .report_problem, // Ícono representativo de inspección
-                          'Tabla Inspecciones',
+                          'Tabla de inspecciones',
                           InspeccionesPantalla1Page(),
                         ),
                         _buildListTile(
                           context,
                           Icons
                               .next_week_sharp, // Ícono representativo de inspección
-                          'Inspecciones Proximas',
+                          'Inspecciones próximas',
                           InspeccionesProximasPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons.date_range, // Ícono representativo de programa
-                          'Programa de Inspección',
+                          'Programa de inspección',
                           ProgramaInspeccionesPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons.show_chart, // Ícono representativo de gráfico
-                          'Gráfico de Inspecciones',
+                          'Gráfico de inspecciones',
                           GraficaInspeccionesPage(),
                         ),
                       ],
@@ -198,7 +198,7 @@ class _MenuLateralState extends State<MenuLateral> {
               ),
               // Menú principal para Extintores con opciones desplegables
               ExpansionTile(
-                leading: Icon(FontAwesomeIcons.fireAlt),
+                leading: Icon(FontAwesomeIcons.fireFlameCurved),
                 title: Text(
                   'Extintores',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
@@ -224,7 +224,7 @@ class _MenuLateralState extends State<MenuLateral> {
                         _buildListTile(
                           context,
                           FontAwesomeIcons.wrench,
-                          'Tipos de Extintores',
+                          'Tipos de extintores',
                           TiposExtintoresPage(),
                         ),
                       ],
@@ -256,31 +256,31 @@ class _MenuLateralState extends State<MenuLateral> {
               _buildListTile(
                 context,
                 Icons.poll, // Icono relacionado con encuestas
-                'Crear Inspeccion',
+                'Crear inspección',
                 EncuestasPage(),
               ),
               _buildListTile(
                 context,
                 Icons.assignment, // Icono relacionado con inspecciones
-                'Alta Inspeccion',
+                'Alta de inspección',
                 EncuestaPage(),
               ),
               _buildListTile(
                 context,
                 Icons.next_week_sharp, // Ícono representativo de inspección
-                'Inspecciónes Proximas',
+                'Inspecciónes proximas',
                 InspeccionesProximasPage(),
               ),
               _buildListTile(
                 context,
                 Icons.date_range, // Ícono representativo de programa
-                'Programa de Inspección',
+                'Programa de inspección',
                 ProgramaInspeccionesPage(),
               ),
               _buildListTile(
                 context,
                 Icons.show_chart, // Ícono representativo de gráfico
-                'Gráfico de Inspecciones',
+                'Gráfico de inspecciones',
                 GraficaInspeccionesPage(),
               ),
             ],
