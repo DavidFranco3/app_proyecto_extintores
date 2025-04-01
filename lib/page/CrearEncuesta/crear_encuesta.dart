@@ -407,7 +407,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   child: ListTile(
                                     title: Text(widget.preguntas[index].titulo),
                                     subtitle: Text(
-                                      "Categoria: ${widget.preguntas[index].categoria}\n"
+                                      "Categoría: ${widget.preguntas[index].categoria}\n"
                                       "Opciones: ${widget.preguntas[index].opciones.join(", ")}",
                                     ),
                                     trailing: IconButton(

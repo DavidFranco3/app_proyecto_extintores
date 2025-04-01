@@ -106,7 +106,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspeccion Anual",
+                      "Inspeccion anual",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
