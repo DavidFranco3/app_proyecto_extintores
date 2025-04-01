@@ -6,6 +6,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../Encuestas/encuestas.dart';
 import '../CrearEncuesta/crear_encuesta.dart';
 import '../../components/Generales/pregunta.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CrearEncuestaPantalla2Screen extends StatefulWidget {
   final VoidCallback showModal;
@@ -91,7 +92,8 @@ class _CrearEncuestaPantalla2ScreenState
               onPressed: () {
                 // Guardamos la nueva sección
                 setState(() {
-                  widget.secciones.add({"nombre": nombreSeccionController.text});
+                  widget.secciones
+                      .add({"nombre": nombreSeccionController.text});
                 });
                 nombreSeccionController.clear();
                 Navigator.of(context)
@@ -156,25 +158,23 @@ class _CrearEncuestaPantalla2ScreenState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(
-                          onPressed: returnPrincipalPage,
-                          child: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24)
-                              : Text("Regresar"),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    // Botón para crear sección
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed:
                               _crearSeccion, // Abrir el formulario para crear sección
-                          child: Text("Crear Sección"),
+                          icon: Icon(FontAwesomeIcons.plus), // Ícono de +
+                          label: Text("Crear Sección"), // Texto normal
+                        ),
+                        SizedBox(width: 10), // Espacio entre los botones
+                        ElevatedButton.icon(
+                          onPressed: returnPrincipalPage,
+                          icon: Icon(FontAwesomeIcons
+                              .arrowLeft), // Ícono de flecha hacia la izquierda
+                          label: _isLoading
+                              ? SpinKitFadingCircle(
+                                  color: const Color.fromARGB(255, 241, 8, 8),
+                                  size: 24,
+                                )
+                              : Text("Regresar"),
                         ),
                       ],
                     ),
@@ -185,7 +185,8 @@ class _CrearEncuestaPantalla2ScreenState
                         int index = entry.key;
                         Map<String, String> seccion = entry.value;
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4.0, horizontal: 8.0),
                           child: SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -193,11 +194,13 @@ class _CrearEncuestaPantalla2ScreenState
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: EdgeInsets.symmetric(vertical: 16),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 8), // Reducir el alto del botón
                               ),
                               onPressed: () => {
                                 // Acción cuando se presiona el botón de la sección
-                                openPantalla2Page(seccion["nombre"]!, widget.secciones)
+                                openPantalla2Page(
+                                    seccion["nombre"]!, widget.secciones)
                               },
                               child: Row(
                                 mainAxisAlignment:

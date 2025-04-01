@@ -3,6 +3,9 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../Logs/logs_informativos.dart';
 import '../Generales/flushbar_helper.dart';
+import 'package:prueba/components/Header/header.dart';
+import 'package:prueba/components/Menu/menu_lateral.dart';
+import '../Load/load.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -22,7 +25,7 @@ class Acciones extends StatefulWidget {
 
 class _AccionesState extends State<Acciones> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   late TextEditingController _nombreController;
   late TextEditingController _frecuenciaController;
   late TextEditingController _clasificacionController;
@@ -39,6 +42,12 @@ class _AccionesState extends State<Acciones> {
       _frecuenciaController.text = widget.data['frecuencia'] ?? '';
       _clasificacionController.text = widget.data['clasificacion'] ?? '';
     }
+
+    Future.delayed(Duration(seconds: 1), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override
@@ -117,58 +126,93 @@ class _AccionesState extends State<Acciones> {
 
   bool get isEliminar => widget.accion == 'eliminar';
 
+  String capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _nombreController,
-            decoration: InputDecoration(labelText: 'Nombre'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) =>
-                    value?.isEmpty ?? true ? 'El nombre es obligatorio' : null,
-          ),
-          TextFormField(
-            controller: _frecuenciaController,
-            decoration: InputDecoration(labelText: 'Frecuencia'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) => value?.isEmpty ?? true
-                    ? 'La frecuencia es obligatoria'
-                    : null,
-          ),
-          TextFormField(
-            controller: _clasificacionController,
-            decoration: InputDecoration(labelText: 'Clasificacion'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) => value?.isEmpty ?? true
-                    ? 'La clasificacion es obligatoria'
-                    : null,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: closeRegistroModal, // Cierra el modal pasando false
-                child: Text('Cancelar'),
+    return Scaffold(
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Encuestas"), // Usa el menú lateral
+      body: _isLoading
+          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${capitalize(widget.accion)} encuesta',
+                        style: TextStyle(
+                          fontSize: 24, // Tamaño grande
+                          fontWeight: FontWeight.bold, // Negrita
+                        ),
+                      ),
+                    ),
+                  ),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nombreController,
+                          decoration: InputDecoration(labelText: 'Nombre'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'El nombre es obligatorio'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _frecuenciaController,
+                          decoration: InputDecoration(labelText: 'Frecuencia'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La frecuencia es obligatoria'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _clasificacionController,
+                          decoration:
+                              InputDecoration(labelText: 'Clasificacion'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La clasificacion es obligatoria'
+                                  : null,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed:
+                                  closeRegistroModal, // Cierra el modal pasando false
+                              child: Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _onSubmit,
+                              child: _isLoading
+                                  ? SpinKitFadingCircle(
+                                      color: Colors.white, size: 24)
+                                  : Text(buttonLabel),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _onSubmit,
-                child: _isLoading
-                    ? SpinKitFadingCircle(color: Colors.white, size: 24)
-                    : Text(buttonLabel),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
     );
   }
 }

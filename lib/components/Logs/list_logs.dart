@@ -47,7 +47,6 @@ class _TblLogsState extends State<TblLogs> {
       {'name': 'Descripción'},
       {'name': 'Detalles'},
       {'name': 'Creado el'},
-      {'name': 'Actualizado el'},
     ];
 
     return Column(
@@ -66,7 +65,6 @@ class _TblLogsState extends State<TblLogs> {
                   'Descripción': row['descripcion'],
                   'Detalles': row['detalles'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
-                  'Actualizado el': formatDate(row['updatedAt'] ?? ''),
                   '_originalRow': row,
                 };
               }).toList(),

@@ -9,6 +9,9 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import '../Generales/flushbar_helper.dart';
+import 'package:prueba/components/Header/header.dart';
+import 'package:prueba/components/Menu/menu_lateral.dart';
+import '../Load/load.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -28,7 +31,7 @@ class Acciones extends StatefulWidget {
 
 class _AccionesState extends State<Acciones> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   late TextEditingController _nombreController;
   late TextEditingController _emailController;
   late TextEditingController _telefonoController;
@@ -97,6 +100,12 @@ class _AccionesState extends State<Acciones> {
       _passwordController.text = widget.data['password'] ?? '';
       _rolController.text = widget.data['tipo'] ?? '';
     }
+
+    Future.delayed(Duration(seconds: 1), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override
@@ -239,8 +248,7 @@ class _AccionesState extends State<Acciones> {
         showCustomFlushbar(
           context: context,
           title: "Eliminacion exitosa",
-          message:
-              "Se han eliminado correctamente los datos del usuario",
+          message: "Se han eliminado correctamente los datos del usuario",
           backgroundColor: Colors.green,
         );
       }
@@ -326,160 +334,195 @@ class _AccionesState extends State<Acciones> {
   bool get isEliminar => widget.accion == 'eliminar';
   bool get isEditar => widget.accion == 'editar';
 
+  String capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      // Permite scroll si el contenido es grande
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Evita que ocupe todo el modal
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                decoration: InputDecoration(labelText: 'Nombre'),
-                enabled: !isEliminar && !_isLoading,
-                validator: isEliminar
-                    ? null
-                    : (value) => value?.isEmpty ?? true
-                        ? 'El nombre es obligatorio'
-                        : null,
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email'),
-                enabled: !isEliminar && !_isLoading,
-                keyboardType: TextInputType.emailAddress,
-                validator: isEliminar
-                    ? null
-                    : (value) => value != null &&
-                            !RegExp(r"^[^@]+@[^@]+\.[^@]+").hasMatch(value)
-                        ? 'Por favor ingresa un email válido'
-                        : null,
-              ),
-              TextFormField(
-                controller: _telefonoController,
-                decoration: InputDecoration(labelText: 'Teléfono'),
-                enabled: !isEliminar && !_isLoading,
-                keyboardType: TextInputType.number,
-                validator: isEliminar
-                    ? null
-                    : (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El teléfono es obligatorio';
-                        } else if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-                          return 'El teléfono debe tener 10 dígitos';
-                        }
-                        return null;
-                      },
-              ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Contraseña'),
-                enabled: !isEliminar && !_isLoading,
-                obscureText: true,
-                validator: (value) {
-                  if (!isEliminar && !isEditar) {
-                    return value?.isEmpty ?? true
-                        ? 'La contraseña es obligatoria'
-                        : null;
-                  }
-                  return null;
-                },
-              ),
-              DropdownButtonFormField<String>(
-                value: _rolController.text.isEmpty
-                    ? null
-                    : _rolController.text, // Permitir valor nulo
-                onChanged: (isEliminar || _isLoading)
-                    ? null
-                    : (String? newValue) {
-                        setState(() {
-                          _rolController.text =
-                              newValue ?? ''; // Asegurar que no sea nulo
-                        });
-                      },
-                decoration: InputDecoration(labelText: 'Rol'),
-                items: [
-                  DropdownMenuItem<String>(
-                    value: "",
-                    child: Text("Selecciona una opción",
-                        style: TextStyle(color: Colors.grey)),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: "administrador",
-                    child: Text("Administrador"),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: "inspector",
-                    child: Text("Inspector"),
-                  ),
-                ],
-                validator: isEliminar
-                    ? null
-                    : (value) => (value == null || value.isEmpty)
-                        ? 'Por favor selecciona un rol'
-                        : null,
-              ),
-              SizedBox(height: 16),
-
-              /// **Sección de Firma**
-              if (!isEditar && !isEliminar) ...[
-                Text(
-                  "Firma del cliente",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10),
-                Container(
-                  width: double.infinity, // Se ajusta al ancho del modal
-                  height: 250, // Altura fija para evitar problemas
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey), // Agrega borde
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Signature(
-                      controller: _controller,
-                      height: 300,
-                      backgroundColor: Colors.transparent, // Fondo transparente
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : () => _controller.clear(),
-                      child: Text("Limpiar Firma"),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-              ],
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+    return Scaffold(
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Periodos"), // Usa el menú lateral
+      body: _isLoading
+          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextButton(
-                    onPressed: _isLoading ? null : closeRegistroModal,
-                    child: Text('Cancelar'),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${capitalize(widget.accion)} usuario',
+                        style: TextStyle(
+                          fontSize: 24, // Tamaño grande
+                          fontWeight: FontWeight.bold, // Negrita
+                        ),
+                      ),
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _onSubmit,
-                    child: _isLoading
-                        ? SpinKitFadingCircle(color: Colors.white, size: 24)
-                        : Text(buttonLabel),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize:
+                          MainAxisSize.min, // Evita que ocupe todo el modal
+                      children: [
+                        TextFormField(
+                          controller: _nombreController,
+                          decoration: InputDecoration(labelText: 'Nombre'),
+                          enabled: !isEliminar && !_isLoading,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'El nombre es obligatorio'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(labelText: 'Email'),
+                          enabled: !isEliminar && !_isLoading,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value != null &&
+                                      !RegExp(r"^[^@]+@[^@]+\.[^@]+")
+                                          .hasMatch(value)
+                                  ? 'Por favor ingresa un email válido'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _telefonoController,
+                          decoration: InputDecoration(labelText: 'Teléfono'),
+                          enabled: !isEliminar && !_isLoading,
+                          keyboardType: TextInputType.number,
+                          validator: isEliminar
+                              ? null
+                              : (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'El teléfono es obligatorio';
+                                  } else if (!RegExp(r'^\d{10}$')
+                                      .hasMatch(value)) {
+                                    return 'El teléfono debe tener 10 dígitos';
+                                  }
+                                  return null;
+                                },
+                        ),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(labelText: 'Contraseña'),
+                          enabled: !isEliminar && !_isLoading,
+                          obscureText: true,
+                          validator: (value) {
+                            if (!isEliminar && !isEditar) {
+                              return value?.isEmpty ?? true
+                                  ? 'La contraseña es obligatoria'
+                                  : null;
+                            }
+                            return null;
+                          },
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: _rolController.text.isEmpty
+                              ? null
+                              : _rolController.text, // Permitir valor nulo
+                          onChanged: (isEliminar || _isLoading)
+                              ? null
+                              : (String? newValue) {
+                                  setState(() {
+                                    _rolController.text = newValue ??
+                                        ''; // Asegurar que no sea nulo
+                                  });
+                                },
+                          decoration: InputDecoration(labelText: 'Rol'),
+                          items: [
+                            DropdownMenuItem<String>(
+                              value: "",
+                              child: Text("Selecciona una opción",
+                                  style: TextStyle(color: Colors.grey)),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: "administrador",
+                              child: Text("Administrador"),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: "inspector",
+                              child: Text("Inspector"),
+                            ),
+                          ],
+                          validator: isEliminar
+                              ? null
+                              : (value) => (value == null || value.isEmpty)
+                                  ? 'Por favor selecciona un rol'
+                                  : null,
+                        ),
+                        SizedBox(height: 16),
+
+                        /// **Sección de Firma**
+                        if (!isEditar && !isEliminar) ...[
+                          Text(
+                            "Firma del cliente",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 10),
+                          Container(
+                            width:
+                                double.infinity, // Se ajusta al ancho del modal
+                            height: 250, // Altura fija para evitar problemas
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.grey), // Agrega borde
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Signature(
+                                controller: _controller,
+                                height: 300,
+                                backgroundColor:
+                                    Colors.transparent, // Fondo transparente
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: _isLoading
+                                    ? null
+                                    : () => _controller.clear(),
+                                child: Text("Limpiar Firma"),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                        ],
+                        SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : closeRegistroModal,
+                              child: Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _onSubmit,
+                              child: _isLoading
+                                  ? SpinKitFadingCircle(
+                                      color: Colors.white, size: 24)
+                                  : Text(buttonLabel),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

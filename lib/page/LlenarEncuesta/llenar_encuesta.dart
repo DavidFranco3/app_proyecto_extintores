@@ -19,6 +19,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class EncuestaPage extends StatefulWidget {
   @override
@@ -635,31 +636,32 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : _onSubmit, // Deshabilitar botón mientras carga
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                minimumSize: Size(0, 50), // Tamaño flexible
-                              ),
-                              child: _isLoading
-                                  ? Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SpinKitFadingCircle(
-                                          color: const Color.fromARGB(
-                                              255, 241, 8, 8),
-                                          size: 24,
-                                        ),
-                                        SizedBox(width: 10),
-                                        Text("Guardando..."), // Texto de carga
-                                      ],
-                                    )
-                                  : Text(
-                                      "Guardar Inspección"), // Texto normal cuando no está cargando
+                          ElevatedButton.icon(
+                            onPressed: _isLoading
+                                ? null
+                                : _onSubmit, // Deshabilitar botón mientras carga
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12), // Altura estándar
+                              fixedSize:
+                                  Size(110, 50), // Ancho fijo y altura flexible
                             ),
+                            icon: Icon(FontAwesomeIcons.plus), // Ícono de +
+                            label: _isLoading
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SpinKitFadingCircle(
+                                        color: const Color.fromARGB(
+                                            255, 241, 8, 8),
+                                        size: 24,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text("Guardando..."), // Texto de carga
+                                    ],
+                                  )
+                                : Text(
+                                    "Guardar"), // Texto normal cuando no está cargando
                           ),
                           SizedBox(width: 10), // Espacio entre los botones
                         ],

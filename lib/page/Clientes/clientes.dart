@@ -50,60 +50,25 @@ class _ClientesPageState extends State<ClientesPage> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   void openRegistroModal() {
-    showDialog(
-      context: context,
+  Navigator.push(
+    context,
+    MaterialPageRoute(
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Registrar Cliente',
-                  style: TextStyle(
-                    fontSize: 24, // Tamaño más pequeño
-                    fontWeight: FontWeight.bold, // Negrita
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: () {
-                        Navigator.pop(context); // Esto cierra el modal
-                      },
-                      onCompleted: getClientes,
-                      accion: "registrar",
-                      data: null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        return Scaffold(
+          body: Acciones(
+            showModal: () {
+              Navigator.pop(context); // Esto cerrará la página
+            },
+            onCompleted: getClientes,
+            accion: "registrar",
+            data: null,
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
+
 
 // Cierra el modal
   void closeModal() {

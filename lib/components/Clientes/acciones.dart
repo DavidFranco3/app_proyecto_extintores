@@ -8,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../api/dropbox.dart';
 import 'dart:io';
 import '../Generales/flushbar_helper.dart';
+import 'package:prueba/components/Header/header.dart';
+import 'package:prueba/components/Menu/menu_lateral.dart';
+import '../Load/load.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -27,7 +30,7 @@ class Acciones extends StatefulWidget {
 
 class _AccionesState extends State<Acciones> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   late TextEditingController _nombreController;
   late TextEditingController _imagenController;
   late TextEditingController _correoController;
@@ -77,8 +80,6 @@ class _AccionesState extends State<Acciones> {
     _cpostalController = TextEditingController();
     _referenciaController = TextEditingController();
 
-    
-
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _nombreController.text = widget.data['nombre'] ?? '';
       _imagenController.text = widget.data['imagen'] ?? '';
@@ -94,6 +95,11 @@ class _AccionesState extends State<Acciones> {
       _referenciaController.text = widget.data['referencia'] ?? '';
       imageUrl = widget.data['imagen'].replaceAll('dl=0', 'raw=1');
     }
+    Future.delayed(Duration(seconds: 1), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   Future<void> cargarEstados() async {
@@ -371,262 +377,310 @@ class _AccionesState extends State<Acciones> {
 
   bool get isEliminar => widget.accion == 'eliminar';
 
+  String capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          if (!isEliminar) ...[
-            Text(
-              "Logo de la empresa",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            GestureDetector(
-              onTap:
-                  _pickImage, // Al hacer tap, se activa el selector de imágenes
-              child: Container(
-                width: double.infinity,
-                height: 250,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: _image == null && imageUrl == null
-                    ? Center(
-                        child: Icon(
-                          Icons.cloud_upload,
-                          size: 50,
-                          color: Colors.blueAccent,
+    return Scaffold(
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Clientes"), // Usa el menú lateral
+      body: _isLoading
+          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${capitalize(widget.accion)} cliente',
+                        style: TextStyle(
+                          fontSize: 24, // Tamaño grande
+                          fontWeight: FontWeight.bold, // Negrita
                         ),
-                      )
-                    : (_image != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              File(_image!.path),
-                              fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        if (!isEliminar) ...[
+                          Text(
+                            "Logo de la empresa",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          GestureDetector(
+                            onTap:
+                                _pickImage, // Al hacer tap, se activa el selector de imágenes
+                            child: Container(
+                              width: double.infinity,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: _image == null && imageUrl == null
+                                  ? Center(
+                                      child: Icon(
+                                        Icons.cloud_upload,
+                                        size: 50,
+                                        color: Colors.blueAccent,
+                                      ),
+                                    )
+                                  : (_image != null
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.file(
+                                            File(_image!.path),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.network(
+                                            imageUrl!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )),
                             ),
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              imageUrl!,
-                              fit: BoxFit.cover,
+                          ),
+                          SizedBox(height: 10),
+                          if (_image != null || imageUrl != null)
+                            Text(
+                              "Imagen seleccionada",
+                              style:
+                                  TextStyle(color: Colors.green, fontSize: 16),
+                            )
+                        ],
+                        TextFormField(
+                          controller: _nombreController,
+                          decoration: InputDecoration(labelText: 'Nombre'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'El nombre es obligatorio'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _correoController,
+                          decoration: InputDecoration(labelText: 'Email'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'El email es obligatorio';
+                                  }
+                                  // Expresión regular para validar email
+                                  final emailRegex = RegExp(
+                                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Ingrese un email válido';
+                                  }
+                                  return null;
+                                },
+                        ),
+                        TextFormField(
+                          controller: _telefonoController,
+                          decoration: InputDecoration(
+                            labelText: 'Teléfono',
+                            hintText: 'Ingresa solo números (máx. 10)',
+                          ),
+                          enabled: !isEliminar,
+                          keyboardType: TextInputType
+                              .phone, // Para mostrar el teclado numérico
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Permite solo números
+                            LengthLimitingTextInputFormatter(
+                                10), // Limita a 10 caracteres
+                          ],
+                          validator: isEliminar
+                              ? null
+                              : (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'El teléfono es obligatorio';
+                                  }
+                                  if (!RegExp(r'^\d{10}$').hasMatch(value)) {
+                                    return 'Debe contener exactamente 10 dígitos';
+                                  }
+                                  return null;
+                                },
+                        ),
+                        TextFormField(
+                          controller: _calleController,
+                          decoration: InputDecoration(labelText: 'Calle'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La calle es obligatoria'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _nExteriorController,
+                          decoration: InputDecoration(
+                            labelText: 'Número exterior',
+                          ),
+                          keyboardType: TextInputType
+                              .number, // Solo permite números en el teclado
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Solo números
+                          ],
+                          enabled: !isEliminar,
+                        ),
+                        TextFormField(
+                          controller: _nInteriorController,
+                          decoration: InputDecoration(
+                            labelText: 'Número interior',
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          enabled: !isEliminar,
+                        ),
+                        TextFormField(
+                          controller: _coloniaController,
+                          decoration: InputDecoration(labelText: 'Colonia'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La colonia es obligatoria'
+                                  : null,
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: _estadoDomController.text.isEmpty
+                              ? null
+                              : _estadoDomController.text,
+                          decoration: InputDecoration(labelText: 'Estado'),
+                          isExpanded: true,
+                          items: _estadosFuture.map((estado) {
+                            return DropdownMenuItem<String>(
+                              value: estado['nombre'],
+                              child: Text(estado[
+                                  'nombre']), // Muestra el nombre en el select
+                            );
+                          }).toList(),
+                          onChanged: isEliminar
+                              ? null
+                              : (newValue) {
+                                  setState(() {
+                                    _estadoDomController.text =
+                                        newValue!; // Actualiza el estado
+                                    _municipioController.text =
+                                        ''; // Limpia el municipio cuando cambia el estado
+                                  });
+                                },
+                          validator: isEliminar
+                              ? null
+                              : (value) => value == null || value.isEmpty
+                                  ? 'El estado es obligatorio'
+                                  : null,
+                        ),
+                        // Dropdown para seleccionar Municipio
+                        DropdownButtonFormField<String>(
+                          isExpanded: true, // Expande el menú
+                          value: _municipioController.text.isNotEmpty
+                              ? _municipioController.text
+                              : null,
+                          decoration: InputDecoration(labelText: 'Municipio'),
+                          items: (_estadoDomController.text.isNotEmpty &&
+                                  _municipiosMap
+                                      .containsKey(_estadoDomController.text))
+                              ? _municipiosMap[_estadoDomController.text]!
+                                  .map((municipio) {
+                                  return DropdownMenuItem<String>(
+                                    value: municipio,
+                                    child: Text(municipio),
+                                  );
+                                }).toList()
+                              : [],
+                          onChanged: isEliminar
+                              ? null
+                              : (newValue) {
+                                  setState(() {
+                                    _municipioController.text =
+                                        newValue!; // Actualiza el municipio seleccionado
+                                  });
+                                },
+                          validator: isEliminar
+                              ? null
+                              : (value) => value == null || value.isEmpty
+                                  ? 'El municipio es obligatorio'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _cpostalController,
+                          decoration: InputDecoration(
+                            labelText: 'Código Postal',
+                          ),
+                          keyboardType: TextInputType
+                              .number, // Solo permite números en el teclado
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Solo números
+                            LengthLimitingTextInputFormatter(
+                                5), // Máximo 5 caracteres
+                          ],
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'El código postal es obligatorio';
+                                  } else if (value.length != 5) {
+                                    return 'Debe tener 5 dígitos';
+                                  }
+                                  return null;
+                                },
+                        ),
+                        TextFormField(
+                          controller: _referenciaController,
+                          decoration: InputDecoration(labelText: 'Referencia'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La referencia es obligatoria'
+                                  : null,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed:
+                                  closeRegistroModal, // Cierra el modal pasando false
+                              child: Text('Cancelar'),
                             ),
-                          )),
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _onSubmit,
+                              child: _isLoading
+                                  ? SpinKitFadingCircle(
+                                      color: Colors.white, size: 24)
+                                  : Text(buttonLabel),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 10),
-            if (_image != null || imageUrl != null)
-              Text(
-                "Imagen seleccionada",
-                style: TextStyle(color: Colors.green, fontSize: 16),
-              )
-          ],
-          TextFormField(
-            controller: _nombreController,
-            decoration: InputDecoration(labelText: 'Nombre'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) =>
-                    value?.isEmpty ?? true ? 'El nombre es obligatorio' : null,
-          ),
-          TextFormField(
-            controller: _correoController,
-            decoration: InputDecoration(labelText: 'Email'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El email es obligatorio';
-                    }
-                    // Expresión regular para validar email
-                    final emailRegex = RegExp(
-                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-                    if (!emailRegex.hasMatch(value)) {
-                      return 'Ingrese un email válido';
-                    }
-                    return null;
-                  },
-          ),
-          TextFormField(
-            controller: _telefonoController,
-            decoration: InputDecoration(
-              labelText: 'Teléfono',
-              hintText: 'Ingresa solo números (máx. 10)',
-            ),
-            enabled: !isEliminar,
-            keyboardType:
-                TextInputType.phone, // Para mostrar el teclado numérico
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly, // Permite solo números
-              LengthLimitingTextInputFormatter(10), // Limita a 10 caracteres
-            ],
-            validator: isEliminar
-                ? null
-                : (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El teléfono es obligatorio';
-                    }
-                    if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-                      return 'Debe contener exactamente 10 dígitos';
-                    }
-                    return null;
-                  },
-          ),
-          TextFormField(
-            controller: _calleController,
-            decoration: InputDecoration(labelText: 'Calle'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) =>
-                    value?.isEmpty ?? true ? 'La calle es obligatoria' : null,
-          ),
-          TextFormField(
-            controller: _nExteriorController,
-            decoration: InputDecoration(
-              labelText: 'Número exterior',
-            ),
-            keyboardType:
-                TextInputType.number, // Solo permite números en el teclado
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly, // Solo números
-            ],
-            enabled: !isEliminar,
-          ),
-          TextFormField(
-            controller: _nInteriorController,
-            decoration: InputDecoration(
-              labelText: 'Número interior',
-            ),
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            enabled: !isEliminar,
-          ),
-          TextFormField(
-            controller: _coloniaController,
-            decoration: InputDecoration(labelText: 'Colonia'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) =>
-                    value?.isEmpty ?? true ? 'La colonia es obligatoria' : null,
-          ),
-          DropdownButtonFormField<String>(
-            value: _estadoDomController.text.isEmpty
-                ? null
-                : _estadoDomController.text,
-            decoration: InputDecoration(labelText: 'Estado'),
-            isExpanded: true,
-            items: _estadosFuture.map((estado) {
-              return DropdownMenuItem<String>(
-                value: estado['nombre'],
-                child: Text(estado['nombre']), // Muestra el nombre en el select
-              );
-            }).toList(),
-            onChanged: isEliminar
-                ? null
-                : (newValue) {
-                    setState(() {
-                      _estadoDomController.text =
-                          newValue!; // Actualiza el estado
-                      _municipioController.text =
-                          ''; // Limpia el municipio cuando cambia el estado
-                    });
-                  },
-            validator: isEliminar
-                ? null
-                : (value) => value == null || value.isEmpty
-                    ? 'El estado es obligatorio'
-                    : null,
-          ),
-          // Dropdown para seleccionar Municipio
-          DropdownButtonFormField<String>(
-            isExpanded: true, // Expande el menú
-            value: _municipioController.text.isNotEmpty
-                ? _municipioController.text
-                : null,
-            decoration: InputDecoration(labelText: 'Municipio'),
-            items: (_estadoDomController.text.isNotEmpty &&
-                    _municipiosMap.containsKey(_estadoDomController.text))
-                ? _municipiosMap[_estadoDomController.text]!.map((municipio) {
-                    return DropdownMenuItem<String>(
-                      value: municipio,
-                      child: Text(municipio),
-                    );
-                  }).toList()
-                : [],
-            onChanged: isEliminar
-                ? null
-                : (newValue) {
-                    setState(() {
-                      _municipioController.text =
-                          newValue!; // Actualiza el municipio seleccionado
-                    });
-                  },
-            validator: isEliminar
-                ? null
-                : (value) => value == null || value.isEmpty
-                    ? 'El municipio es obligatorio'
-                    : null,
-          ),
-          TextFormField(
-            controller: _cpostalController,
-            decoration: InputDecoration(
-              labelText: 'Código Postal',
-            ),
-            keyboardType:
-                TextInputType.number, // Solo permite números en el teclado
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly, // Solo números
-              LengthLimitingTextInputFormatter(5), // Máximo 5 caracteres
-            ],
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El código postal es obligatorio';
-                    } else if (value.length != 5) {
-                      return 'Debe tener 5 dígitos';
-                    }
-                    return null;
-                  },
-          ),
-          TextFormField(
-            controller: _referenciaController,
-            decoration: InputDecoration(labelText: 'Referencia'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) => value?.isEmpty ?? true
-                    ? 'La referencia es obligatoria'
-                    : null,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: closeRegistroModal, // Cierra el modal pasando false
-                child: Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _onSubmit,
-                child: _isLoading
-                    ? SpinKitFadingCircle(color: Colors.white, size: 24)
-                    : Text(buttonLabel),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

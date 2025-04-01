@@ -148,7 +148,8 @@ class _MenuLateralState extends State<MenuLateral> {
                         ),
                         _buildListTile(
                           context,
-                          Icons.poll_sharp, // Icono relacionado con encuestas
+                          Icons
+                              .assignment, // Icono relacionado con inspecciones
                           'Alta Inspeccion',
                           EncuestaPage(),
                         ),
@@ -260,7 +261,7 @@ class _MenuLateralState extends State<MenuLateral> {
               ),
               _buildListTile(
                 context,
-                Icons.poll_sharp, // Icono relacionado con encuestas
+                Icons.assignment, // Icono relacionado con inspecciones
                 'Alta Inspeccion',
                 EncuestaPage(),
               ),

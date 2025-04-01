@@ -11,6 +11,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import '../CrearEncuestaPantalla2/crear_encuesta_pantalla_2.dart';
 import '../../components/Generales/pregunta.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -354,9 +355,9 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
   String get buttonLabel {
     if (widget.accion == 'registrar') {
-      return 'Guardar encuesta';
+      return 'Guardar';
     } else {
-      return 'Actualizar encuesta';
+      return 'Actualizar';
     }
   }
 
@@ -407,42 +408,43 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                         ),
                       ),
                     ),
-                    // Botones centrados
+                    // Botones centrados con separación
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: _isLoading ? null : _publicarEncuesta,
-                          child: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: Colors.white, size: 24)
-                              : Text(buttonLabel),
+                          icon: Icon(FontAwesomeIcons.plus), // Ícono de +
+                          label: _isLoading
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SpinKitFadingCircle(
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text("Cargando..."), // Texto de carga
+                                  ],
+                                )
+                              : Text(
+                                  buttonLabel), // Texto normal cuando no está cargando
                         ),
-                        ElevatedButton(
+                        SizedBox(width: 10), // Separación entre botones
+                        ElevatedButton.icon(
                           onPressed: returnPrincipalPage,
-                          child: _isLoading
+                          icon: Icon(FontAwesomeIcons
+                              .arrowLeft), // Ícono de flecha hacia la izquierda
+                          label: _isLoading
                               ? SpinKitFadingCircle(
                                   color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24)
-                              : Text("Cancelar"),
+                                  size: 24,
+                                )
+                              : Text("Regresar"),
                         ),
                       ],
                     ),
-
-                    // Botón de "Agregar Pregunta" centrado
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _agregarPregunta,
-                          child: Text("Agregar Pregunta"),
-                        ),
-                      ],
-                    ),
-
                     SizedBox(height: 20),
-
                     // Sección de Preguntas
                     Card(
                       elevation: 3,
@@ -484,6 +486,14 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   ),
                                 );
                               },
+                            ),
+                            // Botón de "Agregar Pregunta" centrado debajo de la lista
+                            SizedBox(height: 10),
+                            Center(
+                              child: ElevatedButton(
+                                onPressed: _agregarPregunta,
+                                child: Text("Agregar Pregunta"),
+                              ),
                             ),
                           ],
                         ),

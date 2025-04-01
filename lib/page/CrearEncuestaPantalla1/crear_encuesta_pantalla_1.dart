@@ -9,6 +9,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../Encuestas/encuestas.dart';
 import '../CrearEncuestaPantalla2/crear_encuesta_pantalla_2.dart';
 import '../../components/Generales/pregunta.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CrearEncuestaPantalla1Screen extends StatefulWidget {
   final VoidCallback showModal;
@@ -249,12 +250,15 @@ class _CrearEncuestaPantalla1ScreenState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: returnPrincipalPage,
-                          child: _isLoading
+                          icon: Icon(FontAwesomeIcons
+                              .arrowLeft), // Ícono de flecha hacia la izquierda
+                          label: _isLoading
                               ? SpinKitFadingCircle(
                                   color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24)
+                                  size: 24,
+                                )
                               : Text("Regresar"),
                         ),
                       ],
@@ -386,5 +390,3 @@ class _CrearEncuestaPantalla1ScreenState
     );
   }
 }
-
-

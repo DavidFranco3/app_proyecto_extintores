@@ -38,101 +38,35 @@ class _TblExtintoresState extends State<TblExtintores> {
     return dateFormat.format(localDate);
   }
 
-  void openEditarModal(row) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Editar extintor',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: widget.showModal,
-                      onCompleted: widget.onCompleted,
-                      accion: "editar",
-                      data: row,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+ void openEditarModal(row) {
+  // Navegar a la página de edición pasando los parámetros necesarios
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => Acciones(
+        showModal: widget.showModal,
+        onCompleted: widget.onCompleted,
+        accion: "editar",
+        data: row,
+      ),
+    ),
+  );
+}
 
-  void openEliminarModal(row) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Eliminar extintor',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: widget.showModal,
-                      onCompleted: widget.onCompleted,
-                      accion: "eliminar",
-                      data: row,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+void openEliminarModal(row) {
+  // Navegar a la página de eliminación pasando los parámetros necesarios
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => Acciones(
+        showModal: widget.showModal,
+        onCompleted: widget.onCompleted,
+        accion: "eliminar",
+        data: row,
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

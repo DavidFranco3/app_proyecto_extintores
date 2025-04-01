@@ -4,6 +4,9 @@ import '../../api/extintores.dart';
 import '../../api/tipos_extintores.dart';
 import '../Logs/logs_informativos.dart';
 import '../Generales/flushbar_helper.dart';
+import 'package:prueba/components/Header/header.dart';
+import 'package:prueba/components/Menu/menu_lateral.dart';
+import '../Load/load.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -23,7 +26,7 @@ class Acciones extends StatefulWidget {
 
 class _AccionesState extends State<Acciones> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool loading = true;
   List<Map<String, dynamic>> dataTiposExtintores = [];
   late TextEditingController _numeroSerieController;
@@ -46,6 +49,12 @@ class _AccionesState extends State<Acciones> {
       _capacidadController.text = widget.data['capacidad'] ?? '';
       _ultimaRecargaController.text = widget.data['ultimaRecarga'] ?? '';
     }
+
+    Future.delayed(Duration(seconds: 1), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   Future<void> getTiposExtintores() async {
@@ -149,7 +158,7 @@ class _AccionesState extends State<Acciones> {
         );
       }
     } catch (error) {
-      setState(() { 
+      setState(() {
         _isLoading = false;
       });
       showCustomFlushbar(
@@ -274,103 +283,144 @@ class _AccionesState extends State<Acciones> {
 
   bool get isEliminar => widget.accion == 'eliminar';
 
+  String capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _numeroSerieController,
-            decoration: InputDecoration(labelText: 'Numero de serie'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) => value?.isEmpty ?? true
-                    ? 'El numero de serie es obligatorio'
-                    : null,
-          ),
-          DropdownButtonFormField<String>(
-            value: _idTipoExtintorController.text.isEmpty
-                ? null
-                : _idTipoExtintorController.text,
-            decoration: InputDecoration(labelText: 'Tipo de extintor'),
-            isExpanded: true,
-            items: dataTiposExtintores.map((tipo) {
-              return DropdownMenuItem<String>(
-                value: tipo['id'],
-                child: Text(tipo['nombre']), // Muestra el nombre en el select
-              );
-            }).toList(),
-            onChanged: isEliminar
-                ? null
-                : (newValue) {
-                    setState(() {
-                      _idTipoExtintorController.text = newValue!;
-                    });
-                  },
-            validator: isEliminar
-                ? null
-                : (value) => value == null || value.isEmpty
-                    ? 'El tipo de extintor es obligatorio'
-                    : null,
-          ),
-          TextFormField(
-            controller: _capacidadController,
-            decoration: InputDecoration(labelText: 'Capacidad'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) => value?.isEmpty ?? true
-                    ? 'La capacidad es obligatoria'
-                    : null,
-          ),
-          TextFormField(
-            controller: _ultimaRecargaController,
-            decoration: InputDecoration(labelText: 'Última recarga'),
-            enabled: !isEliminar,
-            readOnly: true, // Para que el usuario no escriba manualmente
-            onTap: () async {
-              // Muestra el selector de fecha
-              DateTime? pickedDate = await showDatePicker(
-                context: context,
-                initialDate: DateTime
-                    .now(), // Fecha inicial, puedes ajustarla si lo necesitas
-                firstDate: DateTime(1900), // Fecha mínima seleccionable
-                lastDate: DateTime(2100), // Fecha máxima seleccionable
-                locale: Locale(
-                    'es', 'ES'), // Aquí se asegura que la fecha esté en español
-              );
+    return Scaffold(
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Crear Inspeccion"), // Usa el menú lateral
+      body: _isLoading
+          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        '${capitalize(widget.accion)} extintor',
+                        style: TextStyle(
+                          fontSize: 24, // Tamaño grande
+                          fontWeight: FontWeight.bold, // Negrita
+                        ),
+                      ),
+                    ),
+                  ),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _numeroSerieController,
+                          decoration:
+                              InputDecoration(labelText: 'Numero de serie'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'El numero de serie es obligatorio'
+                                  : null,
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: _idTipoExtintorController.text.isEmpty
+                              ? null
+                              : _idTipoExtintorController.text,
+                          decoration:
+                              InputDecoration(labelText: 'Tipo de extintor'),
+                          isExpanded: true,
+                          items: dataTiposExtintores.map((tipo) {
+                            return DropdownMenuItem<String>(
+                              value: tipo['id'],
+                              child: Text(tipo[
+                                  'nombre']), // Muestra el nombre en el select
+                            );
+                          }).toList(),
+                          onChanged: isEliminar
+                              ? null
+                              : (newValue) {
+                                  setState(() {
+                                    _idTipoExtintorController.text = newValue!;
+                                  });
+                                },
+                          validator: isEliminar
+                              ? null
+                              : (value) => value == null || value.isEmpty
+                                  ? 'El tipo de extintor es obligatorio'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _capacidadController,
+                          decoration: InputDecoration(labelText: 'Capacidad'),
+                          enabled: !isEliminar,
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La capacidad es obligatoria'
+                                  : null,
+                        ),
+                        TextFormField(
+                          controller: _ultimaRecargaController,
+                          decoration:
+                              InputDecoration(labelText: 'Última recarga'),
+                          enabled: !isEliminar,
+                          readOnly:
+                              true, // Para que el usuario no escriba manualmente
+                          onTap: () async {
+                            // Muestra el selector de fecha
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime
+                                  .now(), // Fecha inicial, puedes ajustarla si lo necesitas
+                              firstDate:
+                                  DateTime(1900), // Fecha mínima seleccionable
+                              lastDate:
+                                  DateTime(2100), // Fecha máxima seleccionable
+                              locale: Locale('es',
+                                  'ES'), // Aquí se asegura que la fecha esté en español
+                            );
 
-              if (pickedDate != null) {
-                // Si se seleccionó una fecha, actualiza el controlador
-                _ultimaRecargaController.text = "${pickedDate.toLocal()}"
-                    .split(' ')[0]; // Formatea la fecha a 'YYYY-MM-DD'
-              }
-            },
-            validator: isEliminar
-                ? null
-                : (value) => value?.isEmpty ?? true
-                    ? 'La última recarga es obligatoria'
-                    : null,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: closeRegistroModal, // Cierra el modal pasando false
-                child: Text('Cancelar'),
+                            if (pickedDate != null) {
+                              // Si se seleccionó una fecha, actualiza el controlador
+                              _ultimaRecargaController.text =
+                                  "${pickedDate.toLocal()}".split(' ')[
+                                      0]; // Formatea la fecha a 'YYYY-MM-DD'
+                            }
+                          },
+                          validator: isEliminar
+                              ? null
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La última recarga es obligatoria'
+                                  : null,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed:
+                                  closeRegistroModal, // Cierra el modal pasando false
+                              child: Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _onSubmit,
+                              child: _isLoading
+                                  ? SpinKitFadingCircle(
+                                      color: Colors.white, size: 24)
+                                  : Text(buttonLabel),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _onSubmit,
-                child: _isLoading
-                    ? SpinKitFadingCircle(color: Colors.white, size: 24)
-                    : Text(buttonLabel),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
     );
   }
 }

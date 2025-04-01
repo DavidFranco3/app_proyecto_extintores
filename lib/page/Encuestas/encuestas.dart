@@ -153,31 +153,3 @@ class _EncuestasPageState extends State<EncuestasPage> {
     );
   }
 }
-
-class Preguntaa {
-  String titulo;
-  String observaciones;
-  List<String> opciones;
-
-  Preguntaa({
-    required this.titulo,
-    required this.observaciones,
-    required this.opciones,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      "titulo": titulo,
-      "observaciones": observaciones,
-      "opciones": opciones,
-    };
-  }
-
-  factory Preguntaa.fromJson(Map<String, dynamic> json) {
-    return Preguntaa(
-      titulo: json['titulo'] ?? '',
-      observaciones: json['observaciones'] ?? '',
-      opciones: List<String>.from(json['opciones'] ?? []),
-    );
-  }
-}

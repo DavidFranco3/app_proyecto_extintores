@@ -173,8 +173,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey:
-          navigatorKey, // 📌 Necesario para mostrar alertas sin problemas
+      navigatorKey: navigatorKey, // ✅ Utilizando el navigator global
       debugShowCheckedModeBanner: false,
       supportedLocales: [
         Locale('es', 'ES'), // Español
@@ -189,3 +188,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

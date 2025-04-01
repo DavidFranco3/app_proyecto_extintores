@@ -50,60 +50,20 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
 
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
-  // Función para abrir el modal de registro con el formulario de Acciones
-  void openRegistroModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Registrar Clasificación',
-                  style: TextStyle(
-                    fontSize: 18, // Tamaño más pequeño
-                    fontWeight: FontWeight.bold, // Negrita
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: () {
-                        Navigator.pop(context); // Esto cierra el modal
-                      },
-                      onCompleted: getClasificaciones,
-                      accion: "registrar",
-                      data: null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+  // Función para redirigir a la vista de registro de Acciones
+  void openRegistroView() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => Acciones(
+          showModal: () {
+            Navigator.pop(context); // Cierra la vista al completar
+          },
+          onCompleted: getClasificaciones,
+          accion: "registrar",
+          data: null,
+        ),
+      ),
     );
   }
 
@@ -160,7 +120,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
                   child: Center(
                     child: ElevatedButton.icon(
                       onPressed:
-                          openRegistroModal, // Abre el modal con el formulario de acciones
+                          openRegistroView, // Abre el modal con el formulario de acciones
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),

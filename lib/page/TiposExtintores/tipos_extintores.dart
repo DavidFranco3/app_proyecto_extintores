@@ -25,7 +25,8 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
   Future<void> getTiposExtintores() async {
     try {
       final tiposExtintoresService = TiposExtintoresService();
-      final List<dynamic> response = await tiposExtintoresService.listarTiposExtintores();
+      final List<dynamic> response =
+          await tiposExtintoresService.listarTiposExtintores();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -51,57 +52,19 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
 
   // Función para abrir el modal de registro con el formulario de Acciones
   void openRegistroModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Registrar tipo de extintor',
-                  style: TextStyle(
-                    fontSize: 16, // Tamaño más pequeño
-                    fontWeight: FontWeight.bold, // Negrita
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-          child: IntrinsicHeight(
-            child: Column(
-              children: [
-                // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                GestureDetector(
-                  onTap: () {
-                    FocusScope.of(context).unfocus(); // Cierra el teclado al tocar fuera
-                  },
-                  child: Acciones(
-                    showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
-                    },
-                    onCompleted: getTiposExtintores,
-                    accion: "registrar",
-                    data: null,
-                  ),
-                ),
-              ],
-            ),
-          ),
+    // Navegar a la página de registro en lugar de mostrar un modal
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Acciones(
+          showModal: () {
+            Navigator.pop(context); // Esto cierra la pantalla
+          },
+          onCompleted: getTiposExtintores,
+          accion: "registrar",
+          data: null,
         ),
-        );
-      },
+      ),
     );
   }
 

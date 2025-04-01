@@ -39,56 +39,22 @@ class _TblEncuestasState extends State<TblEncuestas> {
   }
 
   void openEliminarModal(row) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Eliminar Encuesta',
-                  style: TextStyle(
-                    fontSize: 23, // Tamaño más pequeño
-                    fontWeight: FontWeight.bold, // Negrita
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: widget.showModal,
-                      onCompleted: widget.onCompleted,
-                      accion: "eliminar",
-                      data: row,
-                    ),
-                  ),
-                ],
-              ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return Scaffold(
+            body: Acciones(
+              showModal: () {
+                Navigator.pop(context); // Cierra la página actual
+              },
+              onCompleted: widget.onCompleted,
+              accion: "eliminar",
+              data: row,
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -129,8 +95,12 @@ class _TblEncuestasState extends State<TblEncuestas> {
               accionesBuilder: (row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
-                      color: Color.fromARGB(255, 27, 40,
-                          223)), 
+                      color: Color.fromARGB(255, 27, 40, 223)),
+                  onSelected: (String value) {
+                    if (value == 'eliminar') {
+                      openEliminarModal(row['_originalRow']);
+                    }
+                  },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
                     PopupMenuItem<String>(

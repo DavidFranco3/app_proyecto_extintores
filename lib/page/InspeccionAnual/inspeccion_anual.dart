@@ -125,8 +125,8 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
 
     try {
       final inspeccionAnualService = InspeccionAnualService();
-      var response = await inspeccionAnualService
-          .registrarInspeccionAnual(dataTemp);
+      var response =
+          await inspeccionAnualService.registrarInspeccionAnual(dataTemp);
       // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
       if (response['status'] == 200) {
         // Asumiendo que 'response' es un Map que contiene el código de estado
@@ -222,20 +222,31 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: _isLoading ? null : _publicarEncuesta,
-                          child: _isLoading
+                          icon: Icon(Icons.add),
+                          label: _isLoading
                               ? SpinKitFadingCircle(
                                   color: Colors.white, size: 24)
-                              : Text(buttonLabel),
+                              : Text("Guardar"),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                          ),
                         ),
-                        ElevatedButton(
+                        SizedBox(width: 16), // Espacio entre los botones
+                        ElevatedButton.icon(
                           onPressed: returnPrincipalPage,
-                          child: _isLoading
+                          icon: Icon(Icons.arrow_back),
+                          label: _isLoading
                               ? SpinKitFadingCircle(
                                   color: const Color.fromARGB(255, 241, 8, 8),
                                   size: 24)
-                              : Text("Cancelar"),
+                              : Text("Regresar"),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                          ),
                         ),
                       ],
                     ),
@@ -270,8 +281,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                               value: clienteController.text.isEmpty
                                   ? null
                                   : clienteController.text,
-                              decoration:
-                                  InputDecoration(labelText: 'Cliente'),
+                              decoration: InputDecoration(labelText: 'Cliente'),
                               isExpanded: true,
                               items: dataClientes.map((tipo) {
                                 return DropdownMenuItem<String>(

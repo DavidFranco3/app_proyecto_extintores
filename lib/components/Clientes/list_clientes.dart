@@ -39,112 +39,45 @@ class _TblClientesState extends State<TblClientes> {
   }
 
   void openEditarModal(row) {
-    showDialog(
-      context: context,
+  Navigator.push(
+    context,
+    MaterialPageRoute(
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Editar cliente',
-                  style: TextStyle(
-                    fontSize: 24, // Tamaño más pequeño
-                    fontWeight: FontWeight.bold, // Negrita
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: widget.showModal,
-                      onCompleted: widget.onCompleted,
-                      accion: "editar",
-                      data: row,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        return Scaffold(
+          body: Acciones(
+            showModal: () {
+              Navigator.pop(context); // Cierra la página actual
+            },
+            onCompleted: widget.onCompleted,
+            accion: "editar",
+            data: row,
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 
-  void openEliminarModal(row) {
-    showDialog(
-      context: context,
+void openEliminarModal(row) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Eliminar cliente',
-                  style: TextStyle(
-                    fontSize: 24, // Tamaño más pequeño
-                    fontWeight: FontWeight.bold, // Negrita
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: widget.showModal,
-                      onCompleted: widget.onCompleted,
-                      accion: "eliminar",
-                      data: row,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        return Scaffold(
+          body: Acciones(
+            showModal: () {
+              Navigator.pop(context); // Cierra la página actual
+            },
+            onCompleted: widget.onCompleted,
+            accion: "eliminar",
+            data: row,
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

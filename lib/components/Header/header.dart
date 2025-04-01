@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
+import '../../api/usuarios.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({Key? key}) : super(key: key);
@@ -27,6 +28,29 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
+    Future<Map<String, dynamic>> obtenerDatosComunes() async {
+    try {
+      final authService = AuthService();
+      final usuarioService = UsuariosService();
+      final String? token = await authService.getTokenApi();
+
+      // Verificar si el token es nulo
+      if (token == null) {
+        throw Exception("Token de usuario no disponible");
+      }
+
+      // Obtener el ID del usuario
+      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
+      Map<String, dynamic>? user = await usuarioService.obtenerUsuario2(idUsuario);
+
+      // Devolver los datos comunes en un mapa
+      return {'usuario': user?["nombre"]};
+    } catch (e) {
+      print("❌ Error al obtener los datos comunes: $e");
+      rethrow; // Propaga el error a la función que lo llamó
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -36,13 +60,13 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
           Spacer(), // Empuja los elementos a la derecha
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              icon: FaIcon(FontAwesomeIcons.userCircle, color: Colors.white),
+              icon: FaIcon(FontAwesomeIcons.circleUser, color: Colors.white),
               items: [
                 DropdownMenuItem<String>(
                   value: "logout",
                   child: Row(
                     children: [
-                      FaIcon(FontAwesomeIcons.signOutAlt, size: 18),
+                      FaIcon(FontAwesomeIcons.rightFromBracket, size: 18),
                       SizedBox(width: 10),
                       Text("Cerrar sesión"),
                     ],
