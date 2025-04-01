@@ -5,42 +5,67 @@ class Load extends StatefulWidget {
   _LoadState createState() => _LoadState();
 }
 
-class _LoadState extends State<Load> {
-  double _opacity = 0.0; // Inicialmente invisible
+class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    // Inicia la animación de opacidad después de un pequeño retraso
-    Future.delayed(Duration(milliseconds: 100), () {
-      setState(() {
-        _opacity = 1.0; // Se hace completamente visible
-      });
-    });
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 600),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0, end: 10).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Fondo transparente
-      body: AnimatedOpacity(
-        opacity: _opacity,
-        duration: Duration(seconds: 1), // Duración de la animación
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.5), // Fondo oscuro semi-transparente
-              ),
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
             ),
-            Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                strokeWidth: 6, // Grosor del círculo
-              ),
+          ),
+          Center(
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (index) {
+                    return Transform.translate(
+                      offset: Offset(0, index.isEven ? -_animation.value : _animation.value),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Container(
+                          width: 15,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

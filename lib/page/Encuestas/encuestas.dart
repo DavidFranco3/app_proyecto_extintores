@@ -15,6 +15,9 @@ class EncuestasPage extends StatefulWidget {
 class _EncuestasPageState extends State<EncuestasPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataEncuestas = [];
+  TextEditingController nombreController = TextEditingController();
+  TextEditingController clasificacionController = TextEditingController();
+  TextEditingController ramaController = TextEditingController();
 
   @override
   void initState() {
@@ -61,7 +64,10 @@ class _EncuestasPageState extends State<EncuestasPage> {
               },
               onCompleted: getEncuestas,
               accion: "registrar",
-              data: null)),
+              data: null,
+              nombreController: nombreController,
+              ramaController: ramaController,
+              clasificacionController: clasificacionController)),
     ).then((_) {
       getEncuestas(); // Actualizar encuestas al regresar de la página
     });

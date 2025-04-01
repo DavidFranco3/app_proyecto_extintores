@@ -3,8 +3,8 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../Encuestas/encuestas.dart';
 import '../CrearEncuesta/crear_encuesta.dart';
+import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
 import '../../components/Generales/pregunta.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,9 +13,9 @@ class CrearEncuestaPantalla2Screen extends StatefulWidget {
   //final Function onCompleted;
   final String accion;
   final dynamic data;
-  final String nombre;
-  final String rama;
-  final String clasificacion;
+  final TextEditingController nombreController;
+  final TextEditingController clasificacionController;
+  final TextEditingController ramaController;
   final List<Map<String, String>> secciones;
   final List<Pregunta> preguntas;
   final Function onCompleted;
@@ -26,9 +26,9 @@ class CrearEncuestaPantalla2Screen extends StatefulWidget {
       //required this.onCompleted,
       required this.accion,
       required this.data,
-      required this.nombre,
-      required this.rama,
-      required this.clasificacion,
+      required this.nombreController,
+      required this.clasificacionController,
+      required this.ramaController,
       required this.secciones,
       required this.preguntas,
       required this.onCompleted});
@@ -61,12 +61,13 @@ class _CrearEncuestaPantalla2ScreenState
               },
               accion: "registrar",
               data: widget.data,
-              nombre: widget.nombre,
-              rama: widget.rama,
-              clasificacion: widget.clasificacion,
+              nombreController: widget.nombreController,
+              ramaController: widget.ramaController,
+              clasificacionController: widget.clasificacionController,
               categoria: seccion,
               secciones: secciones,
-              onCompleted: widget.onCompleted)),
+              onCompleted: widget.onCompleted,
+              preguntas: widget.preguntas)),
     ).then((_) {});
   }
 
@@ -111,7 +112,16 @@ class _CrearEncuestaPantalla2ScreenState
   void returnPrincipalPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EncuestasPage()),
+      MaterialPageRoute(
+          builder: (context) => CrearEncuestaPantalla1Screen(
+                showModal: widget.showModal,
+                onCompleted: widget.onCompleted,
+                accion: widget.accion,
+                data: widget.data,
+                nombreController: widget.nombreController,
+                ramaController: widget.ramaController,
+                clasificacionController: widget.clasificacionController,
+              )),
     ).then((_) {
       // Actualizar encuestas al regresar de la página
     });
@@ -223,7 +233,15 @@ class _CrearEncuestaPantalla2ScreenState
                                   IconButton(
                                     icon: Icon(Icons.delete, color: Colors.red),
                                     onPressed: () {
+                                      // Primero, eliminamos las preguntas asociadas a la categoría eliminada
                                       setState(() {
+                                        // Eliminar las preguntas que pertenezcan a la categoría que estamos eliminando
+                                        widget.preguntas.removeWhere(
+                                            (pregunta) =>
+                                                pregunta.categoria ==
+                                                seccion["nombre"]);
+
+                                        // Luego, eliminamos la sección
                                         widget.secciones.removeAt(index);
                                       });
                                     },

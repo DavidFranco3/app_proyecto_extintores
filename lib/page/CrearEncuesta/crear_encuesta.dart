@@ -17,24 +17,26 @@ class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
   final String accion;
   final dynamic data;
-  final String nombre;
-  final String rama;
-  final String clasificacion;
+  final TextEditingController nombreController;
+  final TextEditingController clasificacionController;
+  final TextEditingController ramaController;
   final String categoria;
   final List<Map<String, String>> secciones;
   final Function onCompleted;
+  final List<Pregunta> preguntas;
 
   @override
   CrearEncuestaScreen({
     required this.showModal,
     required this.accion,
     required this.data,
-    required this.nombre,
-    required this.rama,
-    required this.clasificacion,
+    required this.nombreController,
+    required this.clasificacionController,
+    required this.ramaController,
     required this.categoria,
     required this.secciones,
     required this.onCompleted,
+    required this.preguntas,
   });
 
   _CrearEncuestaScreenState createState() => _CrearEncuestaScreenState();
@@ -42,7 +44,6 @@ class CrearEncuestaScreen extends StatefulWidget {
 
 class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   final _formKey = GlobalKey<FormState>();
-  List<Pregunta> preguntas = [];
   TextEditingController preguntaController = TextEditingController();
   TextEditingController categoriaController = TextEditingController();
   TextEditingController nombreController = TextEditingController();
@@ -62,22 +63,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     getFrecuencias();
     getClasificaciones();
     getRamas();
-    List<Pregunta> preguntasss = (widget.data?["preguntas"] as List<dynamic>?)
-            ?.map((pregunta) => Pregunta(
-                  titulo: pregunta["titulo"] ?? "",
-                  categoria: pregunta["categoria"] ?? "",
-                  opciones: List<String>.from(pregunta["opciones"] ?? []),
-                ))
-            .toList() ??
-        [];
-
-    if (widget.accion == 'editar') {
-      preguntas = preguntasss;
-      nombreController.text = widget.data['nombre'] ?? '';
-      frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
-      ramaController.text = widget.data['idRama'] ?? '';
-      clasificacionController.text = widget.data['idClasificacion'] ?? '';
-    }
   }
 
   Future<void> getClasificaciones() async {
@@ -206,7 +191,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
   void _agregarPregunta() {
     setState(() {
-      preguntas.add(Pregunta(
+      widget.preguntas.add(Pregunta(
           titulo: preguntaController.text,
           categoria: widget.categoria,
           opciones: List.from(opcionesTemp)));
@@ -216,7 +201,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
   void _eliminarPregunta(int index) {
     setState(() {
-      preguntas.removeAt(index);
+      widget.preguntas.removeAt(index);
     });
   }
 
@@ -279,76 +264,17 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     }
   }
 
-  void _editarEncuesta(String id, Map<String, dynamic> data) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    var dataTemp = {
-      'nombre': data['nombre'],
-      'idFrecuencia': data['idFrecuencia'],
-      'idRama': data['idRama'],
-      'idClasificacion': data['idClasificacion'],
-      'preguntas': data['preguntas'],
-    };
-
-    try {
-      final encuestaInspeccionService = EncuestaInspeccionService();
-      var response = await encuestaInspeccionService
-          .actualizarEncuestaInspeccion(id, dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
-      if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
-        setState(() {
-          _isLoading = false;
-          returnPrincipalPage();
-        });
-        LogsInformativos(
-            "Se ha actualizado la encuesta ${data['nombre']} correctamente",
-            dataTemp);
-        showCustomFlushbar(
-          context: context,
-          title: "Actualizacion exitosa",
-          message: "Los datos de la encuesta fueron actualizados correctamente",
-          backgroundColor: Colors.green,
-        );
-      } else {
-        // Maneja el caso en que el statusCode no sea 200
-        setState(() {
-          _isLoading = false;
-        });
-        showCustomFlushbar(
-          context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al actualizar la encuesta",
-          backgroundColor: Colors.red,
-        );
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
-    }
-  }
-
   void _publicarEncuesta() {
     var formData = {
-      "nombre": widget.nombre,
+      "nombre": widget.nombreController.text,
       "idFrecuencia": widget.data["id"],
-      "idClasificacion": widget.clasificacion,
-      "idRama": widget.rama,
-      "preguntas": preguntas.map((pregunta) => pregunta.toJson()).toList(),
+      "idClasificacion": widget.clasificacionController.text,
+      "idRama": widget.ramaController.text,
+      "preguntas":
+          widget.preguntas.map((pregunta) => pregunta.toJson()).toList(),
     };
     if (widget.accion == "registrar") {
       _guardarEncuesta(formData);
-    } else {
-      _editarEncuesta(widget.data["id"], formData);
     }
     // Aquí podrías enviar la encuesta a Firebase o una API
   }
@@ -370,11 +296,11 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
               //final Function onCompleted;
               accion: widget.accion,
               data: widget.data,
-              nombre: widget.nombre,
-              rama: widget.rama,
-              clasificacion: widget.clasificacion,
+              nombreController: widget.nombreController,
+              ramaController: widget.ramaController,
+              clasificacionController: widget.clasificacionController,
               secciones: widget.secciones,
-              preguntas: preguntas,
+              preguntas: widget.preguntas,
               onCompleted: widget.onCompleted)),
     ).then((_) {
       // Actualizar encuestas al regresar de la página
@@ -468,15 +394,21 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                             ListView.builder(
                               shrinkWrap: true,
                               physics: NeverScrollableScrollPhysics(),
-                              itemCount: preguntas.length,
+                              itemCount: widget.preguntas.length,
                               itemBuilder: (context, index) {
+                                // Verificar si la categoría coincide antes de crear el widget
+                                if (widget.preguntas[index].categoria !=
+                                    widget.categoria) {
+                                  return SizedBox
+                                      .shrink(); // Retornar un widget vacío si no coincide
+                                }
                                 return Card(
                                   margin: EdgeInsets.symmetric(vertical: 5),
                                   child: ListTile(
-                                    title: Text(preguntas[index].titulo),
+                                    title: Text(widget.preguntas[index].titulo),
                                     subtitle: Text(
-                                      "Categoria: ${preguntas[index].categoria}\n"
-                                      "Opciones: ${preguntas[index].opciones.join(", ")}",
+                                      "Categoria: ${widget.preguntas[index].categoria}\n"
+                                      "Opciones: ${widget.preguntas[index].opciones.join(", ")}",
                                     ),
                                     trailing: IconButton(
                                       icon:

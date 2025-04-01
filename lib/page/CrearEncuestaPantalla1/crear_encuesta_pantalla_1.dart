@@ -16,13 +16,19 @@ class CrearEncuestaPantalla1Screen extends StatefulWidget {
   final Function onCompleted;
   final String accion;
   final dynamic data;
+  final TextEditingController nombreController;
+  final TextEditingController clasificacionController;
+  final TextEditingController ramaController;
 
   @override
   CrearEncuestaPantalla1Screen(
       {required this.showModal,
       required this.onCompleted,
       required this.accion,
-      required this.data});
+      required this.data,
+      required this.nombreController,
+      required this.clasificacionController,
+      required this.ramaController});
 
   _CrearEncuestaPantalla1ScreenState createState() =>
       _CrearEncuestaPantalla1ScreenState();
@@ -32,10 +38,7 @@ class _CrearEncuestaPantalla1ScreenState
     extends State<CrearEncuestaPantalla1Screen> {
   final _formKey = GlobalKey<FormState>();
   List<Pregunta> preguntas = [];
-  TextEditingController nombreController = TextEditingController();
   TextEditingController frecuenciaController = TextEditingController();
-  TextEditingController ramaController = TextEditingController();
-  TextEditingController clasificacionController = TextEditingController();
   List<String> opcionesTemp = ["Si", "No"];
   List<Map<String, dynamic>> dataFrecuencias = [];
   List<Map<String, dynamic>> dataClasificaciones = [];
@@ -50,22 +53,6 @@ class _CrearEncuestaPantalla1ScreenState
     getFrecuencias();
     getClasificaciones();
     getRamas();
-    List<Pregunta> preguntasss = (widget.data?["preguntas"] as List<dynamic>?)
-            ?.map((pregunta) => Pregunta(
-                  titulo: pregunta["titulo"] ?? "",
-                  categoria: pregunta["categoria"] ?? "",
-                  opciones: List<String>.from(pregunta["opciones"] ?? []),
-                ))
-            .toList() ??
-        [];
-
-    if (widget.accion == 'editar') {
-      preguntas = preguntasss;
-      nombreController.text = widget.data['nombre'] ?? '';
-      frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
-      ramaController.text = widget.data['idRama'] ?? '';
-      clasificacionController.text = widget.data['idClasificacion'] ?? '';
-    }
   }
 
   Future<void> getClasificaciones() async {
@@ -212,9 +199,9 @@ class _CrearEncuestaPantalla1ScreenState
               },
               accion: "registrar",
               data: row,
-              nombre: nombreController.text,
-              rama: ramaController.text,
-              clasificacion: clasificacionController.text,
+              nombreController: widget.nombreController,
+              ramaController: widget.ramaController,
+              clasificacionController: widget.clasificacionController,
               secciones: secciones,
               preguntas: preguntas,
               onCompleted: widget.onCompleted)),
@@ -274,7 +261,7 @@ class _CrearEncuestaPantalla1ScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             TextFormField(
-                              controller: nombreController,
+                              controller: widget.nombreController,
                               decoration: InputDecoration(labelText: "Nombre"),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
@@ -284,9 +271,9 @@ class _CrearEncuestaPantalla1ScreenState
                               },
                             ),
                             DropdownButtonFormField<String>(
-                              value: ramaController.text.isEmpty
+                              value: widget.ramaController.text.isEmpty
                                   ? null
-                                  : ramaController.text,
+                                  : widget.ramaController.text,
                               decoration: InputDecoration(labelText: 'Rama'),
                               isExpanded: true,
                               items: dataRamas.map((tipo) {
@@ -297,7 +284,7 @@ class _CrearEncuestaPantalla1ScreenState
                               }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
-                                  ramaController.text = newValue!;
+                                  widget.ramaController.text = newValue!;
                                 });
                               },
                               validator: (value) =>
@@ -306,9 +293,9 @@ class _CrearEncuestaPantalla1ScreenState
                                       : null,
                             ),
                             DropdownButtonFormField<String>(
-                              value: clasificacionController.text.isEmpty
+                              value: widget.clasificacionController.text.isEmpty
                                   ? null
-                                  : clasificacionController.text,
+                                  : widget.clasificacionController.text,
                               decoration:
                                   InputDecoration(labelText: 'Clasificación'),
                               isExpanded: true,
@@ -320,7 +307,7 @@ class _CrearEncuestaPantalla1ScreenState
                               }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
-                                  clasificacionController.text = newValue!;
+                                  widget.clasificacionController.text = newValue!;
                                 });
                               },
                               validator: (value) =>
