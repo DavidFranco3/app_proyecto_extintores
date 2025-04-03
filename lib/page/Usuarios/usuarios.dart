@@ -50,22 +50,22 @@ class _UsuariosPageState extends State<UsuariosPage> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   // Función para abrir el modal de registro con el formulario de Acciones
-void openRegistroModal() {
-  // Navegar a la página de registro en lugar de mostrar un modal
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => Acciones(
-        showModal: () {
-          Navigator.pop(context); // Cierra la pantalla
-        },
-        onCompleted: getUsuarios,
-        accion: "registrar",
-        data: null,
+  void openRegistroModal() {
+    // Navegar a la página de registro en lugar de mostrar un modal
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Acciones(
+          showModal: () {
+            Navigator.pop(context); // Cierra la pantalla
+          },
+          onCompleted: getUsuarios,
+          accion: "registrar",
+          data: null,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
 // Cierra el modal
   void closeModal() {

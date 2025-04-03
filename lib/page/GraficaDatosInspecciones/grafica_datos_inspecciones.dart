@@ -8,15 +8,15 @@ import '../../components/Header/header.dart';
 class GraficaDatosInspeccionesPage extends StatefulWidget {
   final String idInspeccion;
 
-  GraficaDatosInspeccionesPage(
-      {required this.idInspeccion});
+  GraficaDatosInspeccionesPage({required this.idInspeccion});
 
   @override
   _GraficaDatosInspeccionesPageState createState() =>
       _GraficaDatosInspeccionesPageState();
 }
 
-class _GraficaDatosInspeccionesPageState extends State<GraficaDatosInspeccionesPage> {
+class _GraficaDatosInspeccionesPageState
+    extends State<GraficaDatosInspeccionesPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataEncuestas = [];
 
@@ -30,9 +30,9 @@ class _GraficaDatosInspeccionesPageState extends State<GraficaDatosInspeccionesP
   Future<void> getEncuestas() async {
     try {
       final inspeccionAnualService = InspeccionAnualService();
-      final List<dynamic> response =
-          await inspeccionAnualService.listarInspeccionAnualId(widget.idInspeccion);
-          print(response);
+      final List<dynamic> response = await inspeccionAnualService
+          .listarInspeccionAnualId(widget.idInspeccion);
+      print(response);
 
       if (response.isNotEmpty) {
         setState(() {

@@ -22,7 +22,7 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
     super.initState();
     getInspeccionesProximas();
   }
-  
+
   Future<void> getInspeccionesProximas() async {
     try {
       final inspeccionesProximasService = InspeccionesProximasService();
@@ -32,7 +32,8 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
       if (response.isNotEmpty) {
         setState(() {
           dataInspeccionesProximas = formatModelInspeccionesProximas(response);
-          eventosCalendario = _convertirAEventosCalendario(dataInspeccionesProximas);
+          eventosCalendario =
+              _convertirAEventosCalendario(dataInspeccionesProximas);
           loading = false; // Desactivar el estado de carga
         });
       } else {
@@ -55,7 +56,8 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
 
     for (var item in data) {
       DateTime fechaInspeccion = DateTime.parse(item['proximaInspeccion']);
-      String evento = "Cliente: ${item['cliente']} - Inspeccion: ${item['cuestionario']}";
+      String evento =
+          "Cliente: ${item['cliente']} - Inspeccion: ${item['cuestionario']}";
 
       // Crear un nuevo objeto Event
       eventos.add(Event(title: evento, date: fechaInspeccion));
@@ -64,7 +66,8 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
     return eventos;
   }
 
-  List<Map<String, dynamic>> formatModelInspeccionesProximas(List<dynamic> data) {
+  List<Map<String, dynamic>> formatModelInspeccionesProximas(
+      List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
@@ -88,7 +91,8 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Programa de inspección"), // Menú lateral
+      drawer:
+          MenuLateral(currentPage: "Programa de inspección"), // Menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -109,7 +113,8 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
                 // Aquí usamos el componente Calendario
                 Expanded(
                   child: Calendario(
-                    eventosIniciales: eventosCalendario, // Pasamos los eventos al calendario
+                    eventosIniciales:
+                        eventosCalendario, // Pasamos los eventos al calendario
                   ),
                 ),
               ],

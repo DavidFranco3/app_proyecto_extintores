@@ -142,7 +142,9 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                     items: dataEncuestas
                         .map((encuesta) => DropdownMenuItem<String>(
                               value: encuesta['id'],
-                              child: Text(encuesta['nombre'] + " - " + encuesta['frecuencia']),
+                              child: Text(encuesta['nombre'] +
+                                  " - " +
+                                  encuesta['frecuencia']),
                             ))
                         .toList(),
                     onChanged: (String? newValue) {

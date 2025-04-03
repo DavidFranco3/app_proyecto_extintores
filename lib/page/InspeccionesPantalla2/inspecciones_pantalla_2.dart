@@ -236,8 +236,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
                                   vertical:
                                       16), // Aumenta el tamaño vertical del botón
                             ),
-                            onPressed: () =>
-                                {openPantalla2Page(inspeccion)},
+                            onPressed: () => {openPantalla2Page(inspeccion)},
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment
                                   .spaceBetween, // Espacio entre texto y el ícono

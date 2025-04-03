@@ -60,44 +60,44 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   // Función para formatear los datos de las clientes
-List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
-  List<Map<String, dynamic>> dataTemp = [];
-  int total = data.length; // Obtener el total de elementos
-  for (var i = 0; i < total; i++) {
-    var item = data[i];
-    dataTemp.add({
-      'index': total - i,
-      'id': item['_id'],
-      'nombre': item['nombre'],
-      'imagen': item['imagen'],
-      'correo': item['correo'],
-      'telefono': item['telefono'],
-      'calle': item['direccion']['calle'],
-      'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-          ? item['direccion']['nExterior']
-          : 'S/N',
-      'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-          ? item['direccion']['nInterior']
-          : 'S/N',
-      'colonia': item['direccion']['colonia'],
-      'estadoDom': item['direccion']['estadoDom'],
-      'municipio': item['direccion']['municipio'],
-      'cPostal': item['direccion']['cPostal'],
-      'referencia': item['direccion']['referencia'],
-      'estado': item['estado'],
-      'createdAt': item['createdAt'],
-      'updatedAt': item['updatedAt'],
-    });
+  List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    int total = data.length; // Obtener el total de elementos
+    for (var i = 0; i < total; i++) {
+      var item = data[i];
+      dataTemp.add({
+        'index': total - i,
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'imagen': item['imagen'],
+        'correo': item['correo'],
+        'telefono': item['telefono'],
+        'calle': item['direccion']['calle'],
+        'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
+            ? item['direccion']['nExterior']
+            : 'S/N',
+        'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
+            ? item['direccion']['nInterior']
+            : 'S/N',
+        'colonia': item['direccion']['colonia'],
+        'estadoDom': item['direccion']['estadoDom'],
+        'municipio': item['direccion']['municipio'],
+        'cPostal': item['direccion']['cPostal'],
+        'referencia': item['direccion']['referencia'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      });
+    }
+    return dataTemp;
   }
-  return dataTemp;
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Tabla de inspecciones"), // Usa el menú lateral
+      drawer: MenuLateral(
+          currentPage: "Tabla de inspecciones"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -145,7 +145,6 @@ List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
               ],
             ),
       // Modal: Se muestra solo si `showModal` es true
-
     );
   }
 }

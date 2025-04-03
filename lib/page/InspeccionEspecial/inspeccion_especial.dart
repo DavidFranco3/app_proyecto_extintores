@@ -25,7 +25,8 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
   Future<void> getInspecciones() async {
     try {
       final inspeccionAnualService = InspeccionAnualService();
-      final List<dynamic> response = await inspeccionAnualService.listarInspeccionAnual();
+      final List<dynamic> response =
+          await inspeccionAnualService.listarInspeccionAnual();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -49,7 +50,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
 
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
-   // Función para abrir el modal de registro con el formulario de Acciones
+  // Función para abrir el modal de registro con el formulario de Acciones
   void openRegistroPage() {
     Navigator.push(
       context,
@@ -95,7 +96,8 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Inspección anual"), // Usa el menú lateral
+      drawer:
+          MenuLateral(currentPage: "Inspección anual"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(

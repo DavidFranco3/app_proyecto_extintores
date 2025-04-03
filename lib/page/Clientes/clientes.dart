@@ -50,25 +50,24 @@ class _ClientesPageState extends State<ClientesPage> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   void openRegistroModal() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (BuildContext context) {
-        return Scaffold(
-          body: Acciones(
-            showModal: () {
-              Navigator.pop(context); // Esto cerrará la página
-            },
-            onCompleted: getClientes,
-            accion: "registrar",
-            data: null,
-          ),
-        );
-      },
-    ),
-  );
-}
-
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return Scaffold(
+            body: Acciones(
+              showModal: () {
+                Navigator.pop(context); // Esto cerrará la página
+              },
+              onCompleted: getClientes,
+              accion: "registrar",
+              data: null,
+            ),
+          );
+        },
+      ),
+    );
+  }
 
 // Cierra el modal
   void closeModal() {

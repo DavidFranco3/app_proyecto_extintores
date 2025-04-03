@@ -7,7 +7,8 @@ import '../../components/Header/header.dart';
 
 class InspeccionesProximasPage extends StatefulWidget {
   @override
-  _InspeccionesProximasPageState createState() => _InspeccionesProximasPageState();
+  _InspeccionesProximasPageState createState() =>
+      _InspeccionesProximasPageState();
 }
 
 class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
@@ -49,7 +50,8 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
   bool showModal = false; // Estado que maneja la visibilidad del modal
 
   // Función para formatear los datos de las inspeccionesProximas
-  List<Map<String, dynamic>> formatModelInspeccionesProximas(List<dynamic> data) {
+  List<Map<String, dynamic>> formatModelInspeccionesProximas(
+      List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
       dataTemp.add({
@@ -73,7 +75,8 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Inspecciones próximas"), // Usa el menú lateral
+      drawer: MenuLateral(
+          currentPage: "Inspecciones próximas"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
