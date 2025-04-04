@@ -190,28 +190,34 @@ class _CrearEncuestaPantalla1ScreenState
 
   // Función para abrir el modal de registro con el formulario de Acciones
   void openPantalla2Page(Map<String, dynamic> row) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
+    // Primero validamos el formulario
+    if (_formKey.currentState?.validate() ?? false) {
+      // Si la validación es exitosa, navegamos a la siguiente pantalla
+      Navigator.push(
+        context,
+        MaterialPageRoute(
           builder: (context) => CrearEncuestaPantalla2Screen(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              accion: "registrar",
-              data: row,
-              nombreController: widget.nombreController,
-              ramaController: widget.ramaController,
-              clasificacionController: widget.clasificacionController,
-              secciones: secciones,
-              preguntas: preguntas,
-              onCompleted: widget.onCompleted)),
-    ).then((_) {});
+            showModal: () {
+              Navigator.pop(context); // Esto cierra el modal
+            },
+            accion: "registrar",
+            data: row,
+            nombreController: widget.nombreController,
+            ramaController: widget.ramaController,
+            clasificacionController: widget.clasificacionController,
+            secciones: secciones,
+            preguntas: preguntas,
+            onCompleted: widget.onCompleted,
+          ),
+        ),
+      ).then((_) {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _formKey,
+      //key: _formKey,
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Crear inspección"),
       body: loading
@@ -239,8 +245,7 @@ class _CrearEncuestaPantalla1ScreenState
                       children: [
                         ElevatedButton.icon(
                           onPressed: returnPrincipalPage,
-                          icon: Icon(FontAwesomeIcons
-                              .arrowLeft), // Ícono de flecha hacia la izquierda
+                          icon: Icon(FontAwesomeIcons.arrowLeft),
                           label: _isLoading
                               ? SpinKitFadingCircle(
                                   color: const Color.fromARGB(255, 241, 8, 8),
@@ -257,111 +262,107 @@ class _CrearEncuestaPantalla1ScreenState
                           borderRadius: BorderRadius.circular(10)),
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextFormField(
-                              controller: widget.nombreController,
-                              decoration: InputDecoration(labelText: "Nombre"),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'El nombre es obligatorio';
-                                }
-                                return null;
-                              },
-                            ),
-                            DropdownButtonFormField<String>(
-                              value: widget.ramaController.text.isEmpty
-                                  ? null
-                                  : widget.ramaController.text,
-                              decoration: InputDecoration(labelText: 'Rama'),
-                              isExpanded: true,
-                              items: dataRamas.map((tipo) {
-                                return DropdownMenuItem<String>(
-                                  value: tipo['id'],
-                                  child: Text(tipo['nombre']),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                setState(() {
-                                  widget.ramaController.text = newValue!;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'La rama es obligatoria'
-                                      : null,
-                            ),
-                            DropdownButtonFormField<String>(
-                              value: widget.clasificacionController.text.isEmpty
-                                  ? null
-                                  : widget.clasificacionController.text,
-                              decoration:
-                                  InputDecoration(labelText: 'Clasificación'),
-                              isExpanded: true,
-                              items: dataClasificaciones.map((tipo) {
-                                return DropdownMenuItem<String>(
-                                  value: tipo['id'],
-                                  child: Text(tipo['nombre']),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                setState(() {
-                                  widget.clasificacionController.text = newValue!;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'La clasificación es obligatoria'
-                                      : null,
-                            ),
-                          ],
+                        child: Form(
+                          key: _formKey, // Asigna el GlobalKey<FormState> aquí
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                controller: widget.nombreController,
+                                decoration:
+                                    InputDecoration(labelText: "Nombre"),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'El nombre es obligatorio';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: widget.ramaController.text.isEmpty
+                                    ? null
+                                    : widget.ramaController.text,
+                                decoration: InputDecoration(labelText: 'Rama'),
+                                isExpanded: true,
+                                items: dataRamas.map((tipo) {
+                                  return DropdownMenuItem<String>(
+                                    value: tipo['id'],
+                                    child: Text(tipo['nombre']),
+                                  );
+                                }).toList(),
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    widget.ramaController.text = newValue!;
+                                  });
+                                },
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'La rama es obligatoria'
+                                        : null,
+                              ),
+                              DropdownButtonFormField<String>(
+                                value:
+                                    widget.clasificacionController.text.isEmpty
+                                        ? null
+                                        : widget.clasificacionController.text,
+                                decoration:
+                                    InputDecoration(labelText: 'Clasificación'),
+                                isExpanded: true,
+                                items: dataClasificaciones.map((tipo) {
+                                  return DropdownMenuItem<String>(
+                                    value: tipo['id'],
+                                    child: Text(tipo['nombre']),
+                                  );
+                                }).toList(),
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    widget.clasificacionController.text =
+                                        newValue!;
+                                  });
+                                },
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'La clasificación es obligatoria'
+                                        : null,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    // Agregar un botón por cada elemento de dataFrecuencias
-                    // Agregar un botón por cada elemento de dataFrecuencias
                     SizedBox(height: 10),
                     Column(
                       children: dataFrecuencias.map((frecuencia) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 4.0), // Espaciado entre botones
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
                           child: SizedBox(
-                            width: double
-                                .infinity, // Hace que el botón ocupe todo el ancho disponible
+                            width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      10), // Bordes redondeados
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: EdgeInsets.symmetric(
-                                    vertical:
-                                        16), // Aumenta el tamaño vertical del botón
+                                padding: EdgeInsets.symmetric(vertical: 16),
                               ),
                               onPressed: () => {
-                                openPantalla2Page(frecuencia)
-                                // Acción que deseas realizar cuando se presiona el botón
+                                openPantalla2Page(frecuencia),
                               },
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment
-                                    .center, // Centra el contenido dentro del Row
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Expanded(
-                                    child: Text(frecuencia['nombre'],
-                                        textAlign:
-                                            TextAlign.center, // Centra el texto
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors
-                                              .black, // ), // Tamaño de texto
-                                        )),
+                                    child: Text(
+                                      frecuencia['nombre'],
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black,
+                                      ),
+                                    ),
                                   ),
                                   Icon(
-                                    Icons
-                                        .chevron_right, // Icono que aparece a la derecha
-                                    size: 24, // Tamaño del ícono
+                                    Icons.chevron_right,
+                                    size: 24,
                                   ),
                                 ],
                               ),
