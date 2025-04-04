@@ -191,7 +191,7 @@ class _AccionesState extends State<Acciones> {
           closeRegistroModal();
         });
         LogsInformativos(
-            "Se ha registrado la cliente ${data['nombre']} correctamente",
+            "Se ha registrado eñ cliente ${data['nombre']} correctamente",
             dataTemp);
         showCustomFlushbar(
           context: context,
@@ -362,6 +362,10 @@ class _AccionesState extends State<Acciones> {
       } else if (widget.accion == 'eliminar') {
         _eliminarCliente(widget.data['id'], formData);
       }
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -460,7 +464,12 @@ class _AccionesState extends State<Acciones> {
                               "Imagen seleccionada",
                               style:
                                   TextStyle(color: Colors.green, fontSize: 16),
-                            )
+                            ),
+                          if (_image == null || imageUrl == null)
+                            Text(
+                              "Selecciona una imagen",
+                              style: TextStyle(color: Colors.red, fontSize: 16),
+                            ),
                         ],
                         TextFormField(
                           controller: _nombreController,
