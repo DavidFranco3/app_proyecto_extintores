@@ -92,7 +92,7 @@ class PdfGenerator {
 
           final imageUrl3 =
               data['imagenes'][2]['sharedLink']?.replaceAll("dl=0", "dl=1");
-          print("Link de la imagen: $imageUrl2");
+          print("Link de la imagen: $imageUrl3");
 
           if (imageUrl3 == null || imageUrl3.isEmpty) {
             print("URL de la imagen no válida");
@@ -110,7 +110,7 @@ class PdfGenerator {
                 data['imagenes'][2]['comentario'] ?? 'Sin comentario';
             print("Comentario: $comentario3");
 
-            final double valor3 = data['imagenes'][2]['valor'] ?? 0;
+            final valor3 = data['imagenes'][2]['valor'] ?? 0;
             print("valor: $valor3");
 
             final imageUrl4 =
@@ -133,7 +133,7 @@ class PdfGenerator {
                   data['imagenes'][3]['comentario'] ?? 'Sin comentario';
               print("Comentario: $comentario4");
 
-              final double valor4 = data['imagenes'][3]['valor'] ?? 0;
+              final valor4 = data['imagenes'][3]['valor'] ?? 0;
               print("valor: $valor4");
 
               final imageUrl5 =
@@ -156,7 +156,7 @@ class PdfGenerator {
                     data['imagenes'][4]['comentario'] ?? 'Sin comentario';
                 print("Comentario: $comentario5");
 
-                final double valor5 = data['imagenes'][4]['valor'] ?? 0;
+                final valor5 = data['imagenes'][4]['valor'] ?? 0;
                 print("valor: $valor5");
 
                 final imageUrl6 = data['imagenes'][5]['sharedLink']
@@ -179,7 +179,7 @@ class PdfGenerator {
                       data['imagenes'][5]['comentario'] ?? 'Sin comentario';
                   print("Comentario: $comentario6");
 
-                  final double valor6 = data['imagenes'][5]['valor'] ?? 0;
+                  final valor6 = data['imagenes'][5]['valor'] ?? 0;
                   print("valor: $valor6");
 
                   final imageUrl7 = data['imagenes'][6]['sharedLink']
@@ -202,12 +202,12 @@ class PdfGenerator {
                         data['imagenes'][6]['comentario'] ?? 'Sin comentario';
                     print("Comentario: $comentario7");
 
-                    final double valor7 = data['imagenes'][6]['valor'] ?? 0;
+                    final valor7 = data['imagenes'][6]['valor'] ?? 0;
                     print("valor: $valor7");
 
                     final imageUrlLogo =
                         data['imagen_cliente']?.replaceAll("dl=0", "dl=1");
-                    print("Link de la imagen: $imageUrl");
+                    print("Link de la imagen: $imageUrlLogo");
 
                     if (imageUrlLogo == null || imageUrlLogo.isEmpty) {
                       print("URL de la imagen no válida");
@@ -388,8 +388,7 @@ class PdfGenerator {
                                   pw.Center(
                                     child: pw.Image(
                                       pw.MemoryImage(imageBytes),
-                                      width: double
-                                          .infinity, // Ajusta al ancho completo de la página
+                                      width: 500, // Ajusta al ancho completo de la página
                                       height: 350, // Altura fija
                                     ),
                                   ),

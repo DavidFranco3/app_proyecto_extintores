@@ -10,6 +10,7 @@ import '../../api/inspecciones.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import './pdf.dart';
+import './pdf2.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
 
@@ -207,6 +208,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                       } else if (value == 'enviarPdfBackend') {
                         PdfGenerator.enviarPdfAlBackend(
                             context, row['_originalRow']);
+                      } else if (value == 'guardarPdf3') {
+                        GenerarPdfPage.generarPdf(row['_originalRow']);
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -278,6 +281,20 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                             ),
                             SizedBox(width: 8),
                             Text('Enviar PDF 2'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'guardarPdf3',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.filePdf,
+                              color: Colors.blue,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Guardar PDF 3'),
                           ],
                         ),
                       ),
