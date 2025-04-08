@@ -1,0 +1,2 @@
+C:/flutter/app_proyecto_extintores/android/app/.cxx/RelWithDebInfo/2a1x2449/x86/CMakeFiles/edit_cache.dir
+C:/flutter/app_proyecto_extintores/android/app/.cxx/RelWithDebInfo/2a1x2449/x86/CMakeFiles/rebuild_cache.dir
