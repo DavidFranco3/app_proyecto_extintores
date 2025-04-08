@@ -52,6 +52,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   String linkFirma = "";
 
   late TextEditingController clienteController;
+  late TextEditingController descripcionController;
   late TextEditingController comentariosController;
   late TextEditingController comentariosImagenController;
 
@@ -78,6 +79,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
     clienteController.clear();
     comentariosController.clear();
+    descripcionController.clear();
 
     _controller.clear();
   }
@@ -97,12 +99,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
     clienteController = TextEditingController();
     comentariosController = TextEditingController();
+    descripcionController = TextEditingController();
   }
 
   @override
   void dispose() {
     clienteController.dispose();
     comentariosController.dispose();
+    descripcionController.dispose();
     super.dispose();
   }
 
@@ -519,6 +523,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
         // Asegúrate de que imagePath sea un mapa con las claves correctas
         String? imagePathStr = imagePath["imagePath"];
         String? comentario = imagePath["comentario"];
+        double? valor =  double.tryParse(imagePath["valor"]);
 
         if (imagePathStr != null) {
           String? sharedLink = await dropboxService.uploadImageToDropbox(
@@ -528,6 +533,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
             var imageInfo = {
               "sharedLink": sharedLink,
               "comentario": comentario,
+              "valor": valor
             };
             // Agregar el mapa a la lista
             uploadedImageLinks.add(imageInfo);
@@ -554,6 +560,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       "imagenes":
           uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
       "comentarios": comentariosController.text,
+      "descripcion": descripcionController.text,
       "firmaCliente": linkFirma
     };
 
@@ -644,7 +651,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                               padding: EdgeInsets.symmetric(
                                   vertical: 12), // Altura estándar
                               fixedSize:
-                                  Size(110, 50), // Ancho fijo y altura flexible
+                                  Size(150, 50), // Ancho fijo y altura flexible
                             ),
                             icon: Icon(FontAwesomeIcons.plus), // Ícono de +
                             label: _isLoading
@@ -769,7 +776,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: dividirPreguntasEnPaginas().length +
-                              3, // +2 por la nueva página de imagen
+                              4, // +2 por la nueva página de imagen
                           itemBuilder: (context, pageIndex) {
                             if (pageIndex <
                                 dividirPreguntasEnPaginas().length) {
@@ -849,6 +856,33 @@ class _EncuestaPageState extends State<EncuestaPage> {
                               );
                             } else if (pageIndex ==
                                 dividirPreguntasEnPaginas().length) {
+                              // Página de comentarios finales
+                              return Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Descripción",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(height: 10),
+                                    TextField(
+                                      controller: descripcionController,
+                                      maxLines: 4,
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            "Escribe aquí la descripción de la inspección...",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else if (pageIndex ==
+                                dividirPreguntasEnPaginas().length + 1) {
                               // Página de comentarios finales
                               return Padding(
                                 padding: EdgeInsets.all(16.0),
@@ -1065,7 +1099,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           IconButton(
                             icon: Icon(Icons.arrow_forward, size: 30),
                             onPressed: currentPage <
-                                    dividirPreguntasEnPaginas().length + 2
+                                    dividirPreguntasEnPaginas().length + 3
                                 ? () {
                                     _pageController.nextPage(
                                         duration: Duration(milliseconds: 300),

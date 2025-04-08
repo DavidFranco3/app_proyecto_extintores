@@ -14,6 +14,7 @@ import '../../page/ProgramaInspecciones/programa_inspecciones.dart';
 import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
 import '../../page/GraficaInspecciones/grafica_inspecciones.dart';
 import '../../page/InspeccionEspecial/inspeccion_especial.dart';
+import '../../page/ReporteFinal/reporte_final.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -120,6 +121,12 @@ class _MenuLateralState extends State<MenuLateral> {
                 Icons.fact_check,
                 'Inspección anual',
                 InspeccionEspecialPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.person,
+                'Reporte de inspecciones y pruebas',
+                ReporteFinalPage(),
               ),
               // Submenú de Inspecciones
               ExpansionTile(

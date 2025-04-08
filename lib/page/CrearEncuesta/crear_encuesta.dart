@@ -381,6 +381,14 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Botón de "Agregar Pregunta" centrado en la parte superior de la Card
+                            Center(
+                              child: ElevatedButton(
+                                onPressed: _agregarPregunta,
+                                child: Text("Agregar Pregunta"),
+                              ),
+                            ),
+                            SizedBox(height: 20), // Espacio debajo del botón
                             Text("Preguntas",
                                 style: TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.bold)),
@@ -418,14 +426,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   ),
                                 );
                               },
-                            ),
-                            // Botón de "Agregar Pregunta" centrado debajo de la lista
-                            SizedBox(height: 10),
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: _agregarPregunta,
-                                child: Text("Agregar Pregunta"),
-                              ),
                             ),
                           ],
                         ),
