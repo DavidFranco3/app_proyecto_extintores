@@ -34,6 +34,14 @@ const String ENDPOINT_ACTUALIZAR_RAMAS = "/ramas/actualizar";
 const String ENDPOINT_ELIMINAR_RAMAS = "/ramas/eliminar";
 const String ENDPOINT_DESHABILITAR_RAMAS = "/ramas/deshabilitar";
 
+// Reporte Final
+const String ENDPOINT_LISTAR_REPORTE_FINAL = "/reporteFinal/listar";
+const String ENDPOINT_REGISTRAR_REPORTE_FINAL = "/reporteFinal/registro";
+const String ENDPOINT_OBTENER_REPORTE_FINAL = "/reporteFinal/obtener";
+const String ENDPOINT_ACTUALIZAR_REPORTE_FINAL = "/reporteFinal/actualizar";
+const String ENDPOINT_ELIMINAR_REPORTE_FINAL = "/reporteFinal/eliminar";
+const String ENDPOINT_DESHABILITAR_REPORTE_FINAL = "/reporteFinal/deshabilitar";
+
 // Inspeccion anual
 const String ENDPOINT_LISTAR_INSPECCION_ANUAL = "/inspeccionAnual/listar";
 const String ENDPOINT_LISTAR_INSPECCION_ANUAL_ID = "/inspeccionAnual/listarPorId";
