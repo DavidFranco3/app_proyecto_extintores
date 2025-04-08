@@ -1,8 +1,8 @@
 // Constante para desarrollo
-const String API_HOST = "http://192.168.1.65:5050";
+// const String API_HOST = "http://192.168.1.65:5050";
 
 // Constantes para puesta en producción
-// const String API_HOST = 'https://apiaggo.isotech.mx';
+const String API_HOST = 'https://apiaggo.isotech.mx';
 
 // API para la consulta de la IP pública
 const String API_IP = 'https://api.ipify.org';
