@@ -29,7 +29,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.isotech.aggo"
     compileSdk = 35//flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"//flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -38,7 +38,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -47,9 +47,9 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 21//flutter.minSdkVersion
-        targetSdk = 34//flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        targetSdk = 35//flutter.targetSdkVersion
+        versionCode = 3//flutter.versionCode
+        versionName = 1.2//flutter.versionName
     }
 
     signingConfigs {
@@ -73,4 +73,17 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// 🔧 Suprimir advertencias de opciones obsoletas
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += "-Xlint:-options"
+}
+
+// 🔧 Aplicar compatibilidad global a Java 17
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
