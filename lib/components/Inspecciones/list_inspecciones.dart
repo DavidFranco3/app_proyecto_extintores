@@ -157,8 +157,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
 
   String formatEncuesta(List<dynamic> encuesta) {
     return encuesta.map((item) {
-      return '${item['pregunta']} ${item['respuesta']}';
-    }).join('\n');
+      return '${item['pregunta']}\n${item['respuesta']}';
+    }).join('\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n');
   }
 
   @override

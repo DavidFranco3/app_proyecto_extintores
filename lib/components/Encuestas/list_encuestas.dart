@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import '../Generales/formato_fecha.dart';
+import 'lista_preguntas.dart';
 
 class TblEncuestas extends StatefulWidget {
   final VoidCallback showModal;
@@ -34,6 +35,26 @@ class _TblEncuestasState extends State<TblEncuestas> {
             body: Acciones(
               showModal: () {
                 Navigator.pop(context); // Cierra la página actual
+              },
+              onCompleted: widget.onCompleted,
+              accion: "eliminar",
+              data: row,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void openViewPreguntas(row) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return Scaffold(
+            body: PreguntasVisualPage(
+              showModal: () {
+                Navigator.pop(context); // Eliminar la lógica de cerrar el modal
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",
@@ -86,6 +107,8 @@ class _TblEncuestasState extends State<TblEncuestas> {
                   onSelected: (String value) {
                     if (value == 'eliminar') {
                       openEliminarModal(row['_originalRow']);
+                    } else if (value == 'visualizar') {
+                      openViewPreguntas(row['_originalRow']);
                     }
                   },
                   itemBuilder: (BuildContext context) =>
@@ -98,6 +121,17 @@ class _TblEncuestasState extends State<TblEncuestas> {
                               color: Color(0xFFDC3545), size: 16),
                           SizedBox(width: 8),
                           Text('Eliminar'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'visualizar',
+                      child: Row(
+                        children: [
+                          FaIcon(FontAwesomeIcons.eye,
+                              color: Color.fromARGB(255, 88, 6, 211), size: 16),
+                          SizedBox(width: 8),
+                          Text('Ver preguntas'),
                         ],
                       ),
                     ),
