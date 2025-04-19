@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../api/inspecciones.dart';
-import '../../components/Inspecciones/list_inspecciones.dart';
+import '../../components/InspeccionesAbiertas/list_inspecciones_abiertas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class InspeccionesPage extends StatefulWidget {
-  final VoidCallback showModal;
-  final dynamic data;
-  final dynamic data2;
+class InspeccionesAbiertasPage extends StatefulWidget {
 
-  InspeccionesPage(
-      {required this.showModal, required this.data, required this.data2});
   @override
-  _InspeccionesPageState createState() => _InspeccionesPageState();
+  _InspeccionesAbiertasPageState createState() => _InspeccionesAbiertasPageState();
 }
 
-class _InspeccionesPageState extends State<InspeccionesPage> {
+class _InspeccionesAbiertasPageState extends State<InspeccionesAbiertasPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataInspecciones = [];
 
@@ -32,7 +25,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     try {
       final inspeccionesService = InspeccionesService();
       final List<dynamic> response =
-          await inspeccionesService.listarInspeccionesDatos(widget.data["id"]);
+          await inspeccionesService.listarInspeccionesAbiertas();
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
@@ -83,25 +76,12 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     return dataTemp;
   }
 
-  // Función para abrir el modal de registro con el formulario de Acciones
-  void returnPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => InspeccionesPantalla2Page(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              data: widget.data2)),
-    ).then((_) {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-          currentPage: "Historial de inspecciones"), // Usa el menú lateral
+          currentPage: "Historial de inspecciones abiertas"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -116,28 +96,6 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          returnPage, // Abre el modal con el formulario de acciones
-                      icon: Icon(FontAwesomeIcons.arrowLeft),
-                      label: Text("Regresar"),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Cliente: ${widget.data["cliente"]}",
-                      style: TextStyle(
-                        fontSize: 18,
                       ),
                     ),
                   ),

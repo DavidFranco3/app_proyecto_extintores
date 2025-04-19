@@ -7,7 +7,6 @@ import 'dart:io';
 import 'package:open_file/open_file.dart';
 import 'package:dio/dio.dart';
 import '../../api/inspecciones.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import './pdf.dart';
 import './pdf2.dart';
@@ -49,39 +48,18 @@ class _TblInspeccionesState extends State<TblInspecciones> {
 
       var dio = Dio();
 
-      // **Solicitar permisos de almacenamiento**
-      if (Platform.isAndroid) {
-        var status = await Permission.storage.request();
-        if (!status.isGranted) {
-          throw Exception("Permiso de almacenamiento denegado.");
-        }
-      }
-
-      // **Obtener la carpeta de descargas adecuada**
-      Directory? downloadsDir;
-      if (Platform.isAndroid) {
-        downloadsDir = await getExternalStorageDirectory();
-      } else if (Platform.isIOS) {
-        downloadsDir = await getApplicationDocumentsDirectory();
-      }
-
-      if (downloadsDir == null) {
-        throw Exception("No se pudo obtener el directorio de descargas.");
-      }
-
-      if (!downloadsDir.existsSync()) {
-        downloadsDir.createSync(recursive: true);
-      }
+      // Obtener la ruta de la carpeta de documentos de la aplicación
+      Directory appDocDir = await getApplicationDocumentsDirectory();
 
       String filePath =
-          "${downloadsDir.path}/Encuesta_de_inspección_${row["id"]}.pdf";
+          "${appDocDir.path}/Encuesta_de_inspección_${row["id"]}.pdf";
 
       print("Descargando archivo en: $filePath");
 
-      // **Descargar el archivo**
+      // Descargar el archivo PDF
       await dio.download(fileURL, filePath);
 
-      // **Verificar si el archivo se descargó**
+      // Verificar si el archivo fue descargado correctamente
       File file = File(filePath);
       if (await file.exists()) {
         OpenFile.open(filePath);
@@ -158,7 +136,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   String formatEncuesta(List<dynamic> encuesta) {
     return encuesta.map((item) {
       return '${item['pregunta']}\n${item['respuesta']}';
-    }).join('\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n');
+    }).join(
+        '\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n');
   }
 
   @override

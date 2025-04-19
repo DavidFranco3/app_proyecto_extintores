@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import '../../api/frecuencias.dart';
 import '../../api/clasificaciones.dart';
 import '../../api/ramas.dart';
-import '../../api/encuesta_inspeccion.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import '../../components/Logs/logs_informativos.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../components/Generales/flushbar_helper.dart';
 import '../CrearEncuestaPantalla2/crear_encuesta_pantalla_2.dart';
 import '../../components/Generales/pregunta.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -205,79 +202,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     });
   }
 
-  void _guardarEncuesta(Map<String, dynamic> data) async {
-    setState(() {
-      _isLoading = true;
-    });
 
-    var dataTemp = {
-      'nombre': data['nombre'],
-      'idFrecuencia': data['idFrecuencia'],
-      'idRama': data['idRama'],
-      'idClasificacion': data['idClasificacion'],
-      'preguntas': data['preguntas'],
-      'estado': "true",
-    };
-
-    try {
-      final encuestaInspeccionService = EncuestaInspeccionService();
-      var response =
-          await encuestaInspeccionService.registraEncuestaInspeccion(dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
-      if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
-        setState(() {
-          _isLoading = false;
-          returnPrincipalPage();
-        });
-        LogsInformativos(
-            "Se ha registrado la encuesta ${data['nombre']} correctamente",
-            dataTemp);
-        showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "La encuesta fue agregada correctamente",
-          backgroundColor: Colors.green,
-        );
-      } else {
-        // Maneja el caso en que el statusCode no sea 200
-        setState(() {
-          _isLoading = false;
-        });
-        showCustomFlushbar(
-          context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la encuesta",
-          backgroundColor: Colors.red,
-        );
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
-    }
-  }
-
-  void _publicarEncuesta() {
-    var formData = {
-      "nombre": widget.nombreController.text,
-      "idFrecuencia": widget.data["id"],
-      "idClasificacion": widget.clasificacionController.text,
-      "idRama": widget.ramaController.text,
-      "preguntas":
-          widget.preguntas.map((pregunta) => pregunta.toJson()).toList(),
-    };
-    if (widget.accion == "registrar") {
-      _guardarEncuesta(formData);
-    }
-    // Aquí podrías enviar la encuesta a Firebase o una API
-  }
 
   String get buttonLabel {
     if (widget.accion == 'registrar') {
@@ -338,24 +263,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _publicarEncuesta,
-                          icon: Icon(FontAwesomeIcons.plus), // Ícono de +
-                          label: _isLoading
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SpinKitFadingCircle(
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text("Cargando..."), // Texto de carga
-                                  ],
-                                )
-                              : Text(
-                                  buttonLabel), // Texto normal cuando no está cargando
-                        ),
                         SizedBox(width: 10), // Separación entre botones
                         ElevatedButton.icon(
                           onPressed: returnPrincipalPage,

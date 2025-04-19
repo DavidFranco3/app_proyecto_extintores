@@ -21,12 +21,12 @@ import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class EncuestaPage extends StatefulWidget {
+class EditarEncuestaPage extends StatefulWidget {
   @override
-  _EncuestaPageState createState() => _EncuestaPageState();
+  _EditarEncuestaPageState createState() => _EditarEncuestaPageState();
 }
 
-class _EncuestaPageState extends State<EncuestaPage> {
+class _EditarEncuestaPageState extends State<EditarEncuestaPage> {
   List<Pregunta> preguntas = [];
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> dataRamas = [];
