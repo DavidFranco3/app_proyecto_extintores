@@ -171,44 +171,46 @@ class InspeccionAnualService {
   }
 
   Future<Map<String, dynamic>> sendEmail(String id, String pdfFilePath) async {
-  final token = await authService.getTokenApi();
-  final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF_INSPECCION_ANUAL + '/$id';
+    final token = await authService.getTokenApi();
+    final String apiUrl =
+        API_HOST + ENDPOINT_ENVIAR_PDF_INSPECCION_ANUAL + '/$id';
 
-  try {
-    // Leer el archivo PDF como bytes desde el sistema de archivos
-    final pdfFile = File(pdfFilePath); // Ruta donde se guarda el archivo PDF
-    final bytes = await pdfFile.readAsBytes();  // Leemos el archivo como bytes
+    try {
+      // Leer el archivo PDF como bytes desde el sistema de archivos
+      final pdfFile = File(pdfFilePath); // Ruta donde se guarda el archivo PDF
+      final bytes = await pdfFile.readAsBytes(); // Leemos el archivo como bytes
 
-    // Crear la solicitud POST con el archivo y el ID
-    final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
-      ..headers.addAll({
-        'Content-Type': 'multipart/form-data',
-        'Authorization': 'Bearer $token',  // Añadir el token en el header
-      })
-      // Agregar el archivo PDF
-      ..files.add(http.MultipartFile.fromBytes('pdf', bytes, filename: 'documento.pdf'))
-      // Agregar el ID como un campo del formulario
-      ..fields['id'] = id;
+      // Crear la solicitud POST con el archivo y el ID
+      final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+        ..headers.addAll({
+          'Content-Type': 'multipart/form-data',
+          'Authorization': 'Bearer $token', // Añadir el token en el header
+        })
+        // Agregar el archivo PDF
+        ..files.add(http.MultipartFile.fromBytes('pdf', bytes,
+            filename: 'documento.pdf'))
+        // Agregar el ID como un campo del formulario
+        ..fields['id'] = id;
 
-    // Enviar la solicitud
-    final response = await request.send();
+      // Enviar la solicitud
+      final response = await request.send();
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        return {
+          'status': response.statusCode,
+          'message': 'PDF enviado exitosamente',
+        };
+      } else {
+        return {
+          'status': response.statusCode,
+          'message': 'Error al enviar el PDF: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
       return {
-        'status': response.statusCode,
-        'message': 'PDF enviado exitosamente',
-      };
-    } else {
-      return {
-        'status': response.statusCode,
-        'message': 'Error al enviar el PDF: ${response.statusCode}',
+        'status': 500, // Error interno si ocurre alguna excepción
+        'message': 'Error al enviar el PDF: $e',
       };
     }
-  } catch (e) {
-    return {
-      'status': 500, // Error interno si ocurre alguna excepción
-      'message': 'Error al enviar el PDF: $e',
-    };
   }
-}
 }

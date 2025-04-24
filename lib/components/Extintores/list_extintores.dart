@@ -83,7 +83,7 @@ void openEliminarModal(row) {
                   'Número de serie': row['numeroSerie'],
                   'Extintor': row['extintor'],
                   'Capacidad': row['capacidad'],
-                  'Ultima recarga': row['ultimaRecarga'],
+                  'Ultima recarga': formatDate(row['ultimaRecarga'] ?? ''),
                   'Creado el': formatDate(row['createdAt'] ?? ''),
                   '_originalRow': row,
                 };

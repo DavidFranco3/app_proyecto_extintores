@@ -15,7 +15,6 @@ import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
 import '../../page/GraficaInspecciones/grafica_inspecciones.dart';
 import '../../page/InspeccionEspecial/inspeccion_especial.dart';
 import '../../page/ReporteFinal/reporte_final.dart';
-import '../../page/InspeccionesAbiertas/inspecciones_abiertas.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
@@ -125,7 +124,7 @@ class _MenuLateralState extends State<MenuLateral> {
               ),
               _buildListTile(
                 context,
-                Icons.person,
+                Icons.sticky_note_2,
                 'Reporte de inspecciones y pruebas',
                 ReporteFinalPage(),
               ),
@@ -167,13 +166,6 @@ class _MenuLateralState extends State<MenuLateral> {
                               .report_problem, // Ícono representativo de inspección
                           'Historial de inspecciones',
                           InspeccionesPantalla1Page(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons
-                              .report_problem, // Ícono representativo de inspección
-                          'Historial de inspecciones abiertas',
-                          InspeccionesAbiertasPage(),
                         ),
                         _buildListTile(
                           context,

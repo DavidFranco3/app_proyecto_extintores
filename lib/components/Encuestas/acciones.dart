@@ -171,7 +171,7 @@ class _AccionesState extends State<Acciones> {
                         ),
                         TextFormField(
                           controller: _frecuenciaController,
-                          decoration: InputDecoration(labelText: 'Frecuencia'),
+                          decoration: InputDecoration(labelText: 'Periodo'),
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null

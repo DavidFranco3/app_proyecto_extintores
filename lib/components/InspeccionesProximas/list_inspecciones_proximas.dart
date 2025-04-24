@@ -29,7 +29,7 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
     List<Map<String, dynamic>> columnas = [
       {'name': 'Registro'},
       {'name': 'Cliente'},
-      {'name': 'Frecuencia'},
+      {'name': 'Periodo'},
       {'name': 'Encuesta'},
       {'name': 'Proxima inspeccion'},
       {'name': 'Creado el'},
@@ -51,7 +51,7 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
                 return {
                   'Registro': index,
                   'Cliente': row['cliente'],
-                  'Frecuencia': row['frecuencia'],
+                  'Periodo': row['frecuencia'],
                   'Encuesta': row['cuestionario'],
                   'Proxima inspeccion': formatDate(row['proximaInspeccion']),
                   'Creado el': formatDate(row['createdAt'] ?? ''),

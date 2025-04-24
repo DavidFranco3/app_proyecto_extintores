@@ -42,7 +42,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
   @override
   void initState() {
     super.initState();
-     descripcionController = TextEditingController();
+    descripcionController = TextEditingController();
     Future.delayed(Duration(seconds: 1), () {
       setState(() {
         loading = false;
@@ -194,8 +194,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
 
   // Método para agregar imagen con comentario y limpiar vista previa
   void _agregarImagen() {
-    if (_image != null &&
-        _comentarioController.text.isNotEmpty) {
+    if (_image != null && _comentarioController.text.isNotEmpty) {
       setState(() {
         // Agregar imagen y comentario a la lista
         imagePaths.add({
@@ -222,8 +221,9 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     return Scaffold(
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Reporte de inspecciones y pruebas"), // Usa el menú lateral
+      drawer: MenuLateral(
+          currentPage:
+              "Reporte de inspecciones y pruebas"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
@@ -281,7 +281,18 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
                       ],
                     ),
                     SizedBox(height: 20),
-                    // Sección de Preguntas
+                    // Campo de texto para descripción (tipo textarea)
+                    TextFormField(
+                      controller: descripcionController,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        labelText: 'Descripción',
+                        hintText: 'Escribe aquí la descripción del reporte...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
                     Center(
                       child: Padding(
                         padding: EdgeInsets.all(16.0),

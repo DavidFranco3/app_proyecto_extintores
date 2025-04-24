@@ -71,7 +71,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
     List<Map<String, dynamic>> columnas = [
       {'name': 'Registro'},
       {'name': 'Nombre'},
-      {'name': 'Frecuencia'},
+      {'name': 'Periodo'},
       {'name': 'Clasificacion'},
       {'name': 'Rama'},
       {'name': 'Creado el'},
@@ -92,7 +92,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                 return {
                   'Registro': index,
                   'Nombre': row['nombre'],
-                  'Frecuencia': row['frecuencia'],
+                  'Periodo': row['frecuencia'],
                   'Clasificacion': row['clasificacion'],
                   'Rama': row['rama'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
