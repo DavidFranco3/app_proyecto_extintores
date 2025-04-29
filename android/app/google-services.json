@@ -1,13 +1,32 @@
 {
   "project_info": {
-    "project_number": "877785277411",
-    "project_id": "fire-b9a2c",
-    "storage_bucket": "fire-b9a2c.firebasestorage.app"
+    "project_number": "617711073689",
+    "project_id": "aggoapp",
+    "storage_bucket": "aggoapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:877785277411:android:a114c5c3e927afc786f6d6",
+        "mobilesdk_app_id": "1:617711073689:android:d30e69b61a6debbb927b08",
+        "android_client_info": {
+          "package_name": "com.example.prueba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASwZz13ZeqL9Z7K4I8Zmi8onbXe0HN42E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:617711073689:android:7035f320b943892f927b08",
         "android_client_info": {
           "package_name": "com.isotech.aggo"
         }
@@ -15,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAY5gTZD0IiFJl4X4FaapZ-fIVyOG5qFto"
+          "current_key": "AIzaSyASwZz13ZeqL9Z7K4I8Zmi8onbXe0HN42E"
         }
       ],
       "services": {

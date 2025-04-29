@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../api/dropbox.dart';
+import '../../api/cloudinary.dart';
 import 'dart:io';
 import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
@@ -33,6 +34,7 @@ class _AccionesState extends State<Acciones> {
   bool _isLoading = true;
   late TextEditingController _nombreController;
   late TextEditingController _imagenController;
+  late TextEditingController _imagenCloudinaryController;
   late TextEditingController _correoController;
   late TextEditingController _telefonoController;
   late TextEditingController _calleController;
@@ -69,6 +71,7 @@ class _AccionesState extends State<Acciones> {
 
     _nombreController = TextEditingController();
     _imagenController = TextEditingController();
+    _imagenCloudinaryController = TextEditingController();
     _correoController = TextEditingController();
     _telefonoController = TextEditingController();
     _calleController = TextEditingController();
@@ -83,6 +86,7 @@ class _AccionesState extends State<Acciones> {
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _nombreController.text = widget.data['nombre'] ?? '';
       _imagenController.text = widget.data['imagen'] ?? '';
+      _imagenCloudinaryController.text = widget.data['imagenCloudinary'] ?? '';
       _correoController.text = widget.data['correo'] ?? '';
       _telefonoController.text = widget.data['telefono'] ?? '';
       _calleController.text = widget.data['calle'] ?? '';
@@ -138,6 +142,7 @@ class _AccionesState extends State<Acciones> {
   void dispose() {
     _nombreController.dispose();
     _imagenController.dispose();
+    _imagenCloudinaryController.dispose();
     _correoController.dispose();
     _telefonoController.dispose();
     _calleController.dispose();
@@ -165,6 +170,7 @@ class _AccionesState extends State<Acciones> {
     var dataTemp = {
       'nombre': data['nombre'],
       'imagen': data['imagen'],
+      'imagenCloudinary': data['imagenCloudinary'],
       'correo': data['correo'],
       'telefono': data['telefono'],
       'direccion': {
@@ -232,6 +238,7 @@ class _AccionesState extends State<Acciones> {
     var dataTemp = {
       'nombre': data['nombre'],
       'imagen': data['imagen'],
+      'imagenCloudinary': data['imagenCloudinary'],
       'correo': data['correo'],
       'telefono': data['telefono'],
       'direccion': {
@@ -320,18 +327,27 @@ class _AccionesState extends State<Acciones> {
     });
     if (_formKey.currentState?.validate() ?? false) {
       final dropboxService = DropboxService();
+      final cloudinaryService = CloudinaryService();
       String imagenFile = "";
       if (_image != null) {
         // Llamas a la función que espera un Uint8List y obtienes la ruta
         String filePath = _image!.path;
-
+        print("ruta de la imagen");
+        print(filePath);
         if (filePath.isNotEmpty) {
           imagenFile = filePath;
           String? sharedLink =
               await dropboxService.uploadImageToDropbox(imagenFile, "clientes");
+          String? sharedLink2 =
+              await cloudinaryService.subirArchivoCloudinary(imagenFile, "clientes");
+
           if (sharedLink != null) {
             _imagenController.text =
                 sharedLink; // Guardar el enlace de la firma
+          }
+          if (sharedLink2 != null) {
+            _imagenCloudinaryController.text =
+                sharedLink2; // Guardar el enlace de la firma
           }
         } else {
           print('No se pudo guardar el logo del cliente de forma correcta');
@@ -343,6 +359,7 @@ class _AccionesState extends State<Acciones> {
       var formData = {
         'nombre': _nombreController.text,
         'imagen': _imagenController.text,
+        'imagenCloudinary': _imagenCloudinaryController.text,
         'correo': _correoController.text,
         'telefono': _telefonoController.text,
         'calle': _calleController.text,

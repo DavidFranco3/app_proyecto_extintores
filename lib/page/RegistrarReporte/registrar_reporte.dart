@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import '../ReporteFinal/reporte_final.dart';
 import '../../api/dropbox.dart';
+import '../../api/cloudinary.dart';
 
 class RegistrarReporteScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -37,6 +38,8 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
   // Lista para almacenar imágenes y comentarios
   List<Map<String, dynamic>> imagePaths = [];
   List<Map<String, dynamic>> uploadedImageLinks =
+      []; // Array para guardar objetos con enlaces y comentarios
+  List<Map<String, dynamic>> uploadedImageLinksCloudinary =
       []; // Array para guardar objetos con enlaces y comentarios
   late TextEditingController descripcionController;
   @override
@@ -64,6 +67,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     var dataTemp = {
       'descripcion': data['descripcion'],
       'imagenes': data['imagenes'],
+      'imagenesCloudinary': data['imagenesCloudinary'],
       'estado': "true",
     };
 
@@ -116,6 +120,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     // ✅ Agregar async a la función
 
     final dropboxService = DropboxService();
+    final cloudinaryService = CloudinaryService();
     setState(() {
       _isLoading = true; // Activar la animación de carga al inicio
     });
@@ -130,10 +135,21 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
         if (imagePathStr != null) {
           String? sharedLink = await dropboxService.uploadImageToDropbox(
               imagePathStr, "inspecciones");
+          String? sharedLink2 =
+              await cloudinaryService.subirArchivoCloudinary(imagePathStr, "inspecciones");
           if (sharedLink != null) {
             // Crear un mapa con el sharedLink y el comentario
             var imageInfo = {
               "sharedLink": sharedLink,
+              "comentario": comentario,
+            };
+            // Agregar el mapa a la lista
+            uploadedImageLinks.add(imageInfo);
+          }
+          if (sharedLink2 != null) {
+            // Crear un mapa con el sharedLink y el comentario
+            var imageInfo = {
+              "sharedLink": sharedLink2,
               "comentario": comentario,
             };
             // Agregar el mapa a la lista
@@ -152,6 +168,8 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     var formData = {
       "imagenes":
           uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
+      "imagenesClodinary":
+          uploadedImageLinksCloudinary, // Asegúrate de pasar los enlaces de las imágenes
       "descripcion": descripcionController.text,
     };
 

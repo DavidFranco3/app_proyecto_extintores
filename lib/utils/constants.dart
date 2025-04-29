@@ -18,4 +18,6 @@ const String API_DROPBOX = 'https://content.dropboxapi.com/2/files/upload';
 const String API_DROPBOX_ENLACE =
     'https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings';
 
+const String API_CLOUDINARY = "https://api.cloudinary.com/v1_1/omarlestrella/upload";
+
 const String TOKEN = 'token';

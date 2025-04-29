@@ -84,6 +84,7 @@ class _ClientesPageState extends State<ClientesPage> {
         'id': item['_id'],
         'nombre': item['nombre'],
         'imagen': item['imagen'],
+        'imagenCloudinary': item['imagenCloudinary'],
         'correo': item['correo'],
         'telefono': item['telefono'],
         'calle': item['direccion']['calle'],

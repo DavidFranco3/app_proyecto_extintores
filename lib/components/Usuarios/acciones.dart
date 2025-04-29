@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/usuarios.dart';
 import '../../api/dropbox.dart';
+import '../../api/cloudinary.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:signature/signature.dart';
 import 'dart:typed_data';
@@ -39,6 +40,7 @@ class _AccionesState extends State<Acciones> {
   late TextEditingController _rolController;
 
   String linkFirma = "";
+  String linkFirmaCloudinary = "";
 
   final SignatureController _controller = SignatureController(
     penStrokeWidth: 3,
@@ -136,6 +138,7 @@ class _AccionesState extends State<Acciones> {
       'password': data['password'],
       'tipo': data['tipo'],
       'firma': data['firma'],
+      'firmaCloudinary': data['firmaCloudinary'],
       'estado': "true",
     };
 
@@ -268,6 +271,7 @@ class _AccionesState extends State<Acciones> {
   void _onSubmit() async {
     if (!isEditar && !isEliminar) {
       final dropboxService = DropboxService();
+      final cloudinaryService = CloudinaryService();
       setState(() {
         _isLoading = true; // Activar la animación de carga al inicio
       });
@@ -285,8 +289,14 @@ class _AccionesState extends State<Acciones> {
           imagenFile = filePath;
           String? sharedLink =
               await dropboxService.uploadImageToDropbox(imagenFile, "usuarios");
+          String? sharedLink2 =
+              await cloudinaryService.subirArchivoCloudinary(imagenFile, "clientes");
           if (sharedLink != null) {
             linkFirma = sharedLink; // Guardar el enlace de la firma
+          }
+          if (sharedLink2 != null) {
+            linkFirmaCloudinary =
+                sharedLink2; // Guardar el enlace de la firma
           }
         } else {
           print('No se pudo guardar la imagen de la firma correctamente');
@@ -309,6 +319,7 @@ class _AccionesState extends State<Acciones> {
         'password': _passwordController.text,
         'tipo': _rolController.text,
         'firma': linkFirma,
+        'firmaCloudinary': linkFirmaCloudinary,
       };
 
       if (widget.accion == 'registrar') {

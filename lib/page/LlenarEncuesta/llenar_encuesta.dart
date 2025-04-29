@@ -6,6 +6,7 @@ import '../../api/auth.dart';
 import '../../api/ramas.dart';
 import '../../api/clientes.dart';
 import '../../api/dropbox.dart';
+import '../../api/cloudinary.dart';
 import '../../api/inspecciones_proximas.dart';
 import '../../components/Logs/logs_informativos.dart';
 import '../../components/Load/load.dart';
@@ -49,7 +50,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Map<String, dynamic>> uploadedImageLinks =
       []; // Array para guardar objetos con enlaces y comentarios
 
+  List<Map<String, dynamic>> uploadedImageLinksCloudinary =
+      []; // Array para guardar objetos con enlaces y comentarios
+
   String linkFirma = "";
+  String linkFirmaCloudinary = "";
 
   late TextEditingController clienteController;
   late TextEditingController descripcionController;
@@ -71,9 +76,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
     uploadedImageLinks = [];
 
+    uploadedImageLinksCloudinary = [];
+
     imagePaths = [];
 
     linkFirma = "";
+    linkFirmaCloudinary = "";
 
     dataEncuestas = [];
 
@@ -414,7 +422,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
       'encuesta': data['preguntas'],
       'comentarios': data['comentarios'] ?? "",
       'imagenes': data['imagenes'],
+      'imagenesCloudinary': data['imagenesCloudinary'],
       'firmaCliente': data['firmaCliente'] ?? "",
+      'firmaClienteCloudinary': data['firmaClienteCloudinary'] ?? "",
       'estado': "true",
     };
 
@@ -493,6 +503,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     print('Datos comunes obtenidos para logout: $datosComunes');
 
     final dropboxService = DropboxService();
+    final cloudinaryService = CloudinaryService();
     setState(() {
       _isLoading = true; // Activar la animación de carga al inicio
     });
@@ -511,9 +522,15 @@ class _EncuestaPageState extends State<EncuestaPage> {
         imagenFile = filePath;
         String? sharedLink = await dropboxService.uploadImageToDropbox(
             imagenFile, "inspecciones");
+        String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+            imagenFile, "inspecciones");
         if (sharedLink != null) {
           linkFirma = sharedLink; // Guardar el enlace de la firma
           print("Enlace de la firma: $linkFirma");
+        }
+        if (sharedLink2 != null) {
+          linkFirmaCloudinary = sharedLink2; // Guardar el enlace de la firma
+          print("Enlace de la firma: $linkFirmaCloudinary");
         }
       } else {
         print('No se pudo guardar la imagen de la firma correctamente');
@@ -533,6 +550,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
         if (imagePathStr != null) {
           String? sharedLink = await dropboxService.uploadImageToDropbox(
               imagePathStr, "inspecciones");
+          String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+              imagePathStr, "inspecciones");
           if (sharedLink != null) {
             // Crear un mapa con el sharedLink y el comentario
             var imageInfo = {
@@ -542,6 +561,16 @@ class _EncuestaPageState extends State<EncuestaPage> {
             };
             // Agregar el mapa a la lista
             uploadedImageLinks.add(imageInfo);
+          }
+          if (sharedLink2 != null) {
+            // Crear un mapa con el sharedLink y el comentario
+            var imageInfo = {
+              "sharedLink": sharedLink2,
+              "comentario": comentario,
+              "valor": valor
+            };
+            // Agregar el mapa a la lista
+            uploadedImageLinksCloudinary.add(imageInfo);
           }
         }
       }
@@ -564,9 +593,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
       "preguntas": respuestasAguardar,
       "imagenes":
           uploadedImageLinks, // Asegúrate de pasar los enlaces de las imágenes
+      "imagenesCloudinary":
+          uploadedImageLinksCloudinary, // Asegúrate de pasar los enlaces de las imágenes
       "comentarios": comentariosController.text,
       "descripcion": descripcionController.text,
-      "firmaCliente": linkFirma
+      "firmaCliente": linkFirma,
+      "firmaClienteCloudinary": linkFirmaCloudinary
     };
 
     // Llamar a la función para guardar la encuesta
