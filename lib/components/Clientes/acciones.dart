@@ -45,6 +45,8 @@ class _AccionesState extends State<Acciones> {
   late TextEditingController _municipioController;
   late TextEditingController _cpostalController;
   late TextEditingController _referenciaController;
+  late TextEditingController _puestoController;
+  late TextEditingController _responsableController;
 
   final ImagePicker _picker = ImagePicker();
   XFile? _image; // Variable para almacenar la imagen seleccionada
@@ -82,6 +84,8 @@ class _AccionesState extends State<Acciones> {
     _municipioController = TextEditingController();
     _cpostalController = TextEditingController();
     _referenciaController = TextEditingController();
+    _puestoController = TextEditingController();
+    _responsableController = TextEditingController();
 
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
       _nombreController.text = widget.data['nombre'] ?? '';
@@ -97,6 +101,8 @@ class _AccionesState extends State<Acciones> {
       _municipioController.text = widget.data['municipio'] ?? '';
       _cpostalController.text = widget.data['cPostal'] ?? '';
       _referenciaController.text = widget.data['referencia'] ?? '';
+      _responsableController.text = widget.data['responsable'] ?? '';
+      _puestoController.text = widget.data['puesto'] ?? '';
       imageUrl = widget.data['imagen'].replaceAll('dl=0', 'raw=1');
     }
     Future.delayed(Duration(seconds: 1), () {
@@ -153,6 +159,8 @@ class _AccionesState extends State<Acciones> {
     _municipioController.dispose();
     _cpostalController.dispose();
     _referenciaController.dispose();
+    _responsableController.dispose();
+    _puestoController.dispose();
     super.dispose();
   }
 
@@ -173,6 +181,8 @@ class _AccionesState extends State<Acciones> {
       'imagenCloudinary': data['imagenCloudinary'],
       'correo': data['correo'],
       'telefono': data['telefono'],
+      'responsable': data['responsable'],
+      'puesto': data['puesto'],
       'direccion': {
         'calle': data['calle'] ?? '',
         'nExterior': data['nExterior'] ?? 'S/N',
@@ -241,6 +251,8 @@ class _AccionesState extends State<Acciones> {
       'imagenCloudinary': data['imagenCloudinary'],
       'correo': data['correo'],
       'telefono': data['telefono'],
+      'responsable': data['responsable'],
+      'puesto': data['puesto'],
       'direccion': {
         'calle': data['calle'] ?? '',
         'nExterior': data['nExterior'] ?? 'S/N',
@@ -338,8 +350,8 @@ class _AccionesState extends State<Acciones> {
           imagenFile = filePath;
           String? sharedLink =
               await dropboxService.uploadImageToDropbox(imagenFile, "clientes");
-          String? sharedLink2 =
-              await cloudinaryService.subirArchivoCloudinary(imagenFile, "clientes");
+          String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+              imagenFile, "clientes");
 
           if (sharedLink != null) {
             _imagenController.text =
@@ -362,6 +374,8 @@ class _AccionesState extends State<Acciones> {
         'imagenCloudinary': _imagenCloudinaryController.text,
         'correo': _correoController.text,
         'telefono': _telefonoController.text,
+        'responsable': _responsableController.text,
+        'puesto': _puestoController.text,
         'calle': _calleController.text,
         'nExterior': _nExteriorController.text,
         'nInterior': _nInteriorController.text,

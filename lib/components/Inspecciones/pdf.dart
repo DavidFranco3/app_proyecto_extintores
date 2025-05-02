@@ -29,6 +29,13 @@ class PdfGenerator {
     return dateFormat.format(localDate);
   }
 
+  static String capitalizeWords(String text) {
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
   static Future<Uint8List> loadImageFromAssets(String assetPath) async {
     final byteData = await rootBundle.load(assetPath);
 
@@ -44,7 +51,7 @@ class PdfGenerator {
       // Verificar URL de la imagen
       final imageUrl =
           data['imagenes'][0]['sharedLink']?.replaceAll("dl=0", "dl=1");
-      print("Link de la imagen: $imageUrl");
+      print("Link de la imagen 1: $imageUrl");
 
       if (imageUrl == null || imageUrl.isEmpty) {
         print("URL de la imagen no válida");
@@ -69,7 +76,7 @@ class PdfGenerator {
         // Verificar URL de la imagen
         final imageUrl2 =
             data['imagenes'][1]['sharedLink']?.replaceAll("dl=0", "dl=1");
-        print("Link de la imagen: $imageUrl2");
+        print("Link de la imagen 2: $imageUrl2");
 
         if (imageUrl2 == null || imageUrl2.isEmpty) {
           print("URL de la imagen no válida");
@@ -92,7 +99,7 @@ class PdfGenerator {
 
           final imageUrl3 =
               data['imagenes'][2]['sharedLink']?.replaceAll("dl=0", "dl=1");
-          print("Link de la imagen: $imageUrl3");
+          print("Link de la imagen 3: $imageUrl3");
 
           if (imageUrl3 == null || imageUrl3.isEmpty) {
             print("URL de la imagen no válida");
@@ -115,7 +122,7 @@ class PdfGenerator {
 
             final imageUrl4 =
                 data['imagenes'][3]['sharedLink']?.replaceAll("dl=0", "dl=1");
-            print("Link de la imagen: $imageUrl4");
+            print("Link de la imagen 4: $imageUrl4");
 
             if (imageUrl4 == null || imageUrl4.isEmpty) {
               print("URL de la imagen no válida");
@@ -138,7 +145,7 @@ class PdfGenerator {
 
               final imageUrl5 =
                   data['imagenes'][4]['sharedLink']?.replaceAll("dl=0", "dl=1");
-              print("Link de la imagen: $imageUrl5");
+              print("Link de la imagen 5: $imageUrl5");
 
               if (imageUrl5 == null || imageUrl5.isEmpty) {
                 print("URL de la imagen no válida");
@@ -161,7 +168,7 @@ class PdfGenerator {
 
                 final imageUrl6 = data['imagenes'][5]['sharedLink']
                     ?.replaceAll("dl=0", "dl=1");
-                print("Link de la imagen: $imageUrl6");
+                print("Link de la imagen 6: $imageUrl6");
 
                 if (imageUrl6 == null || imageUrl6.isEmpty) {
                   print("URL de la imagen no válida");
@@ -184,7 +191,7 @@ class PdfGenerator {
 
                   final imageUrl7 = data['imagenes'][6]['sharedLink']
                       ?.replaceAll("dl=0", "dl=1");
-                  print("Link de la imagen: $imageUrl7");
+                  print("Link de la imagen 7: $imageUrl7");
 
                   if (imageUrl7 == null || imageUrl7.isEmpty) {
                     print("URL de la imagen no válida");
@@ -207,7 +214,7 @@ class PdfGenerator {
 
                     final imageUrlLogo =
                         data['imagen_cliente']?.replaceAll("dl=0", "dl=1");
-                    print("Link de la imagen: $imageUrlLogo");
+                    print("Link de la imagen del cliente: $imageUrlLogo");
 
                     if (imageUrlLogo == null || imageUrlLogo.isEmpty) {
                       print("URL de la imagen no válida");
@@ -223,7 +230,7 @@ class PdfGenerator {
 
                       final imageUrlFirma =
                           data["firma_usuario"]?.replaceAll("dl=0", "dl=1");
-                      print("Link de la imagen: $imageUrlFirma");
+                      print("Link de la imagen de la firma: $imageUrlFirma");
 
                       if (imageUrlFirma == null || imageUrlFirma.isEmpty) {
                         print("URL de la imagen no válida");
@@ -286,6 +293,53 @@ class PdfGenerator {
                                       ],
                                     ),
                                   ),
+
+                                  pw.Align(
+                                    alignment: pw.Alignment.centerRight,
+                                    child: pw.Container(
+                                      child: pw.Text(
+                                        '${capitalizeWords(data["municipio"])}, ${capitalizeWords(data["estadoDom"])} a ${formatDate(data["createdAt"])}',
+                                        style: pw.TextStyle(),
+                                      ),
+                                    ),
+                                  ),
+                                  pw.SizedBox(height: 20),
+
+                                  // At'n y datos
+                                  pw.Container(
+                                    child: pw.Text(
+                                      'Atn: ${data["responsableCliente"]}',
+                                      style: pw.TextStyle(
+                                          fontWeight: pw.FontWeight.bold),
+                                    ),
+                                  ),
+                                  pw.Row(
+                                    children: [
+                                      pw.Container(
+                                        child: pw.Text(data["puestoCliente"]),
+                                      ),
+                                    ],
+                                  ),
+                                  pw.Container(
+                                    child: pw.Text(
+                                      data["cliente"],
+                                      style: pw.TextStyle(
+                                          fontWeight: pw.FontWeight.bold),
+                                    ),
+                                  ),
+                                  pw.SizedBox(height: 20),
+
+                                  // Asunto
+                                  pw.Row(
+                                    children: [
+                                      pw.Text('Asunto:',
+                                          style: pw.TextStyle(
+                                              fontWeight: pw.FontWeight.bold)),
+                                      pw.SizedBox(width: 5),
+                                      pw.Text('Reporte de opinión técnica.'),
+                                    ],
+                                  ),
+
                                   pw.Text(
                                     "PRUEBA DE CAUDAL MANGUERA DE 1½ x 30 M (HIDRANTE CLASE II)",
                                     style: pw.TextStyle(
@@ -388,8 +442,9 @@ class PdfGenerator {
                                   pw.Center(
                                     child: pw.Image(
                                       pw.MemoryImage(imageBytes),
-                                      width: 500, // Ajusta al ancho completo de la página
-                                      height: 350, // Altura fija
+                                      width:
+                                          500, // Ajusta al ancho completo de la página
+                                      height: 300, // Altura fija
                                     ),
                                   ),
                                   pw.SizedBox(
@@ -465,7 +520,7 @@ class PdfGenerator {
                                           height: 40, // Altura fija
                                         ),
                                         pw.Image(
-                                          pw.MemoryImage(imageBytes000),
+                                          pw.MemoryImage(imageBytes00),
                                           width:
                                               150, // Ajusta al tamaño deseado de la imagen con "00"
                                           height: 40, // Altura fija
@@ -1301,7 +1356,7 @@ class PdfGenerator {
                                         alignment: pw.Alignment
                                             .bottomRight, // Alinea al centro
                                         child: pw.Image(
-                                          pw.MemoryImage(imageBytes000),
+                                          pw.MemoryImage(imageBytes00),
                                           width:
                                               150, // Ajusta al tamaño deseado de la imagen con "00"
                                           height: 40, // Altura fija
