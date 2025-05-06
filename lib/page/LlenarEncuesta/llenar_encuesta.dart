@@ -610,10 +610,10 @@ class _EncuestaPageState extends State<EncuestaPage> {
   TextEditingController _comentarioController = TextEditingController();
   TextEditingController _valorController = TextEditingController();
 
-  // Método para seleccionar imagen
+// Método para tomar foto con la cámara
   Future<void> _pickImage() async {
     final XFile? pickedImage =
-        await _picker.pickImage(source: ImageSource.gallery);
+        await _picker.pickImage(source: ImageSource.camera); // Cambiar a cámara
 
     if (pickedImage != null) {
       setState(() {
@@ -1093,31 +1093,34 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
                     // Si hay encuesta seleccionada y preguntas disponibles
                     if (preguntas.isNotEmpty)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.arrow_back, size: 30),
-                            onPressed: currentPage > 0
-                                ? () {
-                                    _pageController.previousPage(
-                                      duration: Duration(milliseconds: 300),
-                                      curve: Curves.easeInOut,
-                                    );
-                                  }
-                                : null,
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: SizedBox(
+                          height: 60, // o menos, según lo que necesites
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.arrow_back, size: 24),
+                                onPressed: currentPage > 0
+                                    ? () => _pageController.previousPage(
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        )
+                                    : null,
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.arrow_forward, size: 24),
+                                onPressed: currentPage < 4
+                                    ? () => _pageController.nextPage(
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeIn,
+                                        )
+                                    : null,
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: Icon(Icons.arrow_forward, size: 30),
-                            onPressed: currentPage < 4
-                                ? () {
-                                    _pageController.nextPage(
-                                        duration: Duration(milliseconds: 300),
-                                        curve: Curves.easeIn);
-                                  }
-                                : null,
-                          ),
-                        ],
+                        ),
                       ),
                   ],
                 ),

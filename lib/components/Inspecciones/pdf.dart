@@ -340,12 +340,20 @@ class PdfGenerator {
                                     ],
                                   ),
 
-                                  pw.Text(
-                                    "PRUEBA DE CAUDAL MANGUERA DE 1½ x 30 M (HIDRANTE CLASE II)",
-                                    style: pw.TextStyle(
-                                      fontSize:
-                                          14, // Tamaño de letra más grande
-                                      fontWeight: pw.FontWeight.bold, // Negrita
+                                  pw.Center(
+                                    child: pw.Column(
+                                      children: [
+                                        pw.Text(
+                                          "PRUEBA DE CAUDAL MANGUERA DE 1½ x 30 M (HIDRANTE CLASE II)",
+                                          style: pw.TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: pw.FontWeight.bold,
+                                          ),
+                                        ),
+                                        pw.SizedBox(
+                                            height:
+                                                10), // Esto agrega un salto de línea en blanco
+                                      ],
                                     ),
                                   ),
 
@@ -444,7 +452,7 @@ class PdfGenerator {
                                       pw.MemoryImage(imageBytes),
                                       width:
                                           500, // Ajusta al ancho completo de la página
-                                      height: 300, // Altura fija
+                                      height: 290, // Altura fija
                                     ),
                                   ),
                                   pw.SizedBox(
