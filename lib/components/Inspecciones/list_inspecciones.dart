@@ -12,6 +12,7 @@ import './pdf.dart';
 import './pdf2.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
+import '../../page/CargarImagenesFinales/cargar_imagenes_finales.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -121,6 +122,21 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 
+    void openCargaImagenes(row) {
+    // Navegar a la página de eliminación en lugar de mostrar un modal
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CargarImagenesFinalesScreen(
+          showModal: widget.showModal,
+          onCompleted: widget.onCompleted,
+          accion: "editar",
+          data: row,
+        ),
+      ),
+    );
+  }
+
   void openRegistroPage(Map<String, dynamic> row) {
     Navigator.push(
       context,
@@ -189,6 +205,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                             context, row['_originalRow']);
                       } else if (value == 'guardarPdf3') {
                         GenerarPdfPage.generarPdf(row['_originalRow']);
+                      } else if (value == 'cargarImagenes') {
+                        openCargaImagenes(row['_originalRow']);
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -274,6 +292,20 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                             ),
                             SizedBox(width: 8),
                             Text('Guardar PDF 3'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'cargarImagenes',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.image,
+                              color: Colors.blue,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Cargar imagenes'),
                           ],
                         ),
                       ),

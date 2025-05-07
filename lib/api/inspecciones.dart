@@ -68,11 +68,12 @@ class InspeccionesService {
     }
   }
 
-    Future<List<dynamic>> listarInspeccionesPorCliente(idCliente) async {
+  Future<List<dynamic>> listarInspeccionesPorCliente(idCliente) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES_CLIENTE + '/$idCliente'),
+        Uri.parse(
+            API_HOST + ENDPOINT_LISTAR_INSPECCIONES_CLIENTE + '/$idCliente'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -130,13 +131,12 @@ class InspeccionesService {
     }
   }
 
-    Future<List<dynamic>> listarInspeccionesDatos(id) async {
+  Future<List<dynamic>> listarInspeccionesDatos(id) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST +
-            ENDPOINT_LISTAR_INSPECCIONES_DATOS_ENCUESTAS +
-            '/$id'),
+        Uri.parse(
+            API_HOST + ENDPOINT_LISTAR_INSPECCIONES_DATOS_ENCUESTAS + '/$id'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ class InspeccionesService {
     return response;
   }
 
-  Future<http.Response> actualizarInspecciones(
+  Future<Map<String, dynamic>> actualizarInspecciones(
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
@@ -205,7 +205,28 @@ class InspeccionesService {
       },
       body: json.encode(data),
     );
-    return response;
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
+  }
+
+  Future<Map<String, dynamic>> actualizarImagenesInspecciones(
+      String id, Map<String, dynamic> data) async {
+    final token = await authService.getTokenApi();
+    final response = await http.put(
+      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_IMAGENES_FINALES + '/$id'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode(data),
+    );
+    return {
+      'body': jsonDecode(response.body),
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
   }
 
   Future<http.Response> eliminarInspecciones(
@@ -258,7 +279,7 @@ class InspeccionesService {
     };
   }
 
-Future<Map<String, dynamic>> sendEmail2(String id, String pdfFilePath) async {
+  Future<Map<String, dynamic>> sendEmail2(String id, String pdfFilePath) async {
     final token = await authService.getTokenApi();
     final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF2 + '/$id';
 

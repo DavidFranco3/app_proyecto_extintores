@@ -86,6 +86,7 @@ const String ENDPOINT_LISTAR_INSPECCIONES_DATOS_ENCUESTAS = "/inspecciones/lista
 const String ENDPOINT_REGISTRAR_INSPECCIONES = "/inspecciones/registro";
 const String ENDPOINT_OBTENER_INSPECCIONES = "/inspecciones/obtener";
 const String ENDPOINT_ACTUALIZAR_INSPECCIONES = "/inspecciones/actualizar";
+const String ENDPOINT_ACTUALIZAR_IMAGENES_FINALES = "/inspecciones/actualizarImagenes";
 const String ENDPOINT_ELIMINAR_INSPECCIONES = "/inspecciones/eliminar";
 const String ENDPOINT_DESHABILITAR_INSPECCIONES = "/inspecciones/deshabilitar";
 const String ENDPOINT_DESCARGAR_PDF = "/inspecciones/generar-pdf";

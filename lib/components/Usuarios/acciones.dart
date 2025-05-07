@@ -289,14 +289,13 @@ class _AccionesState extends State<Acciones> {
           imagenFile = filePath;
           String? sharedLink =
               await dropboxService.uploadImageToDropbox(imagenFile, "usuarios");
-          String? sharedLink2 =
-              await cloudinaryService.subirArchivoCloudinary(imagenFile, "clientes");
+          String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+              imagenFile, "clientes");
           if (sharedLink != null) {
             linkFirma = sharedLink; // Guardar el enlace de la firma
           }
           if (sharedLink2 != null) {
-            linkFirmaCloudinary =
-                sharedLink2; // Guardar el enlace de la firma
+            linkFirmaCloudinary = sharedLink2; // Guardar el enlace de la firma
           }
         } else {
           print('No se pudo guardar la imagen de la firma correctamente');
@@ -311,24 +310,22 @@ class _AccionesState extends State<Acciones> {
       });
     }
 
-    if (_formKey.currentState?.validate() ?? false) {
-      var formData = {
-        'nombre': _nombreController.text,
-        'email': _emailController.text,
-        'telefono': _telefonoController.text,
-        'password': _passwordController.text,
-        'tipo': _rolController.text,
-        'firma': linkFirma,
-        'firmaCloudinary': linkFirmaCloudinary,
-      };
+    var formData = {
+      'nombre': _nombreController.text,
+      'email': _emailController.text,
+      'telefono': _telefonoController.text,
+      'password': _passwordController.text,
+      'tipo': _rolController.text,
+      'firma': linkFirma,
+      'firmaCloudinary': linkFirmaCloudinary,
+    };
 
-      if (widget.accion == 'registrar') {
-        _guardarUsuario(formData);
-      } else if (widget.accion == 'editar') {
-        _editarUsuario(widget.data['id'], formData);
-      } else if (widget.accion == 'eliminar') {
-        _eliminarUsuario(widget.data['id'], formData);
-      }
+    if (widget.accion == 'registrar') {
+      _guardarUsuario(formData);
+    } else if (widget.accion == 'editar') {
+      _editarUsuario(widget.data['id'], formData);
+    } else if (widget.accion == 'eliminar') {
+      _eliminarUsuario(widget.data['id'], formData);
     }
   }
 

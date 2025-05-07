@@ -9,8 +9,6 @@ import 'package:flutter/services.dart' show rootBundle;
 class GenerarPdfPage {
   static Future<Uint8List> loadImageFromAssets(String assetPath) async {
     final byteData = await rootBundle.load(assetPath);
-
-    // Convertir List<int> a Uint8List
     return Uint8List.fromList(byteData.buffer.asUint8List());
   }
 
@@ -18,33 +16,20 @@ class GenerarPdfPage {
     final pdf = pw.Document();
 
     final imageUrlLogo = data['imagen_cliente']?.replaceAll("dl=0", "dl=1");
-    print("Link de la imagen: $imageUrlLogo");
-
-    // Declarar imageBytesLogo de manera que siempre se asigna
-    Uint8List imageBytesLogo = Uint8List(0); // Valor predeterminado vacío
+    Uint8List imageBytesLogo = Uint8List(0);
 
     if (imageUrlLogo != null && imageUrlLogo.isNotEmpty) {
-      // Descargar la imagen del logo solo si el URL es válido
       final responseLogo = await http.get(Uri.parse(imageUrlLogo));
       if (responseLogo.statusCode == 200) {
         imageBytesLogo = responseLogo.bodyBytes;
-        print("Imagen descargada correctamente");
-      } else {
-        print("Error al descargar la imagen del logo.");
       }
-    } else {
-      print("URL de la imagen no válida");
     }
 
-    // Función para descargar las imágenes
     Future<Uint8List?> descargarImagen(String imageUrl) async {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
-        print("Imagen descargada correctamente");
         return response.bodyBytes;
       } else {
-        print(
-            "Error al descargar la imagen. Código de estado: ${response.statusCode}");
         return null;
       }
     }
@@ -54,10 +39,8 @@ class GenerarPdfPage {
     final imageBytes000 =
         await loadImageFromAssets('lib/assets/img/logo_app.png');
 
-    // Lista para almacenar imágenes descargadas
     List<pw.ImageProvider> imageList = [];
 
-    // Descargar todas las imágenes antes de crear el PDF
     for (var imagen in data['imagenes']) {
       final imageUrl = imagen['sharedLink']?.replaceAll("dl=0", "dl=1");
       if (imageUrl != null && imageUrl.isNotEmpty) {
@@ -68,129 +51,141 @@ class GenerarPdfPage {
       }
     }
 
-    // Función para dividir la lista de imágenes y comentarios en bloques de 3
-    List<List<int>> dividirEnBloques(List<dynamic> lista, int bloqueSize) {
-      List<List<int>> bloques = [];
-      for (int i = 0; i < lista.length; i += bloqueSize) {
-        int end =
-            (i + bloqueSize < lista.length) ? i + bloqueSize : lista.length;
-        bloques.add(List<int>.generate(end - i, (index) => i + index));
+    // Índices de imágenes no procesadas
+    List<int> indicesPendientes =
+        List.generate(data['imagenes'].length, (i) => i);
+
+    List<List<int>> filasAgrupadas = [];
+
+    while (indicesPendientes.isNotEmpty) {
+      int actual = indicesPendientes.removeAt(0);
+      String comentarioActual = data['imagenes'][actual]['comentario'] ?? '';
+
+      int? pareja;
+      for (int i = 0; i < indicesPendientes.length; i++) {
+        int candidato = indicesPendientes[i];
+        String comentarioCandidato =
+            data['imagenes'][candidato]['comentario'] ?? '';
+        if (comentarioActual == comentarioCandidato) {
+          pareja = candidato;
+          indicesPendientes.removeAt(i);
+          break;
+        }
       }
-      return bloques;
+
+      if (pareja != null) {
+        filasAgrupadas.add([actual, pareja]);
+      } else {
+        filasAgrupadas.add([actual]);
+      }
     }
 
-    // Dividir los datos en bloques de 3
-    var bloques = dividirEnBloques(imageList, 3);
+    // Dividir en páginas (cada una con máximo 3 filas)
+    List<List<List<int>>> paginas = [];
+    int i = 0;
+    while (i < filasAgrupadas.length) {
+      paginas.add(filasAgrupadas.sublist(
+          i, (i + 3 <= filasAgrupadas.length) ? i + 3 : filasAgrupadas.length));
+      i += 3;
+    }
 
-    // Calcular el total de páginas
-    int totalPages = bloques.length;
-
-    // Generar una página por cada bloque de 3 elementos
-    for (int pageIndex = 0; pageIndex < bloques.length; pageIndex++) {
+    for (int pageIndex = 0; pageIndex < paginas.length; pageIndex++) {
       pdf.addPage(
         pw.Page(
           build: (context) {
-            return pw.Center(
-              child: pw.Column(
-                children: [
-                  pw.Header(
-                    level: 0,
-                    child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Image(
-                          pw.MemoryImage(imageBytesLogo),
-                          width: 150, // Ajusta al tamaño deseado del logo
-                          height: 40, // Altura fija
-                        ),
-                        pw.Image(
-                          pw.MemoryImage(imageBytes00),
-                          width:
-                              150, // Ajusta al tamaño deseado de la imagen con "00"
-                          height: 40, // Altura fija
-                        ),
-                      ],
-                    ),
-                  ),
-                  pw.Table(
-                    border: pw.TableBorder.all(),
-                    children: [
-                      // Iteramos sobre el bloque y generamos las filas de la tabla
-                      for (int i = 0; i < bloques[pageIndex].length; i++)
-                        pw.TableRow(
-                          children: [
-                            pw.Text(
-                                '${bloques[pageIndex][i] + 1}'), // Número aumentativo
-                            imageList.isNotEmpty &&
-                                    imageList.length > bloques[pageIndex][i]
-                                ? pw.Center(
-                                    child: pw.Image(
-                                        imageList[bloques[pageIndex][i]],
-                                        width: 250,
-                                        height: 175))
-                                : pw.Text("Imagen no disponible"),
-                            pw.Text(data['imagenes'][bloques[pageIndex][i]]
-                                    ['comentario'] ??
-                                ''),
-                          ],
-                        ),
-                    ],
-                  ),
-                  pw.Spacer(), // Esto asegura que haya espacio suficiente para el pie de página
-
-                  // Pie de página en la parte inferior
-                  pw.Row(
+            return pw.Column(
+              children: [
+                pw.Header(
+                  level: 0,
+                  child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Align(
-                        alignment:
-                            pw.Alignment.bottomLeft, // Alinea a la izquierda
-                        child: pw.Text(
-                          'Av. Universidad No. 277 A, Col. Granjas Banthi\n'
-                          'San Juan del Río, Querétaro, C.P. 76806\n'
-                          'Tel: 427 268 5050\n'
-                          'e-mail: ingenieria@aggofc.com',
-                          style: pw.TextStyle(fontSize: 10),
-                          textAlign: pw.TextAlign.left,
-                        ),
+                      pw.Image(
+                        pw.MemoryImage(imageBytesLogo),
+                        width: 150,
+                        height: 40,
                       ),
-                      pw.Align(
-                        alignment:
-                            pw.Alignment.bottomCenter, // Alinea al centro
-                        child: pw.Text(
-                          'Pagina ${pageIndex + 1} de $totalPages',
-                          style: pw.TextStyle(fontSize: 10),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                      ),
-                      pw.Align(
-                        alignment: pw.Alignment.bottomRight, // Alinea al centro
-                        child: pw.Image(
-                          pw.MemoryImage(imageBytes000),
-                          width:
-                              150, // Ajusta al tamaño deseado de la imagen con "00"
-                          height: 40, // Altura fija
-                        ),
+                      pw.Image(
+                        pw.MemoryImage(imageBytes00),
+                        width: 150,
+                        height: 40,
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  children: [
+                    for (var fila in paginas[pageIndex])
+                      pw.TableRow(
+                        children: [
+                          pw.Text('${fila[0] + 1}'),
+                          pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.center,
+                            children: [
+                              if (imageList.length > fila[0])
+                                pw.Image(imageList[fila[0]],
+                                    width: 120, height: 90),
+                              if (fila.length > 1 &&
+                                  imageList.length > fila[1])
+                                pw.SizedBox(width: 10),
+                              if (fila.length > 1 &&
+                                  imageList.length > fila[1])
+                                pw.Image(imageList[fila[1]],
+                                    width: 120, height: 90),
+                            ],
+                          ),
+                          pw.Text(
+                            data['imagenes'][fila[0]]['comentario'] ?? '',
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+                pw.Spacer(),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Align(
+                      alignment: pw.Alignment.bottomLeft,
+                      child: pw.Text(
+                        'Av. Universidad No. 277 A, Col. Granjas Banthi\n'
+                        'San Juan del Río, Querétaro, C.P. 76806\n'
+                        'Tel: 427 268 5050\n'
+                        'e-mail: ingenieria@aggofc.com',
+                        style: pw.TextStyle(fontSize: 10),
+                        textAlign: pw.TextAlign.left,
+                      ),
+                    ),
+                    pw.Align(
+                      alignment: pw.Alignment.bottomCenter,
+                      child: pw.Text(
+                        'Página ${pageIndex + 1} de ${paginas.length}',
+                        style: pw.TextStyle(fontSize: 10),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                    ),
+                    pw.Align(
+                      alignment: pw.Alignment.bottomRight,
+                      child: pw.Image(
+                        pw.MemoryImage(imageBytes000),
+                        width: 150,
+                        height: 40,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             );
           },
         ),
       );
     }
 
-    // Obtener directorio temporal
     final output = await getTemporaryDirectory();
     final filePath = "${output.path}/reporte_de_servicio_${data["id"]}.pdf";
-
-    // Guardar PDF
     final file = File(filePath);
     await file.writeAsBytes(await pdf.save());
-
-    // Abrir el archivo con el visor de PDF predeterminado
     await OpenFile.open(filePath);
   }
 }

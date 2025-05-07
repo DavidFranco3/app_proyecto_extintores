@@ -605,48 +605,99 @@ class _EncuestaPageState extends State<EncuestaPage> {
     _guardarEncuesta(formData);
   }
 
-  final ImagePicker _picker = ImagePicker();
-  XFile? _image; // Imagen en vista previa
-  TextEditingController _comentarioController = TextEditingController();
-  TextEditingController _valorController = TextEditingController();
+  String _orientacion = 'horizontal';
+  File? _imageHorizontal;
+  File? _imageVertical1;
+  File? _imageVertical2;
 
-// Método para tomar foto con la cámara
-  Future<void> _pickImage() async {
-    final XFile? pickedImage =
-        await _picker.pickImage(source: ImageSource.camera); // Cambiar a cámara
+  final TextEditingController _comentarioController = TextEditingController();
+  final TextEditingController _valorController = TextEditingController();
 
-    if (pickedImage != null) {
-      setState(() {
-        _image = pickedImage; // Muestra la imagen en vista previa
-      });
+
+  Future<void> _pickImage(Function(File) onImagePicked) async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      onImagePicked(File(pickedFile.path));
     }
   }
 
-  // Método para agregar imagen con comentario y limpiar vista previa
+  Widget _buildImageContainer(File? image, {String? label}) {
+    return Container(
+      width: double.infinity,
+      height: 250,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: image == null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_upload, size: 50, color: Colors.blueAccent),
+                  if (label != null) Text(label),
+                ],
+              ),
+            )
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(image, fit: BoxFit.cover),
+            ),
+    );
+  }
+
   void _agregarImagen() {
-    if (_image != null &&
-        _comentarioController.text.isNotEmpty &&
-        _valorController.text.isNotEmpty) {
-      setState(() {
-        // Agregar imagen y comentario a la lista
-        imagePaths.add({
-          "imagePath": _image!.path,
-          "comentario": _comentarioController.text,
-          "valor": _valorController.text,
-        });
-
-        // Limpiar vista previa y comentario
-        _image = null;
-        _comentarioController.clear();
-        _valorController.clear();
-      });
-
-      print("Imagen agregada: ${imagePaths.last}");
-    } else {
+    if (_comentarioController.text.isEmpty || _valorController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Selecciona una imagen y escribe un comentario")),
+        SnackBar(content: Text("Completa comentario y valor")),
       );
+      return;
+    }
+
+    if (_orientacion == 'horizontal') {
+      if (_imageHorizontal != null) {
+        setState(() {
+          imagePaths.add({
+            "imagePath": _imageHorizontal!.path,
+            "comentario": _comentarioController.text,
+            "valor": _valorController.text,
+          });
+          _imageHorizontal = null;
+          _comentarioController.clear();
+          _valorController.clear();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Selecciona una imagen")),
+        );
+      }
+    } else {
+      if (_imageVertical1 != null && _imageVertical2 != null) {
+        setState(() {
+          imagePaths.addAll([
+            {
+              "imagePath": _imageVertical1!.path,
+              "comentario": _comentarioController.text,
+              "valor": _valorController.text,
+            },
+            {
+              "imagePath": _imageVertical2!.path,
+              "comentario": _comentarioController.text,
+              "valor": _valorController.text,
+            },
+          ]);
+          _imageVertical1 = null;
+          _imageVertical2 = null;
+          _comentarioController.clear();
+          _valorController.clear();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Selecciona ambas imágenes verticales")),
+        );
+      }
     }
   }
 
@@ -808,7 +859,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     // Agregar más Dropdowns si es necesario
                     if (selectedEncuestaId != null && preguntas.isNotEmpty)
                       SizedBox(
-                        height: 300,
+                        height:
+                            MediaQuery.of(context).size.width > 700 ? 700 : 300,
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: 5, // ← Ahora son 5 páginas
@@ -948,64 +1000,93 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                           child: Text(
                                             "Carga de Imágenes",
                                             style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                         SizedBox(height: 10),
-                                        Center(
-                                          child: GestureDetector(
-                                            onTap: _pickImage,
-                                            child: Container(
-                                              width: double.infinity,
-                                              height: 250,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[200],
-                                                border: Border.all(
-                                                    color: Colors.grey),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                              child: _image == null
-                                                  ? Center(
-                                                      child: Icon(
-                                                        Icons.cloud_upload,
-                                                        size: 50,
-                                                        color:
-                                                            Colors.blueAccent,
-                                                      ),
-                                                    )
-                                                  : ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                      child: Image.file(
-                                                        File(_image!.path),
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
+
+                                        // Selector de orientación
+                                        Row(
+                                          children: [
+                                            Text("Orientación: "),
+                                            SizedBox(width: 10),
+                                            DropdownButton<String>(
+                                              value: _orientacion,
+                                              items: [
+                                                DropdownMenuItem(
+                                                    value: 'horizontal',
+                                                    child: Text('Horizontal')),
+                                                DropdownMenuItem(
+                                                    value: 'vertical',
+                                                    child: Text('Vertical')),
+                                              ],
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _orientacion = value!;
+                                                  _imageHorizontal = null;
+                                                  _imageVertical1 = null;
+                                                  _imageVertical2 = null;
+                                                });
+                                              },
                                             ),
-                                          ),
+                                          ],
                                         ),
                                         SizedBox(height: 16),
+
+                                        // Carga visual de imagen
+                                        if (_orientacion == 'horizontal')
+                                          GestureDetector(
+                                            onTap: () => _pickImage((img) {
+                                              setState(
+                                                  () => _imageHorizontal = img);
+                                            }),
+                                            child: _buildImageContainer(
+                                                _imageHorizontal),
+                                          )
+                                        else ...[
+                                          GestureDetector(
+                                            onTap: () => _pickImage((img) {
+                                              setState(
+                                                  () => _imageVertical1 = img);
+                                            }),
+                                            child: _buildImageContainer(
+                                                _imageVertical1,
+                                                label: "Imagen 1"),
+                                          ),
+                                          SizedBox(height: 8),
+                                          GestureDetector(
+                                            onTap: () => _pickImage((img) {
+                                              setState(
+                                                  () => _imageVertical2 = img);
+                                            }),
+                                            child: _buildImageContainer(
+                                                _imageVertical2,
+                                                label: "Imagen 2"),
+                                          ),
+                                        ],
+
+                                        SizedBox(height: 16),
+
                                         TextField(
                                           controller: _comentarioController,
                                           decoration: InputDecoration(
                                               labelText: "Comentario"),
                                         ),
                                         SizedBox(height: 16),
+
                                         TextField(
                                           controller: _valorController,
                                           decoration: InputDecoration(
                                               labelText: "Valor"),
                                           keyboardType: TextInputType.number,
-                                          inputFormatters: <TextInputFormatter>[
+                                          inputFormatters: [
                                             FilteringTextInputFormatter
                                                 .digitsOnly
                                           ],
                                         ),
                                         SizedBox(height: 16),
+
                                         Center(
                                           child: ElevatedButton(
                                             onPressed: _agregarImagen,
@@ -1013,9 +1094,13 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                           ),
                                         ),
                                         SizedBox(height: 16),
+
+                                        // Vista de imágenes agregadas
                                         if (imagePaths.isNotEmpty)
                                           ListView.builder(
                                             shrinkWrap: true,
+                                            physics:
+                                                NeverScrollableScrollPhysics(),
                                             itemCount: imagePaths.length,
                                             itemBuilder: (context, index) {
                                               return Card(

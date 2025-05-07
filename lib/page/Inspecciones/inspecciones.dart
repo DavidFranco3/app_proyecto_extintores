@@ -68,6 +68,8 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         'encuesta': item['encuesta'],
         'imagenes': item['imagenes'],
         'imagenesCloudinary': item['imagenesCloudinary'],
+        'imagenes_finales': item['imagenesFinales'],
+        'imagenes_finales_cloudinary': item['imagenesFinalesCloudinary'],
         'comentarios': item['comentarios'],
         'descripcion': item['descripcion'],
         'usuario': item['usuario']['nombre'],
