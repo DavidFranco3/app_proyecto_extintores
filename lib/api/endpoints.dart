@@ -92,6 +92,7 @@ const String ENDPOINT_DESHABILITAR_INSPECCIONES = "/inspecciones/deshabilitar";
 const String ENDPOINT_DESCARGAR_PDF = "/inspecciones/generar-pdf";
 const String ENDPOINT_ENVIAR_PDF = "/inspecciones/enviar-pdf";
 const String ENDPOINT_ENVIAR_PDF2 = "/inspecciones/enviar-pdf2";
+const String ENDPOINT_ENVIAR_ZIP = "/inspecciones/enviar-imagenes";
 
 // Inspecciones proximas
 const String ENDPOINT_LISTAR_INSPECCIONES_PROXIMAS = "/inspeccionesProximas/listar";

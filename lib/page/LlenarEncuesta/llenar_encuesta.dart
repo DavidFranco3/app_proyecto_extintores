@@ -613,10 +613,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
   final TextEditingController _comentarioController = TextEditingController();
   final TextEditingController _valorController = TextEditingController();
 
-
   Future<void> _pickImage(Function(File) onImagePicked) async {
     final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+        await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       onImagePicked(File(pickedFile.path));
     }
@@ -766,7 +765,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                     // Dropdown de Encuesta
                     DropdownButtonFormField<String>(
                       value: selectedRamaId,
-                      hint: Text('Selecciona una rama'),
+                      hint: Text('Selecciona un Tipo de Sistema'),
                       onChanged: (String? newValue) {
                         setState(() {
                           selectedRamaId = newValue;
@@ -1181,27 +1180,27 @@ class _EncuestaPageState extends State<EncuestaPage> {
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: SizedBox(
-                          height: 60, // o menos, según lo que necesites
+                          height: 60,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              IconButton(
-                                icon: Icon(Icons.arrow_back, size: 24),
+                              TextButton(
                                 onPressed: currentPage > 0
                                     ? () => _pageController.previousPage(
                                           duration: Duration(milliseconds: 300),
                                           curve: Curves.easeInOut,
                                         )
                                     : null,
+                                child: Text('Anterior'),
                               ),
-                              IconButton(
-                                icon: Icon(Icons.arrow_forward, size: 24),
+                              TextButton(
                                 onPressed: currentPage < 4
                                     ? () => _pageController.nextPage(
                                           duration: Duration(milliseconds: 300),
                                           curve: Curves.easeIn,
                                         )
                                     : null,
+                                child: Text('Siguiente'),
                               ),
                             ],
                           ),

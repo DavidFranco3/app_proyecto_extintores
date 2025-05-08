@@ -282,7 +282,7 @@ class _CrearEncuestaPantalla1ScreenState
                                 value: widget.ramaController.text.isEmpty
                                     ? null
                                     : widget.ramaController.text,
-                                decoration: InputDecoration(labelText: 'Rama'),
+                                decoration: InputDecoration(labelText: 'Tipo de Sistema'),
                                 isExpanded: true,
                                 items: dataRamas.map((tipo) {
                                   return DropdownMenuItem<String>(

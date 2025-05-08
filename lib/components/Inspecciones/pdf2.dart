@@ -51,7 +51,6 @@ class GenerarPdfPage {
       }
     }
 
-    // Índices de imágenes no procesadas
     List<int> indicesPendientes =
         List.generate(data['imagenes'].length, (i) => i);
 
@@ -80,13 +79,27 @@ class GenerarPdfPage {
       }
     }
 
-    // Dividir en páginas (cada una con máximo 3 filas)
+    // Agrupación dinámica por altura
     List<List<List<int>>> paginas = [];
-    int i = 0;
-    while (i < filasAgrupadas.length) {
-      paginas.add(filasAgrupadas.sublist(
-          i, (i + 3 <= filasAgrupadas.length) ? i + 3 : filasAgrupadas.length));
-      i += 3;
+    List<List<int>> paginaActual = [];
+    double alturaUsada = 0;
+    const double alturaMaxima = 700;
+
+    for (var fila in filasAgrupadas) {
+      double alturaFila = (fila.length > 1) ? 130 : 100;
+
+      if (alturaUsada + alturaFila > alturaMaxima) {
+        paginas.add(paginaActual);
+        paginaActual = [];
+        alturaUsada = 0;
+      }
+
+      paginaActual.add(fila);
+      alturaUsada += alturaFila;
+    }
+
+    if (paginaActual.isNotEmpty) {
+      paginas.add(paginaActual);
     }
 
     for (int pageIndex = 0; pageIndex < paginas.length; pageIndex++) {
@@ -119,24 +132,33 @@ class GenerarPdfPage {
                     for (var fila in paginas[pageIndex])
                       pw.TableRow(
                         children: [
-                          pw.Text('${fila[0] + 1}'),
-                          pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.center,
-                            children: [
-                              if (imageList.length > fila[0])
-                                pw.Image(imageList[fila[0]],
-                                    width: 120, height: 90),
-                              if (fila.length > 1 &&
-                                  imageList.length > fila[1])
-                                pw.SizedBox(width: 10),
-                              if (fila.length > 1 &&
-                                  imageList.length > fila[1])
-                                pw.Image(imageList[fila[1]],
-                                    width: 120, height: 90),
-                            ],
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(4),
+                            child: pw.Text('${fila[0] + 1}'),
                           ),
-                          pw.Text(
-                            data['imagenes'][fila[0]]['comentario'] ?? '',
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(4),
+                            child: pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.center,
+                              children: [
+                                if (imageList.length > fila[0])
+                                  pw.Image(imageList[fila[0]],
+                                      width: 120, height: 90),
+                                if (fila.length > 1 &&
+                                    imageList.length > fila[1])
+                                  pw.SizedBox(width: 10),
+                                if (fila.length > 1 &&
+                                    imageList.length > fila[1])
+                                  pw.Image(imageList[fila[1]],
+                                      width: 120, height: 90),
+                              ],
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(4),
+                            child: pw.Text(
+                              data['imagenes'][fila[0]]['comentario'] ?? '',
+                            ),
                           ),
                         ],
                       ),

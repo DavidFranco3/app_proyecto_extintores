@@ -325,4 +325,21 @@ class InspeccionesService {
   String urlDownloadPDF(String id) {
     return API_HOST + ENDPOINT_DESCARGAR_PDF + '/$id';
   }
+
+Future<Map<String, dynamic>>  urlDownloadZIP(String id, String email) async {
+    final String apiUrl = API_HOST + ENDPOINT_ENVIAR_ZIP + '/$id/$email';
+
+    
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    return {
+      'status': response.statusCode, // Retorna la respuesta del servidor
+    };
+  }
 }
+

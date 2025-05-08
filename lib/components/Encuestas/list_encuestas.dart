@@ -73,7 +73,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
       {'name': 'Nombre'},
       {'name': 'Periodo'},
       {'name': 'Clasificacion'},
-      {'name': 'Rama'},
+      {'name': 'Tipo de Sistema'},
       {'name': 'Creado el'},
     ];
 
@@ -94,7 +94,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                   'Nombre': row['nombre'],
                   'Periodo': row['frecuencia'],
                   'Clasificacion': row['clasificacion'],
-                  'Rama': row['rama'],
+                  'Tipo de Sistema': row['rama'],
                   'Creado el': formatDate(row['createdAt'] ?? ''),
                   '_originalRow': row,
                 };

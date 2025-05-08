@@ -683,7 +683,7 @@ class _EditarEncuestaPageState extends State<EditarEncuestaPage> {
                     // Dropdown de Encuesta
                     DropdownButtonFormField<String>(
                       value: selectedRamaId,
-                      hint: Text('Selecciona una rama'),
+                      hint: Text('Selecciona un tipo de sistema'),
                       onChanged: (String? newValue) {
                         setState(() {
                           selectedRamaId = newValue;

@@ -122,7 +122,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 
-    void openCargaImagenes(row) {
+  void openCargaImagenes(row) {
     // Navegar a la página de eliminación en lugar de mostrar un modal
     Navigator.push(
       context,
@@ -154,6 +154,87 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       return '${item['pregunta']}\n${item['respuesta']}';
     }).join(
         '\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n');
+  }
+
+  Future<void> downloadAndOpenZip(
+      Map<String, dynamic> row, String email) async {
+    try {
+      final inspeccionesService = InspeccionesService();
+      var response = await inspeccionesService.urlDownloadZIP(row["id"], email);
+
+      if (response['status'] == 200) {
+        showCustomFlushbar(
+          context: context,
+          title: "ZIP enviado",
+          message: "Se ha enviado correctamente el zip al email ${email}",
+          backgroundColor: Colors.green,
+        );
+      } else {
+        showCustomFlushbar(
+          context: context,
+          title: "Error al enviar el ZIP",
+          message: "Ha ocurrido un problema al enviar el ZIP al email ${email}",
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (e) {
+      showCustomFlushbar(
+          context: context,
+          title: "Error al enviar el ZIP",
+          message: "Error: ${e.toString()}",
+          backgroundColor: Colors.red,
+        );
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  Future<void> showEmailModal(Map<String, dynamic> row) async {
+    TextEditingController emailController = TextEditingController();
+
+    // 📌 Mostrar el modal
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Ingresar Correo"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: "Correo electrónico",
+                  hintText: "Ingresa el correo",
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el modal sin hacer nada
+              },
+              child: Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                // 📌 Validar el correo
+                String email = emailController.text.trim();
+                if (email.isNotEmpty) {
+                  // 📌 Ejecutar la función con el correo
+                  downloadAndOpenZip(row, email);
+                  Navigator.of(context).pop(); // Cerrar el modal
+                } else {
+                  print("❌ Por favor ingresa un correo válido.");
+                }
+              },
+              child: Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -207,6 +288,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                         GenerarPdfPage.generarPdf(row['_originalRow']);
                       } else if (value == 'cargarImagenes') {
                         openCargaImagenes(row['_originalRow']);
+                      } else if (value == 'enviarZip') {
+                        showEmailModal(row['_originalRow']);
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -306,6 +389,20 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                             ),
                             SizedBox(width: 8),
                             Text('Cargar imagenes'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'enviarZip',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.fileZipper,
+                              color: Colors.yellow,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Enviar imagenes'),
                           ],
                         ),
                       ),

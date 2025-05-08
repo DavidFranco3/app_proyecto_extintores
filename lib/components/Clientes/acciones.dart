@@ -55,7 +55,7 @@ class _AccionesState extends State<Acciones> {
   // Método para seleccionar una imagen desde la galería
   Future<void> _pickImage() async {
     final XFile? pickedImage =
-        await _picker.pickImage(source: ImageSource.camera);
+        await _picker.pickImage(source: ImageSource.gallery);
     setState(() {
       _image = pickedImage; // Asignar la imagen seleccionada a la variable
       imageUrl = null;
