@@ -456,7 +456,7 @@ class _AccionesState extends State<Acciones> {
                             ),
                             DropdownMenuItem<String>(
                               value: "inspector",
-                              child: Text("Inspector"),
+                              child: Text("Tecnico"),
                             ),
                           ],
                           validator: isEliminar

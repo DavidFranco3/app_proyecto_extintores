@@ -143,7 +143,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Historial de inspecciones"),
+      drawer: MenuLateral(currentPage: "Historial de actividades"),
       body: loading
           ? Load()
           : Column(
@@ -153,7 +153,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspecciones",
+                      "Actividades",
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

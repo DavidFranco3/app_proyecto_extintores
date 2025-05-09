@@ -96,7 +96,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-        currentPage: "Reporte de inspecciones y pruebas",
+        currentPage: "Reporte de Actividades y pruebas",
       ), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
@@ -107,7 +107,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Reporte",
+                      "Reporte de Actividades y pruebas",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita

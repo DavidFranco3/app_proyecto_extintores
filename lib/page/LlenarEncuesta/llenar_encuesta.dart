@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../api/inspecciones.dart';
+import '../../api/clasificaciones.dart';
 import '../../api/frecuencias.dart';
 import '../../api/auth.dart';
 import '../../api/ramas.dart';
@@ -41,8 +42,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
   final PageController _pageController = PageController();
   List<Map<String, dynamic>> dataClientes = [];
   String? selectedIdFrecuencia;
+  String? selectedIdClasificacion;
 
   List<Map<String, dynamic>> dataFrecuencias = [];
+
+  List<Map<String, dynamic>> dataClasificaciones = [];
 
   // Lista para almacenar imágenes y comentarios
   List<Map<String, dynamic>> imagePaths = [];
@@ -61,6 +65,27 @@ class _EncuestaPageState extends State<EncuestaPage> {
   late TextEditingController comentariosController;
   late TextEditingController comentariosImagenController;
 
+  final TextEditingController descripcionEficienciaController =
+      TextEditingController();
+  final TextEditingController comentariosEficienciaController =
+      TextEditingController();
+  String? calificacionSeleccionada;
+  File? imagenSeleccionada;
+
+  String imagenEficiencia = "";
+  String imagenEficienciaCloudinary = "";
+
+  Future<void> seleccionarImagen() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      setState(() {
+        imagenSeleccionada = File(imagen.path);
+      });
+    }
+  }
+
   final SignatureController _controller = SignatureController(
     penStrokeWidth: 3,
     penColor: Colors.black,
@@ -73,6 +98,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     selectedRamaId = null;
     selectedFrecuenciaId = null;
     selectedIdFrecuencia = null;
+    selectedIdClasificacion = null;
 
     uploadedImageLinks = [];
 
@@ -89,6 +115,11 @@ class _EncuestaPageState extends State<EncuestaPage> {
     comentariosController.clear();
     descripcionController.clear();
 
+    comentariosEficienciaController.clear();
+    descripcionEficienciaController.clear();
+    calificacionSeleccionada = null;
+    imagenSeleccionada = null;
+
     _controller.clear();
   }
 
@@ -98,6 +129,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     getRamas();
     getClientes();
     getFrecuencias();
+    getClasificaciones();
 
     _pageController.addListener(() {
       setState(() {
@@ -240,6 +272,48 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
+  Future<void> getClasificaciones() async {
+    try {
+      final clasificacionesService = ClasificacionesService();
+      final List<dynamic> response =
+          await clasificacionesService.listarClasificaciones();
+
+      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
+      if (response.isNotEmpty) {
+        setState(() {
+          dataClasificaciones = formatModelClasificaciones(response);
+          loading = false; // Desactivar el estado de carga
+        });
+      } else {
+        setState(() {
+          dataClasificaciones = []; // Lista vacía
+          loading = false; // Desactivar el estado de carga
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las clasificaciones: $e");
+      setState(() {
+        loading = false; // En caso de error, desactivar el estado de carga
+      });
+    }
+  }
+
+  // Función para formatear los datos de las clasificaciones
+  List<Map<String, dynamic>> formatModelClasificaciones(List<dynamic> data) {
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      dataTemp.add({
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'descripcion': item['descripcion'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      });
+    }
+    return dataTemp;
+  }
+
   Future<String> saveImage(Uint8List imageBytes) async {
     try {
       // Obtener el directorio de caché de la aplicación
@@ -307,11 +381,13 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
-  Future<void> getEncuestas(String idRama, String idFrecuencia) async {
+  Future<void> getEncuestas(
+      String idRama, String idFrecuencia, String idClasificacion) async {
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
-      final List<dynamic> response = await encuestaInspeccionService
-          .listarEncuestaInspeccionPorRama(idRama, idFrecuencia);
+      final List<dynamic> response =
+          await encuestaInspeccionService.listarEncuestaInspeccionPorRama(
+              idRama, idFrecuencia, idClasificacion);
 
       if (response.isNotEmpty) {
         setState(() {
@@ -361,19 +437,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
     });
   }
 
-  // Dividir las preguntas en páginas de 5
-  List<List<Pregunta>> dividirPreguntasEnPaginas() {
-    List<List<Pregunta>> paginas = [];
-    for (int i = 0; i < preguntas.length; i += preguntasPorPagina) {
-      paginas.add(preguntas.sublist(
-          i,
-          i + preguntasPorPagina > preguntas.length
-              ? preguntas.length
-              : i + preguntasPorPagina));
-    }
-    return paginas;
-  }
-
   List<Map<String, String>> obtenerRespuestasParaGuardar() {
     return preguntas.map((pregunta) {
       return {
@@ -395,21 +458,16 @@ class _EncuestaPageState extends State<EncuestaPage> {
     if (selectedEncuestaId == null ||
         selectedRamaId == null ||
         selectedFrecuenciaId == null ||
-        clienteController.text.isEmpty ||
-        data["imagenes"] == null ||
-        data["imagenes"].length < 7) {
+        clienteController.text.isEmpty) {
       setState(() {
         _isLoading = false;
       });
 
-      String mensaje = data["imagenes"] == null || data["imagenes"].length < 7
-          ? "Debes subir al menos 7 imágenes para continuar."
-          : "Por favor, completa todos los campos obligatorios antes de continuar.";
-
       showCustomFlushbar(
         context: context,
         title: "Campos incompletos",
-        message: mensaje,
+        message:
+            "Por favor, completa todos los campos obligatorios antes de continuar.",
         backgroundColor: Colors.red,
       );
       return;
@@ -425,6 +483,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
       'imagenesCloudinary': data['imagenesCloudinary'],
       'firmaCliente': data['firmaCliente'] ?? "",
       'firmaClienteCloudinary': data['firmaClienteCloudinary'] ?? "",
+      "inspeccionEficiencias": {
+        "descripcionProblema": data["descripcionProblemaEficiencia"],
+        "calificacion": data["calificacionEficiencia"],
+        "comentarios": data["comentariosEficiencia"],
+        "imagen": data["imagenEficiencia"],
+        "imagenCloudinary": data["imagenCloudinaryEficiencia"]
+      },
+      'cerrado': "true",
       'estado': "true",
     };
 
@@ -487,7 +553,92 @@ class _EncuestaPageState extends State<EncuestaPage> {
     }
   }
 
-  Future<void> _onSubmit() async {
+  void _guardarAvanceEncuesta(Map<String, dynamic> data) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    var dataTemp = {
+      'idUsuario': data['idUsuario'],
+      'idCliente': data['idCliente'],
+      'idEncuesta': data['idEncuesta'],
+      'encuesta': data['preguntas'],
+      'comentarios': data['comentarios'] ?? "",
+      'imagenes': data['imagenes'],
+      'imagenesCloudinary': data['imagenesCloudinary'],
+      'firmaCliente': data['firmaCliente'] ?? "",
+      'firmaClienteCloudinary': data['firmaClienteCloudinary'] ?? "",
+      "inspeccionEficiencias": {
+        "descripcionProblema": data["descripcionProblemaEficiencia"],
+        "calificacion": data["calificacionEficiencia"],
+        "comentarios": data["comentariosEficiencia"],
+        "imagen": data["imagenEficiencia"],
+        "imagenCloudinary": data["imagenCloudinaryEficiencia"]
+      },
+      'cerrado': "false",
+      'estado': "true",
+    };
+
+    try {
+      final inspeccionesService = InspeccionesService();
+      var response = await inspeccionesService.registraInspecciones(dataTemp);
+
+      if (response['status'] == 200) {
+        var dataFrecuencia = {
+          'idFrecuencia': selectedIdFrecuencia,
+          'idCliente': data['idCliente'],
+          'idEncuesta': data['idEncuesta'],
+          'estado': "true",
+        };
+
+        final inspeccionesProximasService = InspeccionesProximasService();
+        await inspeccionesProximasService
+            .registraInspeccionesProximas(dataFrecuencia);
+
+        setState(() {
+          _isLoading = false;
+          limpiarCampos();
+        });
+
+        LogsInformativos(
+          "Se ha registrado la inspección ${data['idCliente']} correctamente",
+          dataFrecuencia,
+        );
+
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "Los datos de la encuesta fueron llenados correctamente",
+          backgroundColor: Colors.green,
+        );
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+
+        showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message:
+              "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: "Error inesperado: ${error.toString()}",
+        backgroundColor: Colors.red,
+      );
+    }
+  }
+
+  Future<void> _onSubmit(accion) async {
     // ✅ Agregar async a la función
 
     final String? token = await AuthService().getTokenApi();
@@ -513,6 +664,31 @@ class _EncuestaPageState extends State<EncuestaPage> {
 // Obtener la imagen de la firma
     final Uint8List? signatureImage = await _controller.toPngBytes();
     print("Firma imagen generada con tamaño: ${signatureImage?.length} bytes");
+
+    String imagenFile2 = "";
+    if (imagenSeleccionada != null) {
+      // Llamas a la función que espera un Uint8List y obtienes la ruta
+      String filePath = imagenSeleccionada!.path;
+      if (filePath.isNotEmpty) {
+        imagenFile2 = filePath;
+        String? sharedLink = await dropboxService.uploadImageToDropbox(
+            imagenFile2, "inspecciones");
+        String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+            imagenFile2, "inspecciones");
+
+        if (sharedLink != null) {
+          imagenEficiencia = sharedLink; // Guardar el enlace de la firma
+        }
+        if (sharedLink2 != null) {
+          imagenEficienciaCloudinary =
+              sharedLink2; // Guardar el enlace de la firma
+        }
+      } else {
+        print('No se pudo guardar el logo del cliente de forma correcta');
+      }
+    } else {
+      print('El logo del cliente es nulo');
+    }
 
     if (signatureImage != null) {
       // Llamas a la función que espera un Uint8List y obtienes la ruta
@@ -598,11 +774,20 @@ class _EncuestaPageState extends State<EncuestaPage> {
       "comentarios": comentariosController.text,
       "descripcion": descripcionController.text,
       "firmaCliente": linkFirma,
-      "firmaClienteCloudinary": linkFirmaCloudinary
+      "firmaClienteCloudinary": linkFirmaCloudinary,
+      "descripcionProblemaEficiencia": descripcionEficienciaController,
+      "calificacionEficiencia": calificacionSeleccionada,
+      "comentariosEficiencia": comentariosEficienciaController,
+      "imagenEficiencia": imagenEficiencia,
+      "imagenCloudinaryEficiencia": imagenEficienciaCloudinary
     };
 
     // Llamar a la función para guardar la encuesta
-    _guardarEncuesta(formData);
+    if (accion == "guardar") {
+      _guardarEncuesta(formData);
+    } else if (accion == "editar") {
+      _guardarAvanceEncuesta(formData);
+    }
   }
 
   String _orientacion = 'horizontal';
@@ -704,511 +889,646 @@ class _EncuestaPageState extends State<EncuestaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Aplicar inspección"),
+      drawer: MenuLateral(currentPage: "Aplicar actividad"),
       body: loading
           ? Load()
-          : SingleChildScrollView(
-              // Añadimos SingleChildScrollView
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Título
-                    Center(
-                      child: Text(
-                        "Aplicar inspección",
-                        style: TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-
-                    // Botón centrado debajo del título
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: _isLoading
-                                ? null
-                                : _onSubmit, // Deshabilitar botón mientras carga
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 12), // Altura estándar
-                              fixedSize:
-                                  Size(150, 50), // Ancho fijo y altura flexible
-                            ),
-                            icon: Icon(FontAwesomeIcons.plus), // Ícono de +
-                            label: _isLoading
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SpinKitFadingCircle(
-                                        color: const Color.fromARGB(
-                                            255, 241, 8, 8),
-                                        size: 24,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text("Guardando..."), // Texto de carga
-                                    ],
-                                  )
-                                : Text(
-                                    "Guardar"), // Texto normal cuando no está cargando
+          : Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                      bottom: 80), // deja espacio para el botón fijo
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            "Aplicar actividad",
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
                           ),
-                          SizedBox(width: 10), // Espacio entre los botones
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    // Dropdown de Encuesta
-                    DropdownButtonFormField<String>(
-                      value: selectedRamaId,
-                      hint: Text('Selecciona un Tipo de Sistema'),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedRamaId = newValue;
-                        });
-
-                        if (newValue != null && selectedFrecuenciaId != null) {
-                          getEncuestas(selectedRamaId!, selectedFrecuenciaId!);
-                        }
-                      },
-                      isExpanded: true,
-                      items: dataRamas.map((rama) {
-                        return DropdownMenuItem<String>(
-                          value: rama['id'],
-                          child: Text(rama['nombre']!),
-                        );
-                      }).toList(),
-                    ),
-                    // Dropdown de Encuesta
-                    DropdownButtonFormField<String>(
-                      value: selectedFrecuenciaId,
-                      hint: Text('Selecciona un periodo'),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedFrecuenciaId = newValue;
-                        });
-
-                        if (newValue != null && selectedRamaId != null) {
-                          getEncuestas(selectedRamaId!, selectedFrecuenciaId!);
-                        }
-                      },
-                      isExpanded: true,
-                      items: dataFrecuencias.map((rama) {
-                        return DropdownMenuItem<String>(
-                          value: rama['id'],
-                          child: Text(rama['nombre']!),
-                        );
-                      }).toList(),
-                    ),
-                    // Dropdown de Encuesta
-                    DropdownButtonFormField<String>(
-                      value: selectedEncuestaId,
-                      hint: Text('Selecciona una encuesta'),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedEncuestaId = newValue;
-                          currentPage = 0;
-
-                          final encuestaSeleccionada = dataEncuestas.firstWhere(
-                            (encuesta) => encuesta['id'] == newValue,
-                          );
-
-                          selectedIdFrecuencia =
-                              encuestaSeleccionada['idFrecuencia'];
-                        });
-
-                        if (newValue != null) {
-                          actualizarPreguntas(newValue);
-                        }
-                      },
-                      isExpanded: true,
-                      items: dataEncuestas.map((encuesta) {
-                        return DropdownMenuItem<String>(
-                          value: encuesta['id'],
-                          child: Text(encuesta['nombre']!),
-                        );
-                      }).toList(),
-                    ),
-                    // Dropdown de Cliente
-                    DropdownButtonFormField<String>(
-                      value: clienteController.text.isEmpty
-                          ? null
-                          : clienteController.text,
-                      decoration: InputDecoration(labelText: 'Cliente'),
-                      isExpanded: true,
-                      items: dataClientes.map((cliente) {
-                        return DropdownMenuItem<String>(
-                          value: cliente['id'],
-                          child: Text(cliente['nombre']!),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          clienteController.text = newValue!;
-                        });
-                      },
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'El cliente es obligatorio'
-                          : null,
-                    ),
-                    // Agregar más Dropdowns si es necesario
-                    if (selectedEncuestaId != null && preguntas.isNotEmpty)
-                      SizedBox(
-                        height:
-                            MediaQuery.of(context).size.width > 700 ? 700 : 300,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: 5, // ← Ahora son 5 páginas
-                          itemBuilder: (context, pageIndex) {
-                            if (pageIndex == 0) {
-                              // Página con TODAS las preguntas
-                              return ListView.builder(
-                                itemCount: preguntas.length,
-                                itemBuilder: (context, index) {
-                                  final pregunta = preguntas[index];
-                                  return Card(
-                                    margin: EdgeInsets.all(10),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(10.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            pregunta.titulo,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          SizedBox(height: 5),
-                                          SizedBox(
-                                            height: 120,
-                                            child: ListView.builder(
-                                              shrinkWrap: true,
-                                              physics: ClampingScrollPhysics(),
-                                              itemCount:
-                                                  pregunta.opciones.length,
-                                              itemBuilder: (context, i) {
-                                                final opcion =
-                                                    pregunta.opciones[i];
-                                                return ListTile(
-                                                  contentPadding:
-                                                      EdgeInsets.zero,
-                                                  title: Text(opcion),
-                                                  leading: Radio<String>(
-                                                    value: opcion,
-                                                    groupValue:
-                                                        pregunta.respuesta,
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        pregunta.respuesta =
-                                                            value!;
-                                                      });
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                          TextField(
-                                            decoration: InputDecoration(
-                                              labelText: "Observaciones",
-                                              border: OutlineInputBorder(),
-                                            ),
-                                            maxLines: 2,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                pregunta.observaciones = value;
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            } else if (pageIndex == 1) {
-                              // Página de descripción
-                              return Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Descripción",
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(height: 10),
-                                    TextField(
-                                      controller: descripcionController,
-                                      maxLines: 4,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            "Escribe aquí la descripción de la inspección...",
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else if (pageIndex == 2) {
-                              // Página de comentarios finales
-                              return Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Comentarios Finales",
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(height: 10),
-                                    TextField(
-                                      controller: comentariosController,
-                                      maxLines: 5,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            "Escribe aquí tus comentarios finales...",
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else if (pageIndex == 3) {
-                              // Página de imágenes
-                              return Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: SingleChildScrollView(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Center(
-                                          child: Text(
-                                            "Carga de Imágenes",
-                                            style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        SizedBox(height: 10),
-
-                                        // Selector de orientación
-                                        Row(
-                                          children: [
-                                            Text("Orientación: "),
-                                            SizedBox(width: 10),
-                                            DropdownButton<String>(
-                                              value: _orientacion,
-                                              items: [
-                                                DropdownMenuItem(
-                                                    value: 'horizontal',
-                                                    child: Text('Horizontal')),
-                                                DropdownMenuItem(
-                                                    value: 'vertical',
-                                                    child: Text('Vertical')),
-                                              ],
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  _orientacion = value!;
-                                                  _imageHorizontal = null;
-                                                  _imageVertical1 = null;
-                                                  _imageVertical2 = null;
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(height: 16),
-
-                                        // Carga visual de imagen
-                                        if (_orientacion == 'horizontal')
-                                          GestureDetector(
-                                            onTap: () => _pickImage((img) {
-                                              setState(
-                                                  () => _imageHorizontal = img);
-                                            }),
-                                            child: _buildImageContainer(
-                                                _imageHorizontal),
-                                          )
-                                        else ...[
-                                          GestureDetector(
-                                            onTap: () => _pickImage((img) {
-                                              setState(
-                                                  () => _imageVertical1 = img);
-                                            }),
-                                            child: _buildImageContainer(
-                                                _imageVertical1,
-                                                label: "Imagen 1"),
-                                          ),
-                                          SizedBox(height: 8),
-                                          GestureDetector(
-                                            onTap: () => _pickImage((img) {
-                                              setState(
-                                                  () => _imageVertical2 = img);
-                                            }),
-                                            child: _buildImageContainer(
-                                                _imageVertical2,
-                                                label: "Imagen 2"),
-                                          ),
-                                        ],
-
-                                        SizedBox(height: 16),
-
-                                        TextField(
-                                          controller: _comentarioController,
-                                          decoration: InputDecoration(
-                                              labelText: "Comentario"),
-                                        ),
-                                        SizedBox(height: 16),
-
-                                        TextField(
-                                          controller: _valorController,
-                                          decoration: InputDecoration(
-                                              labelText: "Valor"),
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter
-                                                .digitsOnly
-                                          ],
-                                        ),
-                                        SizedBox(height: 16),
-
-                                        Center(
-                                          child: ElevatedButton(
-                                            onPressed: _agregarImagen,
-                                            child: Text("Agregar"),
-                                          ),
-                                        ),
-                                        SizedBox(height: 16),
-
-                                        // Vista de imágenes agregadas
-                                        if (imagePaths.isNotEmpty)
-                                          ListView.builder(
-                                            shrinkWrap: true,
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
-                                            itemCount: imagePaths.length,
-                                            itemBuilder: (context, index) {
-                                              return Card(
-                                                margin: EdgeInsets.symmetric(
-                                                    vertical: 8),
-                                                child: ListTile(
-                                                  leading: Image.file(
-                                                    File(imagePaths[index]
-                                                        ["imagePath"]),
-                                                    width: 50,
-                                                    height: 50,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                  title: Text(
-                                                    '${imagePaths[index]["comentario"]} - ${imagePaths[index]["valor"]}',
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else {
-                              // Página de firma
-                              return SafeArea(
-                                child: SingleChildScrollView(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Text(
-                                          "Firma del cliente",
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: Signature(
-                                            controller: _controller,
-                                            height: 300,
-                                            backgroundColor: Colors.transparent,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 20),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            ElevatedButton(
-                                              onPressed: _isLoading
-                                                  ? null
-                                                  : _controller.clear,
-                                              child:
-                                                  const Text("Limpiar Firma"),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          },
                         ),
-                      ),
-
-                    // Si hay encuesta seleccionada y preguntas disponibles
-                    if (preguntas.isNotEmpty)
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: SizedBox(
-                          height: 60,
+                        SizedBox(height: 10),
+                        Center(
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              TextButton(
-                                onPressed: currentPage > 0
-                                    ? () => _pageController.previousPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        )
-                                    : null,
-                                child: Text('Anterior'),
-                              ),
-                              TextButton(
-                                onPressed: currentPage < 4
-                                    ? () => _pageController.nextPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeIn,
-                                        )
-                                    : null,
-                                child: Text('Siguiente'),
+                              ElevatedButton.icon(
+                                onPressed: _isLoading
+                                    ? null
+                                    : () => _onSubmit("guardar"),
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  fixedSize: Size(150, 50),
+                                ),
+                                icon: Icon(FontAwesomeIcons.plus),
+                                label: _isLoading
+                                    ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SpinKitFadingCircle(
+                                            color: Colors.red,
+                                            size: 24,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text("Guardando..."),
+                                        ],
+                                      )
+                                    : Text("Guardar"),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                  ],
+                        SizedBox(height: 20),
+                        DropdownButtonFormField<String>(
+                          value: clienteController.text.isEmpty
+                              ? null
+                              : clienteController.text,
+                          decoration: InputDecoration(labelText: 'Cliente'),
+                          isExpanded: true,
+                          items: dataClientes.map((cliente) {
+                            return DropdownMenuItem<String>(
+                              value: cliente['id'],
+                              child: Text(cliente['nombre']!),
+                            );
+                          }).toList(),
+                          onChanged: (newValue) {
+                            setState(() {
+                              clienteController.text = newValue!;
+                            });
+                          },
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'El cliente es obligatorio'
+                              : null,
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: selectedRamaId,
+                          hint: Text('Selecciona un Tipo de Sistema'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedRamaId = newValue;
+                            });
+                            if (newValue != null && selectedRamaId != null) {
+                              getEncuestas(
+                                  selectedRamaId!,
+                                  selectedFrecuenciaId!,
+                                  selectedIdClasificacion!);
+                            }
+                          },
+                          isExpanded: true,
+                          items: dataRamas.map((rama) {
+                            return DropdownMenuItem<String>(
+                              value: rama['id'],
+                              child: Text(rama['nombre']!),
+                            );
+                          }).toList(),
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: selectedIdClasificacion,
+                          hint: Text('Selecciona una clasificación'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedIdClasificacion = newValue;
+                            });
+                            if (newValue != null &&
+                                selectedIdClasificacion != null) {
+                              getEncuestas(
+                                  selectedRamaId!,
+                                  selectedFrecuenciaId!,
+                                  selectedIdClasificacion!);
+                            }
+                          },
+                          isExpanded: true,
+                          items: dataClasificaciones.map((rama) {
+                            return DropdownMenuItem<String>(
+                              value: rama['id'],
+                              child: Text(rama['nombre']!),
+                            );
+                          }).toList(),
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: selectedFrecuenciaId,
+                          hint: Text('Selecciona un periodo'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedFrecuenciaId = newValue;
+                            });
+                            if (newValue != null && selectedRamaId != null) {
+                              getEncuestas(
+                                  selectedRamaId!,
+                                  selectedFrecuenciaId!,
+                                  selectedIdClasificacion!);
+                            }
+                          },
+                          isExpanded: true,
+                          items: dataFrecuencias.map((rama) {
+                            return DropdownMenuItem<String>(
+                              value: rama['id'],
+                              child: Text(rama['nombre']!),
+                            );
+                          }).toList(),
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: selectedEncuestaId,
+                          hint: Text('Selecciona una actividad'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedEncuestaId = newValue;
+                              currentPage = 0;
+                              final encuestaSeleccionada =
+                                  dataEncuestas.firstWhere(
+                                      (encuesta) => encuesta['id'] == newValue);
+                              selectedIdFrecuencia =
+                                  encuestaSeleccionada['idFrecuencia'];
+                            });
+                            if (newValue != null) {
+                              actualizarPreguntas(newValue);
+                            }
+                          },
+                          isExpanded: true,
+                          items: dataEncuestas.map((encuesta) {
+                            return DropdownMenuItem<String>(
+                              value: encuesta['id'],
+                              child: Text(encuesta['nombre']!),
+                            );
+                          }).toList(),
+                        ),
+                        if (selectedEncuestaId != null && preguntas.isNotEmpty)
+                          SizedBox(
+                            height: MediaQuery.of(context).size.width > 700
+                                ? 700
+                                : 300,
+                            child: PageView.builder(
+                              controller: _pageController,
+                              itemCount: 5,
+                              itemBuilder: (context, pageIndex) {
+                                if (pageIndex == 0) {
+                                  // Página con TODAS las preguntas
+                                  return ListView.builder(
+                                    itemCount: preguntas.length,
+                                    itemBuilder: (context, index) {
+                                      final pregunta = preguntas[index];
+                                      return Card(
+                                        margin: EdgeInsets.all(10),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(10.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                pregunta.titulo,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              SizedBox(height: 5),
+                                              SizedBox(
+                                                height: 120,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  physics:
+                                                      ClampingScrollPhysics(),
+                                                  itemCount:
+                                                      pregunta.opciones.length,
+                                                  itemBuilder: (context, i) {
+                                                    final opcion =
+                                                        pregunta.opciones[i];
+                                                    return ListTile(
+                                                      contentPadding:
+                                                          EdgeInsets.zero,
+                                                      title: Text(opcion),
+                                                      leading: Radio<String>(
+                                                        value: opcion,
+                                                        groupValue:
+                                                            pregunta.respuesta,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            pregunta.respuesta =
+                                                                value!;
+                                                          });
+                                                        },
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              TextField(
+                                                decoration: InputDecoration(
+                                                  labelText: "Observaciones",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                maxLines: 2,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    pregunta.observaciones =
+                                                        value;
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                } else if (pageIndex == 1) {
+                                  // Página de descripción
+                                  return Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Descripción General",
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(height: 10),
+                                        TextField(
+                                          controller: descripcionController,
+                                          maxLines: 4,
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                "Escribe aquí la descripción de la actividad...",
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else if (pageIndex == 2) {
+                                  // Página de comentarios finales
+                                  return SingleChildScrollView(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text("Descripción del problema",
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: descripcionController,
+                                          maxLines: 4,
+                                          decoration: InputDecoration(
+                                            hintText: "Describe el problema...",
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text("Calificación",
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 8),
+                                        DropdownButtonFormField<String>(
+                                          value: calificacionSeleccionada,
+                                          items: [
+                                            "Crítico",
+                                            "No crítico",
+                                            "Desactivación",
+                                            "Solucionado"
+                                          ]
+                                              .map((opcion) => DropdownMenuItem(
+                                                    value: opcion,
+                                                    child: Text(opcion),
+                                                  ))
+                                              .toList(),
+                                          onChanged: (valor) {
+                                            setState(() {
+                                              calificacionSeleccionada = valor;
+                                            });
+                                          },
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(),
+                                            hintText: "Selecciona una opción",
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text("Comentarios",
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: comentariosController,
+                                          maxLines: 4,
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                "Comentarios adicionales...",
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          "Foto",
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        GestureDetector(
+                                          onTap:
+                                              seleccionarImagen, // Al hacer tap, se activa el selector de imágenes
+                                          child: Container(
+                                            width: double.infinity,
+                                            height: 250,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[200],
+                                              border: Border.all(
+                                                  color: Colors.grey),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: imagenSeleccionada == null
+                                                ? Center(
+                                                    child: Icon(
+                                                      Icons.cloud_upload,
+                                                      size: 50,
+                                                      color: Colors.blueAccent,
+                                                    ),
+                                                  )
+                                                : ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    child: Image.file(
+                                                      File(imagenSeleccionada!
+                                                          .path),
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        if (imagenSeleccionada != null)
+                                          Text(
+                                            "Imagen seleccionada",
+                                            style: TextStyle(
+                                                color: Colors.green,
+                                                fontSize: 16),
+                                          ),
+                                        if (imagenSeleccionada == null)
+                                          Text(
+                                            "Selecciona una imagen",
+                                            style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 16),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                } else if (pageIndex == 3) {
+                                  // Página de imágenes
+                                  return Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Center(
+                                              child: Text(
+                                                "Carga de Imágenes",
+                                                style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+
+                                            // Selector de orientación
+                                            Row(
+                                              children: [
+                                                Text("Orientación: "),
+                                                SizedBox(width: 10),
+                                                DropdownButton<String>(
+                                                  value: _orientacion,
+                                                  items: [
+                                                    DropdownMenuItem(
+                                                        value: 'horizontal',
+                                                        child:
+                                                            Text('Horizontal')),
+                                                    DropdownMenuItem(
+                                                        value: 'vertical',
+                                                        child:
+                                                            Text('Vertical')),
+                                                  ],
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      _orientacion = value!;
+                                                      _imageHorizontal = null;
+                                                      _imageVertical1 = null;
+                                                      _imageVertical2 = null;
+                                                    });
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 16),
+
+                                            // Carga visual de imagen
+                                            if (_orientacion == 'horizontal')
+                                              GestureDetector(
+                                                onTap: () => _pickImage((img) {
+                                                  setState(() =>
+                                                      _imageHorizontal = img);
+                                                }),
+                                                child: _buildImageContainer(
+                                                    _imageHorizontal),
+                                              )
+                                            else ...[
+                                              GestureDetector(
+                                                onTap: () => _pickImage((img) {
+                                                  setState(() =>
+                                                      _imageVertical1 = img);
+                                                }),
+                                                child: _buildImageContainer(
+                                                    _imageVertical1,
+                                                    label: "Imagen 1"),
+                                              ),
+                                              SizedBox(height: 8),
+                                              GestureDetector(
+                                                onTap: () => _pickImage((img) {
+                                                  setState(() =>
+                                                      _imageVertical2 = img);
+                                                }),
+                                                child: _buildImageContainer(
+                                                    _imageVertical2,
+                                                    label: "Imagen 2"),
+                                              ),
+                                            ],
+
+                                            SizedBox(height: 16),
+
+                                            TextField(
+                                              controller: _comentarioController,
+                                              decoration: InputDecoration(
+                                                  labelText: "Comentario"),
+                                            ),
+                                            SizedBox(height: 16),
+
+                                            TextField(
+                                              controller: _valorController,
+                                              decoration: InputDecoration(
+                                                  labelText: "Valor"),
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly
+                                              ],
+                                            ),
+                                            SizedBox(height: 16),
+
+                                            Center(
+                                              child: ElevatedButton(
+                                                onPressed: _agregarImagen,
+                                                child: Text("Agregar"),
+                                              ),
+                                            ),
+                                            SizedBox(height: 16),
+
+                                            // Vista de imágenes agregadas
+                                            if (imagePaths.isNotEmpty)
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    NeverScrollableScrollPhysics(),
+                                                itemCount: imagePaths.length,
+                                                itemBuilder: (context, index) {
+                                                  return Card(
+                                                    margin:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 8),
+                                                    child: ListTile(
+                                                      leading: Image.file(
+                                                        File(imagePaths[index]
+                                                            ["imagePath"]),
+                                                        width: 50,
+                                                        height: 50,
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                      title: Text(
+                                                        '${imagePaths[index]["comentario"]} - ${imagePaths[index]["valor"]}',
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  // Página de firma
+                                  return SafeArea(
+                                    child: SingleChildScrollView(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Text(
+                                              "Firma del cliente",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Signature(
+                                                controller: _controller,
+                                                height: 300,
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                ElevatedButton(
+                                                  onPressed: _isLoading
+                                                      ? null
+                                                      : _controller.clear,
+                                                  child: const Text(
+                                                      "Limpiar Firma"),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                if (preguntas.isNotEmpty)
+                  Positioned(
+                    bottom: 10,
+                    left: 10,
+                    right: 10,
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: currentPage > 0
+                                ? () => _pageController.previousPage(
+                                      duration: Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    )
+                                : null,
+                            child: Text('Anterior'),
+                          ),
+                          TextButton(
+                            onPressed: currentPage < 4
+                                ? () => _pageController.nextPage(
+                                      duration: Duration(milliseconds: 300),
+                                      curve: Curves.easeIn,
+                                    )
+                                : null,
+                            child: Text('Siguiente'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
     );
   }

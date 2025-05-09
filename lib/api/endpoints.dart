@@ -79,7 +79,8 @@ const String ENDPOINT_DESHABILITAR_FRECUENCIAS = "/frecuencias/deshabilitar";
 
 // Inspecciones
 const String ENDPOINT_LISTAR_INSPECCIONES = "/inspecciones/listar";
-const String ENDPOINT_LISTAR_INSPECCIONES_ABIERTAS = "/inspecciones/listarCerrados";
+const String ENDPOINT_LISTAR_INSPECCIONES_CERRADAS = "/inspecciones/listarCerrados";
+const String ENDPOINT_LISTAR_INSPECCIONES_ABIERTAS = "/inspecciones/listarAbiertas";
 const String ENDPOINT_LISTAR_INSPECCIONES_RESULTADOS_ENCUESTAS = "/inspecciones/listarDatosEncuesta";
 const String ENDPOINT_LISTAR_INSPECCIONES_CLIENTE = "/inspecciones/listarPorCliente";
 const String ENDPOINT_LISTAR_INSPECCIONES_DATOS_ENCUESTAS = "/inspecciones/listarDatosInspeccion";

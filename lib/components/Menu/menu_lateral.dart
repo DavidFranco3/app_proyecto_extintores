@@ -119,20 +119,20 @@ class _MenuLateralState extends State<MenuLateral> {
               _buildListTile(
                 context,
                 Icons.fact_check,
-                'Inspección anual',
+                'Actividad anual',
                 InspeccionEspecialPage(),
               ),
               _buildListTile(
                 context,
                 Icons.sticky_note_2,
-                'Reporte de inspecciones y pruebas',
+                'Reporte de actividades y pruebas',
                 ReporteFinalPage(),
               ),
               // Submenú de Inspecciones
               ExpansionTile(
                 leading: Icon(Icons.check_box_outline_blank),
                 title: Text(
-                  'Inspecciones',
+                  'Actividades',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
                 ),
                 dense: true,
@@ -150,40 +150,40 @@ class _MenuLateralState extends State<MenuLateral> {
                         _buildListTile(
                           context,
                           Icons.poll, // Icono relacionado con encuestas
-                          'Crear inspección',
+                          'Crear actividad',
                           EncuestasPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons
                               .assignment, // Icono relacionado con inspecciones
-                          'Aplicar inspección',
+                          'Aplicar actividad',
                           EncuestaPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons
                               .report_problem, // Ícono representativo de inspección
-                          'Historial de inspecciones',
+                          'Historial de actividades',
                           InspeccionesPantalla1Page(),
                         ),
                         _buildListTile(
                           context,
                           Icons
                               .next_week_sharp, // Ícono representativo de inspección
-                          'Inspecciones próximas',
+                          'Actividades próximas',
                           InspeccionesProximasPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons.date_range, // Ícono representativo de programa
-                          'Programa de inspección',
+                          'Programa de actividades',
                           ProgramaInspeccionesPage(),
                         ),
                         _buildListTile(
                           context,
                           Icons.show_chart, // Ícono representativo de gráfico
-                          'Gráfico de inspecciones',
+                          'Gráfico de actividades',
                           GraficaInspeccionesPage(),
                         ),
                       ],
@@ -263,31 +263,31 @@ class _MenuLateralState extends State<MenuLateral> {
               _buildListTile(
                 context,
                 Icons.poll, // Icono relacionado con encuestas
-                'Crear inspección',
+                'Crear actividad',
                 EncuestasPage(),
               ),
               _buildListTile(
                 context,
                 Icons.assignment, // Icono relacionado con inspecciones
-                'Aplicar inspección',
+                'Aplicar actividad',
                 EncuestaPage(),
               ),
               _buildListTile(
                 context,
                 Icons.next_week_sharp, // Ícono representativo de inspección
-                'Inspecciónes proximas',
+                'Actividades proximas',
                 InspeccionesProximasPage(),
               ),
               _buildListTile(
                 context,
                 Icons.date_range, // Ícono representativo de programa
-                'Programa de inspección',
+                'Programa de actividades',
                 ProgramaInspeccionesPage(),
               ),
               _buildListTile(
                 context,
                 Icons.show_chart, // Ícono representativo de gráfico
-                'Gráfico de inspecciones',
+                'Gráfico de actividades',
                 GraficaInspeccionesPage(),
               ),
             ],

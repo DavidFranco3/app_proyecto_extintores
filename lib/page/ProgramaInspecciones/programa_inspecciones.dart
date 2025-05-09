@@ -92,7 +92,7 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer:
-          MenuLateral(currentPage: "Programa de inspección"), // Menú lateral
+          MenuLateral(currentPage: "Programa de actividades"), // Menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -102,7 +102,7 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Programa de inspecciones",
+                      "Programa de actividades",
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

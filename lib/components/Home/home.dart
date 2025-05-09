@@ -265,7 +265,7 @@ void scheduleDailyNotification() {
                             child: Column(
                               children: [
                                 Text(
-                                  "Inspecciones Hechas",
+                                  "Actividades Hechas",
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -318,7 +318,7 @@ void scheduleDailyNotification() {
                             child: Column(
                               children: [
                                 Text(
-                                  "Inspecciones Próximas",
+                                  "Actividades Próximas",
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,

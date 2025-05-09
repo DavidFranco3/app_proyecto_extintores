@@ -219,7 +219,7 @@ class _CrearEncuestaPantalla1ScreenState
     return Scaffold(
       //key: _formKey,
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Crear inspección"),
+      drawer: MenuLateral(currentPage: "Crear actividad"),
       body: loading
           ? Load()
           : SingleChildScrollView(
@@ -232,7 +232,7 @@ class _CrearEncuestaPantalla1ScreenState
                       padding: const EdgeInsets.all(8.0),
                       child: Center(
                         child: Text(
-                          "Crear inspección",
+                          "Crear actividad",
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,

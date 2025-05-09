@@ -344,8 +344,6 @@ class _AccionesState extends State<Acciones> {
       if (_image != null) {
         // Llamas a la función que espera un Uint8List y obtienes la ruta
         String filePath = _image!.path;
-        print("ruta de la imagen");
-        print(filePath);
         if (filePath.isNotEmpty) {
           imagenFile = filePath;
           String? sharedLink =

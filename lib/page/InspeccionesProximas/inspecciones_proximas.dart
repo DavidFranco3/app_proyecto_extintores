@@ -76,7 +76,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-          currentPage: "Inspecciones próximas"), // Usa el menú lateral
+          currentPage: "Actividades próximas"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -87,7 +87,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspecciones próximas",
+                      "Actividades próximas",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita

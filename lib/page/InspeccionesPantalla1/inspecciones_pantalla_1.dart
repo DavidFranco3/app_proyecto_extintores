@@ -97,7 +97,7 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-          currentPage: "Historial de inspecciones"), // Usa el menú lateral
+          currentPage: "Historial de actividades"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -108,7 +108,7 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspecciones",
+                      "Actividades",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita

@@ -238,7 +238,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
       drawer:
-          MenuLateral(currentPage: "Crear inspección"), // Usa el menú lateral
+          MenuLateral(currentPage: "Crear actividad"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
@@ -251,7 +251,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Center(
                         child: Text(
-                          "Crear inspección",
+                          "Crear actividad",
                           style: TextStyle(
                             fontSize: 24, // Tamaño grande
                             fontWeight: FontWeight.bold, // Negrita

@@ -240,7 +240,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> columnas = [
-      {'name': 'Inspector'},
+      {'name': 'Técnico'},
       {'name': 'Encuesta'},
       {'name': ''},
       {'name': 'Comentarios'},
@@ -257,7 +257,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                 datos: widget.inspecciones.asMap().entries.map((entry) {
                   Map<String, dynamic> row = entry.value;
                   return {
-                    'Inspector': row['usuario'],
+                    'Técnico': row['usuario'],
                     'Encuesta': row['cuestionario'],
                     '': formatEncuesta(row['encuesta']),
                     'Comentarios': row['comentarios'],

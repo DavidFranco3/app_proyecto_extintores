@@ -214,7 +214,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Crear inspección"),
+      drawer: MenuLateral(currentPage: "Crear actividad"),
       body: loading
           ? Load()
           : Column(
@@ -223,7 +223,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Crear inspección",
+                      "Crear actividad",
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

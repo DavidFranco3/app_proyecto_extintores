@@ -112,7 +112,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Gráfico de inspecciones"),
+      drawer: MenuLateral(currentPage: "Gráfico de actividades"),
       body: loading
           ? Load()
           : Column(
@@ -121,7 +121,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Gráfico de inspecciones",
+                      "Gráfico de actividades",
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

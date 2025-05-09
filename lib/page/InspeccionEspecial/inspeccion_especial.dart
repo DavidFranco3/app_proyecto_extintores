@@ -97,7 +97,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
     return Scaffold(
       appBar: Header(), // Usa el header con menú de usuario
       drawer:
-          MenuLateral(currentPage: "Inspección anual"), // Usa el menú lateral
+          MenuLateral(currentPage: "Actividad anual"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Column(
@@ -108,7 +108,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "Inspeccion anual",
+                      "Actividad anual",
                       style: TextStyle(
                         fontSize: 24, // Tamaño grande
                         fontWeight: FontWeight.bold, // Negrita
