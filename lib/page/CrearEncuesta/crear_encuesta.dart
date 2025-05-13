@@ -48,6 +48,9 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   TextEditingController ramaController = TextEditingController();
   TextEditingController clasificacionController = TextEditingController();
   List<String> opcionesTemp = ["Si", "No"];
+  List<String> opcionesTemp2 = ["No aplica"];
+  String? opcionSeleccionada; // Esta es la opción seleccionada temporalmente
+
   List<Map<String, dynamic>> dataFrecuencias = [];
   List<Map<String, dynamic>> dataClasificaciones = [];
   List<Map<String, dynamic>> dataRamas = [];
@@ -187,13 +190,18 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   }
 
   void _agregarPregunta() {
-    setState(() {
-      widget.preguntas.add(Pregunta(
+    if (preguntaController.text.isNotEmpty && opcionSeleccionada != null) {
+      setState(() {
+        widget.preguntas.add(Pregunta(
           titulo: preguntaController.text,
           categoria: widget.categoria,
-          opciones: List.from(opcionesTemp)));
-      preguntaController.clear();
-    });
+          opciones:
+              opcionSeleccionada == "Sí/No" ? opcionesTemp : opcionesTemp2,
+        ));
+        preguntaController.clear();
+        opcionSeleccionada = null;
+      });
+    }
   }
 
   void _eliminarPregunta(int index) {
@@ -201,8 +209,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       widget.preguntas.removeAt(index);
     });
   }
-
-
 
   String get buttonLabel {
     if (widget.accion == 'registrar') {
@@ -305,6 +311,26 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                               decoration:
                                   InputDecoration(labelText: "Pregunta"),
                             ),
+                            SizedBox(height: 10),
+// Combo para seleccionar entre Sí, No, No aplica
+                            DropdownButtonFormField<String>(
+                              value: opcionSeleccionada,
+                              hint: Text("Selecciona una opción"),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  opcionSeleccionada = newValue;
+                                });
+                              },
+                              items:
+                                  ["Sí/No", "No aplica"].map((String opcion) {
+                                return DropdownMenuItem<String>(
+                                  value: opcion,
+                                  child: Text(opcion),
+                                );
+                              }).toList(),
+                            ),
+                            SizedBox(height: 10),
+
                             SizedBox(height: 10),
                             ListView.builder(
                               shrinkWrap: true,
