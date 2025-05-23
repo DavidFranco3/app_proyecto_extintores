@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../api/encuesta_inspeccion.dart';
+import '../../api/encuesta_inspeccion_cliente.dart';
 import '../../api/inspecciones.dart';
 import '../../api/clasificaciones.dart';
 import '../../api/frecuencias.dart';
@@ -34,6 +34,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   List<Map<String, dynamic>> dataRamas = [];
   String? selectedEncuestaId;
   String? selectedRamaId;
+  String? selectedClienteId;
   String? selectedFrecuenciaId;
   bool loading = true;
   bool _isLoading = false;
@@ -60,15 +61,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
   String linkFirma = "";
   String linkFirmaCloudinary = "";
 
-  late TextEditingController clienteController;
   late TextEditingController descripcionController;
   late TextEditingController comentariosController;
   late TextEditingController comentariosImagenController;
 
-  final TextEditingController descripcionEficienciaController =
-      TextEditingController();
-  final TextEditingController comentariosEficienciaController =
-      TextEditingController();
+  late TextEditingController descripcionEficienciaController;
+  late TextEditingController comentariosEficienciaController;
   String? calificacionSeleccionada;
   File? imagenSeleccionada;
 
@@ -96,6 +94,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     preguntas = [];
     selectedEncuestaId = null;
     selectedRamaId = null;
+    selectedClienteId = null;
     selectedFrecuenciaId = null;
     selectedIdFrecuencia = null;
     selectedIdClasificacion = null;
@@ -111,7 +110,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
     dataEncuestas = [];
 
-    clienteController.clear();
     comentariosController.clear();
     descripcionController.clear();
 
@@ -137,14 +135,15 @@ class _EncuestaPageState extends State<EncuestaPage> {
       });
     });
 
-    clienteController = TextEditingController();
     comentariosController = TextEditingController();
     descripcionController = TextEditingController();
+
+    descripcionEficienciaController = TextEditingController();
+    comentariosEficienciaController = TextEditingController();
   }
 
   @override
   void dispose() {
-    clienteController.dispose();
     comentariosController.dispose();
     descripcionController.dispose();
     super.dispose();
@@ -381,13 +380,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
     return dataTemp;
   }
 
-  Future<void> getEncuestas(
-      String idRama, String idFrecuencia, String idClasificacion) async {
+  Future<void> getEncuestas(String idRama, String idFrecuencia,
+      String idClasificacion, String idCliente) async {
     try {
-      final encuestaInspeccionService = EncuestaInspeccionService();
-      final List<dynamic> response =
-          await encuestaInspeccionService.listarEncuestaInspeccionPorRama(
-              idRama, idFrecuencia, idClasificacion);
+      final encuestaInspeccionClienteService =
+          EncuestaInspeccionClienteService();
+      final List<dynamic> response = await encuestaInspeccionClienteService
+          .listarEncuestaInspeccionClientePorRamaPorCliente(
+              idRama, idFrecuencia, idClasificacion, idCliente);
 
       if (response.isNotEmpty) {
         setState(() {
@@ -458,7 +458,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     if (selectedEncuestaId == null ||
         selectedRamaId == null ||
         selectedFrecuenciaId == null ||
-        clienteController.text.isEmpty) {
+        selectedClienteId == null) {
       setState(() {
         _isLoading = false;
       });
@@ -764,7 +764,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     // Crear el formulario con los datos
     var formData = {
       "idUsuario": datosComunes["idUsuario"],
-      "idCliente": clienteController.text,
+      "idCliente": selectedClienteId,
       "idEncuesta": selectedEncuestaId,
       "preguntas": respuestasAguardar,
       "imagenes":
@@ -775,9 +775,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
       "descripcion": descripcionController.text,
       "firmaCliente": linkFirma,
       "firmaClienteCloudinary": linkFirmaCloudinary,
-      "descripcionProblemaEficiencia": descripcionEficienciaController,
+      "descripcionProblemaEficiencia": descripcionEficienciaController.text,
       "calificacionEficiencia": calificacionSeleccionada,
-      "comentariosEficiencia": comentariosEficienciaController,
+      "comentariosEficiencia": comentariosEficienciaController.text,
       "imagenEficiencia": imagenEficiencia,
       "imagenCloudinaryEficiencia": imagenEficienciaCloudinary
     };
@@ -800,7 +800,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
   Future<void> _pickImage(Function(File) onImagePicked) async {
     final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.camera);
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       onImagePicked(File(pickedFile.path));
     }
@@ -942,25 +942,27 @@ class _EncuestaPageState extends State<EncuestaPage> {
                         ),
                         SizedBox(height: 20),
                         DropdownButtonFormField<String>(
-                          value: clienteController.text.isEmpty
-                              ? null
-                              : clienteController.text,
-                          decoration: InputDecoration(labelText: 'Cliente'),
+                          value: selectedClienteId,
+                          hint: Text('Selecciona un Cliente'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedClienteId = newValue;
+                            });
+                            if (newValue != null && selectedClienteId != null) {
+                              getEncuestas(
+                                  selectedRamaId!,
+                                  selectedFrecuenciaId!,
+                                  selectedIdClasificacion!,
+                                  selectedClienteId!);
+                            }
+                          },
                           isExpanded: true,
-                          items: dataClientes.map((cliente) {
+                          items: dataClientes.map((rama) {
                             return DropdownMenuItem<String>(
-                              value: cliente['id'],
-                              child: Text(cliente['nombre']!),
+                              value: rama['id'],
+                              child: Text(rama['nombre']!),
                             );
                           }).toList(),
-                          onChanged: (newValue) {
-                            setState(() {
-                              clienteController.text = newValue!;
-                            });
-                          },
-                          validator: (value) => value == null || value.isEmpty
-                              ? 'El cliente es obligatorio'
-                              : null,
                         ),
                         DropdownButtonFormField<String>(
                           value: selectedRamaId,
@@ -973,7 +975,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                               getEncuestas(
                                   selectedRamaId!,
                                   selectedFrecuenciaId!,
-                                  selectedIdClasificacion!);
+                                  selectedIdClasificacion!,
+                                  selectedClienteId!);
                             }
                           },
                           isExpanded: true,
@@ -996,7 +999,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                               getEncuestas(
                                   selectedRamaId!,
                                   selectedFrecuenciaId!,
-                                  selectedIdClasificacion!);
+                                  selectedIdClasificacion!,
+                                  selectedClienteId!);
                             }
                           },
                           isExpanded: true,
@@ -1018,7 +1022,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                               getEncuestas(
                                   selectedRamaId!,
                                   selectedFrecuenciaId!,
-                                  selectedIdClasificacion!);
+                                  selectedIdClasificacion!,
+                                  selectedClienteId!);
                             }
                           },
                           isExpanded: true,
@@ -1175,7 +1180,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
                                         TextField(
-                                          controller: descripcionController,
+                                          controller:
+                                              descripcionEficienciaController,
                                           maxLines: 4,
                                           decoration: InputDecoration(
                                             hintText: "Describe el problema...",
@@ -1218,7 +1224,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
                                         TextField(
-                                          controller: comentariosController,
+                                          controller:
+                                              comentariosEficienciaController,
                                           maxLines: 4,
                                           decoration: InputDecoration(
                                             hintText:

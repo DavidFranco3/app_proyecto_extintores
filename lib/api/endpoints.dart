@@ -61,6 +61,16 @@ const String ENDPOINT_ACTUALIZAR_ENCUESTA_INSPECCION = "/encuestaInspeccion/actu
 const String ENDPOINT_ELIMINAR_ENCUESTA_INSPECCION = "/encuestaInspeccion/eliminar";
 const String ENDPOINT_DESHABILITAR_ENCUESTA_INSPECCION = "/encuestaInspeccion/deshabilitar";
 
+// Encuestas de inspeccion cliente
+const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/listar";
+const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA_CLIENTE = "/encuestaInspeccionCliente/listarPorRama";
+const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA_POR_CLIENTE = "/encuestaInspeccionCliente/listarPorRamaCliente";
+const String ENDPOINT_REGISTRAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/registro";
+const String ENDPOINT_OBTENER_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/obtener";
+const String ENDPOINT_ACTUALIZAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/actualizar";
+const String ENDPOINT_ELIMINAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/eliminar";
+const String ENDPOINT_DESHABILITAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/deshabilitar";
+
 // Extintores
 const String ENDPOINT_LISTAR_EXTINTORES = "/extintores/listar";
 const String ENDPOINT_REGISTRAR_EXTINTORES = "/extintores/registro";

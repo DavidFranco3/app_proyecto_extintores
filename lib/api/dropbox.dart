@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:image/image.dart' as img;
-import '../utils/constants.dart'; // Asegúrate de tener tu API_DROPBOX, API_DROPBOX_ENLACE, dropboxRefreshToken, etc.
+import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
 
 class DropboxService {
-  /// Obtener nuevo access token con refresh_token
   Future<String> obtenerAccessToken() async {
     final url = Uri.parse('https://api.dropboxapi.com/oauth2/token');
 
@@ -34,29 +32,14 @@ class DropboxService {
     }
   }
 
-  /// Comprime la imagen localmente antes de subirla
-  Future<File> comprimirImagen(String path, {int calidad = 40}) async {
-    final originalFile = File(path);
-    final bytes = await originalFile.readAsBytes();
-    final imagen = img.decodeImage(bytes);
-    if (imagen == null) throw Exception('No se pudo leer la imagen');
-
-    final comprimido = img.encodeJpg(imagen, quality: calidad);
-    final nuevoPath =
-        '${originalFile.parent.path}/compressed_${originalFile.uri.pathSegments.last}';
-    final nuevoArchivo = File(nuevoPath);
-    await nuevoArchivo.writeAsBytes(comprimido);
-    return nuevoArchivo;
-  }
-
-  /// Sube una imagen comprimida a Dropbox y devuelve el enlace compartido.
-  Future<String?> uploadImageToDropbox(String imagePath, String path, {int calidad = 65}) async {
-    final String accessToken = await obtenerAccessToken();
-    final file = await comprimirImagen(imagePath, calidad: calidad); // imagen comprimida
+  /// Sube una imagen a Dropbox y devuelve el enlace compartido.
+  Future<String?> uploadImageToDropbox(String imagePath, String path) async {
+    final String accessToken =
+        await obtenerAccessToken(); // Obtiene el token actualizado
+    final file = File(imagePath);
     final fileBytes = await file.readAsBytes();
     final fileName = file.uri.pathSegments.last;
     final dropboxFolderPath = '/AGOO/$path/$fileName';
-
     final response = await http.post(
       Uri.parse(API_DROPBOX),
       headers: {
@@ -76,6 +59,7 @@ class DropboxService {
       print('Imagen subida con éxito a Dropbox');
       final responseData = json.decode(response.body);
 
+      // Obtener el enlace compartido de la imagen
       final sharedLink =
           await _getSharedLink(accessToken, responseData['path_display']);
       print('Enlace compartido de la imagen: $sharedLink');

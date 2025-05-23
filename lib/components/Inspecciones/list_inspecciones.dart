@@ -10,6 +10,7 @@ import '../../api/inspecciones.dart';
 import 'package:path_provider/path_provider.dart';
 import './pdf.dart';
 import './pdf2.dart';
+import './pdf3.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
 import '../../page/CargarImagenesFinales/cargar_imagenes_finales.dart';
@@ -284,8 +285,14 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                       } else if (value == 'enviarPdfBackend') {
                         PdfGenerator.enviarPdfAlBackend(
                             context, row['_originalRow']);
-                      } else if (value == 'guardarPdf3') {
-                        GenerarPdfPage.generarPdf(row['_originalRow']);
+                      } else if (value == 'enviarPdfBackend') {
+                        PdfGenerator.enviarPdfAlBackend(
+                            context, row['_originalRow']);
+                      } else if (value == 'guardarPdf4') {
+                        GenerarPdfPage4.guardarPDF(row['_originalRow']);
+                      } else if (value == 'enviarPdf4Backend') {
+                        GenerarPdfPage4.enviarPdfAlBackend(
+                            context, row['_originalRow']);
                       } else if (value == 'cargarImagenes') {
                         openCargaImagenes(row['_originalRow']);
                       } else if (value == 'enviarZip') {
@@ -375,6 +382,34 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                             ),
                             SizedBox(width: 8),
                             Text('Guardar PDF 3'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'guardarPdf4',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.filePdf,
+                              color: Colors.blue,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Guardar PDF 4'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'enviarPdf4Backend',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.envelope,
+                              color: Color.fromRGBO(255, 152, 0, 1),
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Enviar PDF 4'),
                           ],
                         ),
                       ),

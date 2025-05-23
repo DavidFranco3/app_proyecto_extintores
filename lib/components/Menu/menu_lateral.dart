@@ -15,12 +15,14 @@ import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
 import '../../page/GraficaInspecciones/grafica_inspecciones.dart';
 import '../../page/InspeccionEspecial/inspeccion_especial.dart';
 import '../../page/ReporteFinal/reporte_final.dart';
+import '../../page/SeleccionarInspeccionesClientes/seleccionar_inspecciones_clientes.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
 import '../../api/auth.dart';
 import '../../api/usuarios.dart';
+import '../../page/SeleccionPreguntas/seleccion_preguntas.dart';
 
 class MenuLateral extends StatefulWidget {
   final String currentPage;
@@ -128,6 +130,12 @@ class _MenuLateralState extends State<MenuLateral> {
                 'Reporte de actividades y pruebas',
                 ReporteFinalPage(),
               ),
+              _buildListTile(
+                context,
+                Icons.manage_accounts,
+                'Configuración de Cliente',
+                EncuestasJerarquicasWidget(),
+              ),
               // Submenú de Inspecciones
               ExpansionTile(
                 leading: Icon(Icons.check_box_outline_blank),
@@ -166,6 +174,13 @@ class _MenuLateralState extends State<MenuLateral> {
                               .report_problem, // Ícono representativo de inspección
                           'Historial de actividades',
                           InspeccionesPantalla1Page(),
+                        ),
+                        _buildListTile(
+                          context,
+                          Icons
+                              .report_problem, // Ícono representativo de inspección
+                          'Seleccionar actividad',
+                          ClienteInspeccionesApp(),
                         ),
                         _buildListTile(
                           context,
