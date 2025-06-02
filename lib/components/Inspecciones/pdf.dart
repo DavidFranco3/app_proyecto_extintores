@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import '../Generales/flushbar_helper.dart';
 
 class PdfGenerator {
+  static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
+
 // Función para formatear fechas
   static String formatDate(String date) {
     // Parseamos la fecha guardada en la base de datos
@@ -1547,7 +1549,7 @@ class PdfGenerator {
                                   await getExternalStorageDirectory();
                               if (outputDirectory != null) {
                                 final file = File(
-                                    "${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
+                                    "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Cer.pdf");
 
                                 // Guardar el archivo en el dispositivo
                                 await file.writeAsBytes(await pdf.save());
@@ -1617,7 +1619,7 @@ class PdfGenerator {
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
         final file = File(
-            "${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
+            "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Cer.pdf");
         var response =
             await inspeccionesService.sendEmail2(data["id"], file.path);
         if (response['status'] == 200) {
@@ -1648,7 +1650,7 @@ class PdfGenerator {
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
         final file = File(
-            "${outputDirectory.path}/ENCUESTA_INSPECCION_${data["id"]}.pdf");
+            "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Cer.pdf");
         // Abrir el PDF con el visor predeterminado
         await OpenFile.open(file.path);
       }

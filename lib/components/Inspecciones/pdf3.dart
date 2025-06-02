@@ -8,8 +8,11 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../api/inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class GenerarPdfPage4 {
+  static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
+
   static Future<Uint8List> loadImageFromAssets(String assetPath) async {
     final byteData = await rootBundle.load(assetPath);
     return Uint8List.fromList(byteData.buffer.asUint8List());
@@ -123,7 +126,7 @@ class GenerarPdfPage4 {
     final outputDirectory = await getExternalStorageDirectory();
     if (outputDirectory != null) {
       final file =
-          File("${outputDirectory.path}/PDF4${data["id"]}.pdf");
+          File("${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
 
       // Guardar el archivo en el dispositivo
       await file.writeAsBytes(await pdf.save());
@@ -140,7 +143,7 @@ class GenerarPdfPage4 {
       // Leer el archivo PDF generado como bytes
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
-        final file = File("${outputDirectory.path}/PDF4${data["id"]}.pdf");
+        final file = File("${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
         // Abrir el PDF con el visor predeterminado
         await OpenFile.open(file.path);
       }
@@ -160,7 +163,7 @@ class GenerarPdfPage4 {
       // Leer el archivo PDF generado como bytes
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
-        final file = File("${outputDirectory.path}/PDF4${data["id"]}.pdf");
+        final file = File("${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
         var response =
             await inspeccionesService.sendEmail2(data["id"], file.path);
         if (response['status'] == 200) {

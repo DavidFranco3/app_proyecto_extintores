@@ -408,18 +408,21 @@ class _EncuestaPageState extends State<EncuestaPage> {
     }
   }
 
-  // Función para formatear los datos de las encuestas
   List<Map<String, dynamic>> formatModelEncuestas(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
+    final Map<String, Map<String, dynamic>> uniqueByName = {};
+
     for (var item in data) {
-      dataTemp.add({
+      // Sobrescribe cualquier entrada previa con el mismo nombre
+      uniqueByName[item['nombre']] = {
         'id': item['_id'],
         'nombre': item['nombre'],
         'idFrecuencia': item['idFrecuencia'],
         'preguntas': item['preguntas'],
-      });
+      };
     }
-    return dataTemp;
+
+    // Devuelve solo los valores (últimos registros por nombre)
+    return uniqueByName.values.toList();
   }
 
   // Actualiza las preguntas cuando se selecciona una encuesta
@@ -458,16 +461,22 @@ class _EncuestaPageState extends State<EncuestaPage> {
     if (selectedEncuestaId == null ||
         selectedRamaId == null ||
         selectedFrecuenciaId == null ||
-        selectedClienteId == null) {
+        selectedClienteId == null ||
+        data["imagenes"] == null ||
+        data["imagenes"].length < 7) {
       setState(() {
         _isLoading = false;
       });
+
+      String mensaje = data["imagenes"] == null || data["imagenes"].length < 7
+          ? "Debes subir al menos 7 imágenes para continuar."
+          : "Por favor, completa todos los campos obligatorios antes de continuar.";
 
       showCustomFlushbar(
         context: context,
         title: "Campos incompletos",
         message:
-            "Por favor, completa todos los campos obligatorios antes de continuar.",
+            mensaje,
         backgroundColor: Colors.red,
       );
       return;
@@ -1101,21 +1110,29 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                   itemBuilder: (context, i) {
                                                     final opcion =
                                                         pregunta.opciones[i];
+                                                    final esNoAplica =
+                                                        opcion.toLowerCase() ==
+                                                            "no aplica";
+
                                                     return ListTile(
                                                       contentPadding:
                                                           EdgeInsets.zero,
                                                       title: Text(opcion),
-                                                      leading: Radio<String>(
-                                                        value: opcion,
-                                                        groupValue:
-                                                            pregunta.respuesta,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            pregunta.respuesta =
-                                                                value!;
-                                                          });
-                                                        },
-                                                      ),
+                                                      leading: esNoAplica
+                                                          ? null // No se muestra ningún widget a la izquierda
+                                                          : Radio<String>(
+                                                              value: opcion,
+                                                              groupValue:
+                                                                  pregunta
+                                                                      .respuesta,
+                                                              onChanged:
+                                                                  (value) {
+                                                                setState(() {
+                                                                  pregunta.respuesta =
+                                                                      value!;
+                                                                });
+                                                              },
+                                                            ),
                                                     );
                                                   },
                                                 ),

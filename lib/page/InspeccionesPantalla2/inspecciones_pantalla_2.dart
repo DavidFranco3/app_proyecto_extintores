@@ -67,7 +67,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
         });
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      print("Error al obtener las inspeccionessssss: $e");
       setState(() {
         loading = false;
       });
@@ -243,7 +243,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    "${inspeccion['frecuencia']}: ${formatDate(inspeccion['createdAt'])}",
+                                    "${inspeccion['frecuencia']}: ${formatDate(inspeccion['createdAt'])} - ${inspeccion['cuestionario']}",
                                     textAlign:
                                         TextAlign.center, // Centra el texto
                                     style: TextStyle(

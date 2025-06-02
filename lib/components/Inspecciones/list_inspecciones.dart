@@ -14,11 +14,13 @@ import './pdf3.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
 import '../../page/CargarImagenesFinales/cargar_imagenes_finales.dart';
+import 'package:intl/intl.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> inspecciones;
   final Function onCompleted;
+
 
   TblInspecciones(
       {Key? key,
@@ -37,6 +39,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   String? titulosModal;
   bool isLoading = false;
 
+    static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
+
   Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
     setState(() => isLoading = true);
 
@@ -54,7 +58,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       Directory appDocDir = await getApplicationDocumentsDirectory();
 
       String filePath =
-          "${appDocDir.path}/Encuesta_de_inspección_${row["id"]}.pdf";
+          "${appDocDir.path}/${row["cliente"]}_$fechaFormateada-IPM.pdf";
 
       print("Descargando archivo en: $filePath");
 
@@ -325,7 +329,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF 1'),
+                            Text('Guardar PDF Reporte IPM'),
                           ],
                         ),
                       ),
@@ -339,7 +343,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar PDF 1'),
+                            Text('Enviar PDF Reporte IPM'),
                           ],
                         ),
                       ),
@@ -353,7 +357,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF 2'),
+                            Text('Guardar PDF Certificado'),
                           ],
                         ),
                       ),
@@ -367,7 +371,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar PDF 2'),
+                            Text('Enviar PDF Certificado'),
                           ],
                         ),
                       ),
@@ -381,7 +385,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF 3'),
+                            Text('Guardar PDF Evidencia'),
                           ],
                         ),
                       ),
@@ -395,7 +399,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF 4'),
+                            Text('Guardar PDF R. Problemas'),
                           ],
                         ),
                       ),
@@ -409,7 +413,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar PDF 4'),
+                            Text('Enviar PDF R. Problemas'),
                           ],
                         ),
                       ),

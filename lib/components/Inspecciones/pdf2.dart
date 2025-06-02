@@ -5,8 +5,11 @@ import 'package:open_file/open_file.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:intl/intl.dart';
 
 class GenerarPdfPage {
+  static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
+
   static Future<Uint8List> loadImageFromAssets(String assetPath) async {
     final byteData = await rootBundle.load(assetPath);
     return Uint8List.fromList(byteData.buffer.asUint8List());
@@ -205,7 +208,7 @@ class GenerarPdfPage {
     }
 
     final output = await getTemporaryDirectory();
-    final filePath = "${output.path}/reporte_de_servicio_${data["id"]}.pdf";
+    final filePath = "${output.path}/${data["cliente"]}_$fechaFormateada-Prub.pdf";
     final file = File(filePath);
     await file.writeAsBytes(await pdf.save());
     await OpenFile.open(filePath);
