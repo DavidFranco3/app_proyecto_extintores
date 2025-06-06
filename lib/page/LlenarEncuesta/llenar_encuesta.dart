@@ -45,6 +45,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
   String? selectedIdFrecuencia;
   String? selectedIdClasificacion;
 
+  List<Map<String, dynamic>> registrosEficiencia = [];
+
   List<Map<String, dynamic>> dataFrecuencias = [];
 
   List<Map<String, dynamic>> dataClasificaciones = [];
@@ -73,9 +75,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
   String imagenEficiencia = "";
   String imagenEficienciaCloudinary = "";
 
+    List<Map<String, dynamic>> uploadedEficiencias =
+      []; // Array para guardar objetos con enlaces y comentarios
+
   Future<void> seleccionarImagen() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? imagen = await picker.pickImage(source: ImageSource.camera);
 
     if (imagen != null) {
       setState(() {
@@ -147,6 +152,37 @@ class _EncuestaPageState extends State<EncuestaPage> {
     comentariosController.dispose();
     descripcionController.dispose();
     super.dispose();
+  }
+
+  void agregarRegistro() {
+    if (descripcionEficienciaController.text.isEmpty ||
+        calificacionSeleccionada == null ||
+        comentariosEficienciaController.text.isEmpty ||
+        imagenSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Por favor, completa todos los campos")),
+      );
+      return;
+    }
+
+    registrosEficiencia.add({
+      'descripcion': descripcionEficienciaController.text,
+      'calificacion': calificacionSeleccionada,
+      'comentarios': comentariosEficienciaController.text,
+      'imagen': imagenSeleccionada, // puedes guardar solo la ruta si quieres
+    });
+
+    // Limpiar los campos
+    descripcionEficienciaController.clear();
+    comentariosEficienciaController.clear();
+    calificacionSeleccionada = null;
+    imagenSeleccionada = null;
+
+    setState(() {}); // Para que se actualice visualmente
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Registro agregado correctamente")),
+    );
   }
 
   Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
@@ -475,8 +511,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       showCustomFlushbar(
         context: context,
         title: "Campos incompletos",
-        message:
-            mensaje,
+        message: mensaje,
         backgroundColor: Colors.red,
       );
       return;
@@ -492,13 +527,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       'imagenesCloudinary': data['imagenesCloudinary'],
       'firmaCliente': data['firmaCliente'] ?? "",
       'firmaClienteCloudinary': data['firmaClienteCloudinary'] ?? "",
-      "inspeccionEficiencias": {
-        "descripcionProblema": data["descripcionProblemaEficiencia"],
-        "calificacion": data["calificacionEficiencia"],
-        "comentarios": data["comentariosEficiencia"],
-        "imagen": data["imagenEficiencia"],
-        "imagenCloudinary": data["imagenCloudinaryEficiencia"]
-      },
+      "inspeccionEficiencias": data['inspeccionEficiencias'],
       'cerrado': "true",
       'estado': "true",
     };
@@ -761,6 +790,37 @@ class _EncuestaPageState extends State<EncuestaPage> {
       }
     }
 
+    // Subir imágenes adicionales si hay imágenes seleccionadas
+    if (registrosEficiencia.isNotEmpty) {
+      for (var imagenes in registrosEficiencia) {
+        // Asegúrate de que imagePath sea un mapa con las claves correctas
+
+        String? descripcion = imagenes["descripcion"];
+        String? calificacion = imagenes["calificacion"];
+        String? comentarios = imagenes["comentarios"];
+        String? imagen = imagenes["imagen"];
+
+        if (imagen != null) {
+          String? sharedLink =
+              await dropboxService.uploadImageToDropbox(imagen, "inspecciones");
+          String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+              imagen, "inspecciones");
+          if (sharedLink != null) {
+            // Crear un mapa con el sharedLink y el comentario
+            var imageInfo = {
+              "descripcion": descripcion,
+              "calificacion": calificacion,
+              "comentarios": comentarios,
+              "imagen": sharedLink,
+              "imagenCloudinary": sharedLink2
+            };
+            // Agregar el mapa a la lista
+            uploadedEficiencias.add(imageInfo);
+          }
+        }
+      }
+    }
+
 // Desactivamos la animación de carga después de que todas las imágenes se hayan subido
     setState(() {
       _isLoading = false; // Desactivar la animación de carga
@@ -784,11 +844,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
       "descripcion": descripcionController.text,
       "firmaCliente": linkFirma,
       "firmaClienteCloudinary": linkFirmaCloudinary,
-      "descripcionProblemaEficiencia": descripcionEficienciaController.text,
-      "calificacionEficiencia": calificacionSeleccionada,
-      "comentariosEficiencia": comentariosEficienciaController.text,
-      "imagenEficiencia": imagenEficiencia,
-      "imagenCloudinaryEficiencia": imagenEficienciaCloudinary
+      "inspeccionEficiencias": uploadedEficiencias,
     };
 
     // Llamar a la función para guardar la encuesta
@@ -809,7 +865,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
   Future<void> _pickImage(Function(File) onImagePicked) async {
     final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+        await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       onImagePicked(File(pickedFile.path));
     }
@@ -1251,15 +1307,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                           ),
                                         ),
                                         const SizedBox(height: 16),
-                                        Text(
+                                        const Text(
                                           "Foto",
                                           style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold),
                                         ),
                                         GestureDetector(
-                                          onTap:
-                                              seleccionarImagen, // Al hacer tap, se activa el selector de imágenes
+                                          onTap: seleccionarImagen,
                                           child: Container(
                                             width: double.infinity,
                                             height: 250,
@@ -1271,7 +1326,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                   BorderRadius.circular(10),
                                             ),
                                             child: imagenSeleccionada == null
-                                                ? Center(
+                                                ? const Center(
                                                     child: Icon(
                                                       Icons.cloud_upload,
                                                       size: 50,
@@ -1290,20 +1345,71 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                   ),
                                           ),
                                         ),
-                                        SizedBox(height: 10),
+                                        const SizedBox(height: 10),
                                         if (imagenSeleccionada != null)
-                                          Text(
+                                          const Text(
                                             "Imagen seleccionada",
                                             style: TextStyle(
                                                 color: Colors.green,
                                                 fontSize: 16),
                                           ),
                                         if (imagenSeleccionada == null)
-                                          Text(
+                                          const Text(
                                             "Selecciona una imagen",
                                             style: TextStyle(
                                                 color: Colors.red,
                                                 fontSize: 16),
+                                          ),
+                                        const SizedBox(height: 20),
+                                        Center(
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              agregarRegistro();
+                                            },
+                                            child:
+                                                const Text("Agregar registro"),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        if (registrosEficiencia.isNotEmpty)
+                                          const Text(
+                                            "Registros agregados",
+                                            style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        if (registrosEficiencia.isNotEmpty)
+                                          ListView.builder(
+                                            shrinkWrap: true,
+                                            physics:
+                                                NeverScrollableScrollPhysics(),
+                                            itemCount:
+                                                registrosEficiencia.length,
+                                            itemBuilder: (context, index) {
+                                              final registro =
+                                                  registrosEficiencia[index];
+                                              return Card(
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8),
+                                                child: ListTile(
+                                                  leading: Image.file(
+                                                    File(registro["imagen"]
+                                                        .path),
+                                                    width: 50,
+                                                    height: 50,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                  title: Text(
+                                                    '${registro["comentarios"]} - ${registro["calificacion"]}',
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                  subtitle: Text(
+                                                      registro["descripcion"]),
+                                                ),
+                                              );
+                                            },
                                           ),
                                       ],
                                     ),

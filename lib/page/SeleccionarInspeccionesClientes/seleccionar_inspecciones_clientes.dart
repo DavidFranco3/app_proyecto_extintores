@@ -9,6 +9,7 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../api/clientes.dart';
 import '../../api/inspecciones.dart';
+import 'package:intl/intl.dart';
 
 void main() => runApp(MaterialApp(home: ClienteInspeccionesApp()));
 
@@ -21,8 +22,8 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
   bool isLoading = false;
   List<Map<String, dynamic>> dataClientes = [];
   List<Map<String, dynamic>> dataInspecciones = [];
-  String? clienteSeleccionado; // ID del cliente
-  Map<String, bool> estadosInspecciones = {};
+  String? clienteSeleccionado;
+  DateTime? fechaSeleccionada;
 
   @override
   void initState() {
@@ -35,7 +36,6 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
     try {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
-
       if (response.isNotEmpty) {
         setState(() {
           dataClientes = formatModelClientes(response);
@@ -64,7 +64,6 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
   Future<void> getInspecciones(String idCliente) async {
     setState(() {
       isLoading = true;
-      estadosInspecciones = {};
       dataInspecciones = [];
     });
 
@@ -74,18 +73,12 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
           await inspeccionesService.listarInspeccionesPorCliente(idCliente);
 
       if (response.isNotEmpty) {
-        List<Map<String, dynamic>> inspecciones =
-            formatModelInspecciones(response);
         setState(() {
-          dataInspecciones = inspecciones;
-          estadosInspecciones = {
-            for (var item in inspecciones) item['id']: false,
-          };
+          dataInspecciones = formatModelInspecciones(response);
         });
       } else {
         setState(() {
           dataInspecciones = [];
-          estadosInspecciones = {};
         });
       }
     } catch (e) {
@@ -99,24 +92,26 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
     return data
         .map((item) => {
               'id': item['_id'],
-              'idUsuario': item['idUsuario'],
-              'idCliente': item['idCliente'],
-              'idEncuesta': item['idEncuesta'],
-              'encuesta': item['encuesta'],
-              'imagenes': item['imagenes'],
-              'comentarios': item['comentarios'],
-              'usuario': item['usuario']['nombre'],
-              'cliente': item['cliente']['nombre'],
-              'imagen_cliente': item['cliente']['imagen'],
-              'firma_usuario': item['usuario']['firma'],
               'cuestionario': item['cuestionario']['nombre'],
               'frecuencia': item['cuestionario']['frecuencia']['nombre'],
-              'usuarios': item['usuario'],
-              'estado': item['estado'],
               'createdAt': item['createdAt'],
-              'updatedAt': item['updatedAt'],
             })
         .toList();
+  }
+
+  Future<void> seleccionarFecha(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: fechaSeleccionada ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null && picked != fechaSeleccionada) {
+      setState(() {
+        fechaSeleccionada = picked;
+      });
+    }
   }
 
   Future<void> handleDownloadMultiplePDFs() async {
@@ -129,47 +124,48 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
     try {
       List<String> pdfPaths = [];
 
-      for (var inspeccion in dataInspecciones) {
-        if (estadosInspecciones[inspeccion['id']] == true) {
-          String url = inspeccionesService.urlDownloadPDF(inspeccion["id"]);
-          if (url.isEmpty) continue;
+      List<Map<String, dynamic>> inspeccionesFiltradas =
+          fechaSeleccionada == null
+              ? dataInspecciones
+              : dataInspecciones.where((inspeccion) {
+                  final fechaInspeccion =
+                      DateTime.parse(inspeccion['createdAt']);
+                  return fechaInspeccion.year == fechaSeleccionada!.year &&
+                      fechaInspeccion.month == fechaSeleccionada!.month &&
+                      fechaInspeccion.day == fechaSeleccionada!.day;
+                }).toList();
 
-          String tempPath = "${tempDir.path}/temp_${inspeccion["id"]}.pdf";
+      for (var inspeccion in inspeccionesFiltradas) {
+        String url = inspeccionesService.urlDownloadPDF(inspeccion["id"]);
+        if (url.isEmpty) continue;
 
-          // Descargar el PDF individual
-          await dio.download(url, tempPath);
-          pdfPaths.add(tempPath);
-        }
+        String tempPath = "${tempDir.path}/temp_${inspeccion["id"]}.pdf";
+        await dio.download(url, tempPath);
+        pdfPaths.add(tempPath);
       }
 
       if (pdfPaths.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se seleccionaron inspecciones.')),
+          SnackBar(
+              content: Text('No hay inspecciones en la fecha seleccionada.')),
         );
         return;
       }
 
-      // Crear un documento PDF vacío para combinar
       PdfDocument outputDocument = PdfDocument();
-
       for (String path in pdfPaths) {
-        // Leer cada PDF descargado
         List<int> bytes = await File(path).readAsBytes();
         PdfDocument inputDocument = PdfDocument(inputBytes: bytes);
 
-        // Importar todas las páginas del PDF actual al documento de salida
         for (int i = 0; i < inputDocument.pages.count; i++) {
           final template = inputDocument.pages[i].createTemplate();
           final templateSize = template.size;
-
           final newPage = outputDocument.pages.add();
           final graphics = newPage.graphics;
           final pageSize = newPage.getClientSize();
 
-          // Centrado horizontal y margen superior personalizado
           final dx = (pageSize.width - templateSize.width) / 2;
-          final topMargin =
-              18; // Puedes ajustar este valor si quieres más o menos espacio
+          final topMargin = 18;
           final dy = ((pageSize.height - templateSize.height) / 2) - topMargin;
 
           graphics.drawPdfTemplate(
@@ -182,12 +178,10 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
       final appDocDir = await getApplicationDocumentsDirectory();
       final finalPath = "${appDocDir.path}/Inspecciones_Unidas.pdf";
 
-      // Guardar el PDF combinado en archivo
       List<int> bytes = await outputDocument.save();
       File(finalPath).writeAsBytesSync(bytes);
       outputDocument.dispose();
 
-      print("PDF combinado guardado en: $finalPath");
       OpenFile.open(finalPath);
     } catch (e) {
       print("Error al combinar los PDF: $e");
@@ -198,69 +192,82 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
 
   @override
   Widget build(BuildContext context) {
+    List<Map<String, dynamic>> inspeccionesFiltradas = fechaSeleccionada == null
+        ? dataInspecciones
+        : dataInspecciones.where((inspeccion) {
+            final fechaInspeccion = DateTime.parse(inspeccion['createdAt']);
+            return fechaInspeccion.year == fechaSeleccionada!.year &&
+                fechaInspeccion.month == fechaSeleccionada!.month &&
+                fechaInspeccion.day == fechaSeleccionada!.day;
+          }).toList();
+
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Seleccionar actividad"),
+      drawer: MenuLateral(currentPage: "Periodos"), // Usa el menú lateral
       body: isLoading
-          ? Load()
+          ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Center(
-                    child: DropdownButton<String>(
-                      hint: Text('Selecciona un cliente'),
-                      value: clienteSeleccionado,
-                      onChanged: (nuevoClienteId) {
-                        setState(() {
-                          clienteSeleccionado = nuevoClienteId;
-                        });
-                        if (nuevoClienteId != null) {
-                          getInspecciones(nuevoClienteId);
-                        }
-                      },
-                      items:
-                          dataClientes.map<DropdownMenuItem<String>>((cliente) {
-                        return DropdownMenuItem<String>(
-                          value: cliente['id'],
-                          child: Text(cliente['nombre']),
-                        );
-                      }).toList(),
-                    ),
+                  DropdownButton<String>(
+                    hint: Text('Selecciona un cliente'),
+                    value: clienteSeleccionado,
+                    onChanged: (nuevoClienteId) {
+                      setState(() {
+                        clienteSeleccionado = nuevoClienteId;
+                        fechaSeleccionada = null;
+                      });
+                      if (nuevoClienteId != null) {
+                        getInspecciones(nuevoClienteId);
+                      }
+                    },
+                    items:
+                        dataClientes.map<DropdownMenuItem<String>>((cliente) {
+                      return DropdownMenuItem<String>(
+                        value: cliente['id'],
+                        child: Text(cliente['nombre']),
+                      );
+                    }).toList(),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => seleccionarFecha(context),
+                        child: const Text('Elegir Fecha'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                   Expanded(
                     child: clienteSeleccionado != null &&
-                            dataInspecciones.isNotEmpty
+                            inspeccionesFiltradas.isNotEmpty
                         ? Scrollbar(
                             child: ListView.builder(
-                              itemCount: dataInspecciones.length,
+                              itemCount: inspeccionesFiltradas.length,
                               itemBuilder: (context, index) {
-                                final inspeccion = dataInspecciones[index];
-                                return CheckboxListTile(
-                                  title: Text(inspeccion['cuestionario'] + "-" + inspeccion['frecuencia']),
-                                  value:
-                                      estadosInspecciones[inspeccion['id']] ??
-                                          false,
-                                  onChanged: (nuevoValor) {
-                                    setState(() {
-                                      estadosInspecciones[inspeccion['id']] =
-                                          nuevoValor!;
-                                    });
-                                  },
+                                final inspeccion = inspeccionesFiltradas[index];
+                                return ListTile(
+                                  title: Text(
+                                    "${inspeccion['cuestionario']} - ${inspeccion['frecuencia']}",
+                                  ),
+                                  subtitle: Text(
+                                    DateFormat('yyyy-MM-dd HH:mm').format(
+                                      DateTime.parse(inspeccion['createdAt']),
+                                    ),
+                                  ),
                                 );
                               },
                             ),
                           )
-                        : SizedBox(),
+                        : Center(child: Text('No hay inspecciones')),
                   ),
-                  SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: ElevatedButton(
-                      onPressed: handleDownloadMultiplePDFs,
-                      child: Text('Descargar PDF combinado'),
-                    ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: handleDownloadMultiplePDFs,
+                    child: Text('Descargar PDF combinado'),
                   ),
                 ],
               ),

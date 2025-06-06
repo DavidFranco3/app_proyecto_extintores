@@ -84,14 +84,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         'firma_usuario_cloudinary': item['usuario']['firmaCloudinary'],
         'cuestionario': item['cuestionario']['nombre'],
         'usuarios': item['usuario'],
-        'descripcion_problema_eficiencia': item['inspeccionEficiencias']
-            ['descripcionProblema'],
-        'calificacion_eficiencia': item['inspeccionEficiencias']
-            ['calificacion'],
-        'comentarios_eficiencia': item['inspeccionEficiencias']['comentarios'],
-        'imagen_eficiencia': item['inspeccionEficiencias']['imagen'],
-        'imagen_cloudinary_eficiencia': item['inspeccionEficiencias']
-            ['imagenCloudinary'],
+        'inspeccion_eficiencias': item['inspeccionEficiencias'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],

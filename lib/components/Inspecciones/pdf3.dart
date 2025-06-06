@@ -31,106 +31,110 @@ class GenerarPdfPage4 {
       }
     }
 
-    // Cargar imagen de eficiencia si existe
-    final imageUrlEficiencia =
-        data['imagen_eficiencia']?.replaceAll("dl=0", "dl=1");
-    Uint8List imageBytesEficiencia = Uint8List(0);
-    if (imageUrlEficiencia != null && imageUrlEficiencia.isNotEmpty) {
-      final responseEficiencia = await http.get(Uri.parse(imageUrlEficiencia));
-      if (responseEficiencia.statusCode == 200) {
-        imageBytesEficiencia = responseEficiencia.bodyBytes;
-      }
-    }
-
     // Cargar logos locales
     final imageBytes00 =
         await loadImageFromAssets('lib/assets/img/logo_nfpa.png');
     final imageBytes000 =
         await loadImageFromAssets('lib/assets/img/logo_app.png');
 
-    pdf.addPage(
-      pw.MultiPage(
-        margin: const pw.EdgeInsets.all(20),
-        footer: (context) => pw.Container(
-          alignment: pw.Alignment.bottomCenter,
-          margin: const pw.EdgeInsets.only(top: 20),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'Av. Universidad No. 277 A, Col. Granjas Banthi\n'
-                'San Juan del Río, Querétaro, C.P. 76806\n'
-                'Tel: 427 268 5050\n'
-                'e-mail: ingenieria@aggofc.com',
-                style: const pw.TextStyle(fontSize: 10),
-                textAlign: pw.TextAlign.left,
-              ),
-              pw.Image(
-                pw.MemoryImage(imageBytes000),
-                width: 150,
-                height: 40,
-              ),
-            ],
-          ),
-        ),
-        build: (context) => [
-          pw.Center(
+    final List<dynamic> inspecciones = data['inspeccion_eficiencias'] ?? [];
+
+    for (var item in inspecciones) {
+      // Cargar imagen si existe en cada ítem
+      Uint8List imageBytes = Uint8List(0);
+      final imageUrl = item['imagen']?.replaceAll("dl=0", "dl=1");
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        final response = await http.get(Uri.parse(imageUrl));
+        if (response.statusCode == 200) {
+          imageBytes = response.bodyBytes;
+        }
+      }
+
+      pdf.addPage(
+        pw.MultiPage(
+          margin: const pw.EdgeInsets.all(20),
+          footer: (context) => pw.Container(
+            alignment: pw.Alignment.bottomCenter,
+            margin: const pw.EdgeInsets.only(top: 20),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                if (imageBytesLogo.isNotEmpty)
-                  pw.Image(pw.MemoryImage(imageBytesLogo),
-                      width: 150, height: 40),
-                pw.Image(pw.MemoryImage(imageBytes00), width: 150, height: 40),
+                pw.Text(
+                  'Av. Universidad No. 277 A, Col. Granjas Banthi\n'
+                  'San Juan del Río, Querétaro, C.P. 76806\n'
+                  'Tel: 427 268 5050\n'
+                  'e-mail: ingenieria@aggofc.com',
+                  style: const pw.TextStyle(fontSize: 10),
+                  textAlign: pw.TextAlign.left,
+                ),
+                pw.Image(
+                  pw.MemoryImage(imageBytes000),
+                  width: 150,
+                  height: 40,
+                ),
               ],
             ),
           ),
-          pw.SizedBox(height: 20),
-          pw.Center(
-            child: pw.Text(
-              data['descripcion_problema_eficiencia'] ?? '',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-              textAlign: pw.TextAlign.center,
-            ),
-          ),
-          pw.SizedBox(height: 10),
-          pw.Center(
-            child: pw.Text(
-              data['calificacion_eficiencia'] ?? '',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-              textAlign: pw.TextAlign.center,
-            ),
-          ),
-          pw.SizedBox(height: 10),
-          pw.Center(
-            child: pw.Text(
-              data['comentarios_eficiencia'] ?? '',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-              textAlign: pw.TextAlign.center,
-            ),
-          ),
-          pw.SizedBox(height: 20),
-          if (imageBytesEficiencia.isNotEmpty)
+          build: (context) => [
             pw.Center(
-              child: pw.Image(
-                pw.MemoryImage(imageBytesEficiencia),
-                width: 500,
-                height: 290,
-                fit: pw.BoxFit.contain,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  if (imageBytesLogo.isNotEmpty)
+                    pw.Image(pw.MemoryImage(imageBytesLogo),
+                        width: 150, height: 40),
+                  pw.Image(pw.MemoryImage(imageBytes00),
+                      width: 150, height: 40),
+                ],
               ),
             ),
-        ],
-      ),
-    );
-    // Obtener el directorio donde guardar el archivo
+            pw.SizedBox(height: 20),
+            pw.Center(
+              child: pw.Text(
+                item['descripcion'] ?? '',
+                style:
+                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            pw.Center(
+              child: pw.Text(
+                item['calificacion'] ?? '',
+                style:
+                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            pw.Center(
+              child: pw.Text(
+                item['comentarios'] ?? '',
+                style:
+                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            if (imageBytes.isNotEmpty)
+              pw.Center(
+                child: pw.Image(
+                  pw.MemoryImage(imageBytes),
+                  width: 500,
+                  height: 290,
+                  fit: pw.BoxFit.contain,
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
     final outputDirectory = await getExternalStorageDirectory();
     if (outputDirectory != null) {
-      final file =
-          File("${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
-
-      // Guardar el archivo en el dispositivo
+      final file = File(
+          "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
       await file.writeAsBytes(await pdf.save());
-
       print("PDF guardado en: ${file.path}");
     } else {
       print("No se pudo obtener el directorio de almacenamiento.");
@@ -143,7 +147,8 @@ class GenerarPdfPage4 {
       // Leer el archivo PDF generado como bytes
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
-        final file = File("${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
+        final file = File(
+            "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
         // Abrir el PDF con el visor predeterminado
         await OpenFile.open(file.path);
       }
@@ -163,7 +168,8 @@ class GenerarPdfPage4 {
       // Leer el archivo PDF generado como bytes
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
-        final file = File("${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
+        final file = File(
+            "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
         var response =
             await inspeccionesService.sendEmail2(data["id"], file.path);
         if (response['status'] == 200) {
