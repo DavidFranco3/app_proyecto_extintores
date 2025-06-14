@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import './pdf.dart';
 import './pdf2.dart';
 import './pdf3.dart';
+import '../../page/LlenarEncuestaEditar/llenar_encuesta_editar.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
 import '../../page/CargarImagenesFinales/cargar_imagenes_finales.dart';
@@ -20,7 +21,6 @@ class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> inspecciones;
   final Function onCompleted;
-
 
   TblInspecciones(
       {Key? key,
@@ -39,7 +39,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
   String? titulosModal;
   bool isLoading = false;
 
-    static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
+  static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
 
   Future<void> handleDownloadPDF(Map<String, dynamic> row) async {
     setState(() => isLoading = true);
@@ -154,6 +154,21 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     });
   }
 
+  void openEditarEncuestaPage(Map<String, dynamic> row) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EncuestaEditarPage(
+            showModal: widget.showModal,
+            onCompleted: widget.onCompleted,
+            accion: "editar",
+            data: row),
+      ),
+    ).then((_) {
+      // Puedes agregar lógica aquí si necesitas hacer algo cuando regresas de la página
+    });
+  }
+
   String formatEncuesta(List<dynamic> encuesta) {
     return encuesta.map((item) {
       return '${item['pregunta']}\n${item['respuesta']}';
@@ -184,11 +199,11 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       }
     } catch (e) {
       showCustomFlushbar(
-          context: context,
-          title: "Error al enviar el ZIP",
-          message: "Error: ${e.toString()}",
-          backgroundColor: Colors.red,
-        );
+        context: context,
+        title: "Error al enviar el ZIP",
+        message: "Error: ${e.toString()}",
+        backgroundColor: Colors.red,
+      );
     } finally {
       isLoading = false;
     }
@@ -301,6 +316,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                         openCargaImagenes(row['_originalRow']);
                       } else if (value == 'enviarZip') {
                         showEmailModal(row['_originalRow']);
+                      } else if (value == 'editarEncuesta') {
+                        openEditarEncuestaPage(row['_originalRow']);
                       }
                     },
                     itemBuilder: (BuildContext context) =>
@@ -442,6 +459,20 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                             ),
                             SizedBox(width: 8),
                             Text('Enviar imagenes'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'editarEncuesta',
+                        child: Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.fileZipper,
+                              color: Colors.yellow,
+                              size: 16,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Editar encuesta'),
                           ],
                         ),
                       ),
