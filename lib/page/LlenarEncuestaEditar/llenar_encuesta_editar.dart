@@ -156,16 +156,20 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
     descripcionEficienciaController = TextEditingController();
     comentariosEficienciaController = TextEditingController();
     print("preguntas aca");
-    print(widget.data["preguntas"]);
+    print(widget.data["inspeccion_eficiencias"] ?? []);
     selectedEncuestaId = widget.data["idEncuesta"];
     selectedRamaId = widget.data["idRama"];
     selectedClienteId = widget.data["idCliente"];
     selectedFrecuenciaId = widget.data["idFrecuencia"];
     selectedIdClasificacion = widget.data["idClasificacion"];
-    descripcionController.text = widget.data["descripcion"];
-    uploadedEficiencias = widget.data["inspeccion_eficiencias"];
-    uploadedImageLinks = widget.data["imagenes"];
-    uploadedImageLinksCloudinary = widget.data["imagenesCloudinary"];
+    descripcionController.text = widget.data["descripcion"] ?? "Sin descripción";
+    uploadedEficiencias = (widget.data["inspeccion_eficiencias"] as List?)
+    ?.cast<Map<String, dynamic>>() ?? [];
+    uploadedImageLinks = (widget.data["imagenes"] as List?)
+    ?.cast<Map<String, dynamic>>() ?? [];
+    uploadedImageLinksCloudinary = (widget.data["imagenesCloudinary"] as List?)
+    ?.cast<Map<String, dynamic>>() ?? [];
+
 
     getEncuestas(widget.data["idRama"]!, widget.data["idFrecuencia"]!,
         widget.data["idClasificacion"]!, widget.data["idCliente"]!);

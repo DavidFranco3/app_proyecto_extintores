@@ -419,6 +419,10 @@ class _EncuestaPageState extends State<EncuestaPage> {
   Future<void> getEncuestas(String idRama, String idFrecuencia,
       String idClasificacion, String idCliente) async {
     try {
+      print("rama" + idRama );
+      print("frecuencia" + idFrecuencia);
+      print("clasificacion" + idClasificacion);
+      print("cliente" + idCliente);
       final encuestaInspeccionClienteService =
           EncuestaInspeccionClienteService();
       final List<dynamic> response = await encuestaInspeccionClienteService
@@ -497,21 +501,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
     if (selectedEncuestaId == null ||
         selectedRamaId == null ||
         selectedFrecuenciaId == null ||
-        selectedClienteId == null ||
-        data["imagenes"] == null ||
-        data["imagenes"].length < 7) {
+        selectedClienteId == null) {
       setState(() {
         _isLoading = false;
       });
-
-      String mensaje = data["imagenes"] == null || data["imagenes"].length < 7
-          ? "Debes subir al menos 7 imágenes para continuar."
-          : "Por favor, completa todos los campos obligatorios antes de continuar.";
-
       showCustomFlushbar(
         context: context,
         title: "Campos incompletos",
-        message: mensaje,
+        message: "Por favor, completa todos los campos obligatorios antes de continuar.",
         backgroundColor: Colors.red,
       );
       return;

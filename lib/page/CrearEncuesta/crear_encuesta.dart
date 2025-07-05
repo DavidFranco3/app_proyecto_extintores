@@ -6,9 +6,12 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../CrearEncuestaPantalla2/crear_encuesta_pantalla_2.dart';
+import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
 import '../../components/Generales/pregunta.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../components/Generales/flushbar_helper.dart';
+import '../../components/Logs/logs_informativos.dart';
+import '../../api/encuesta_inspeccion.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -17,10 +20,9 @@ class CrearEncuestaScreen extends StatefulWidget {
   final TextEditingController nombreController;
   final TextEditingController clasificacionController;
   final TextEditingController ramaController;
-  final String categoria;
-  final List<Map<String, String>> secciones;
   final Function onCompleted;
   final List<Pregunta> preguntas;
+  final dynamic frecuencia;
 
   @override
   CrearEncuestaScreen({
@@ -30,10 +32,9 @@ class CrearEncuestaScreen extends StatefulWidget {
     required this.nombreController,
     required this.clasificacionController,
     required this.ramaController,
-    required this.categoria,
-    required this.secciones,
     required this.onCompleted,
     required this.preguntas,
+    required this.frecuencia,
   });
 
   _CrearEncuestaScreenState createState() => _CrearEncuestaScreenState();
@@ -194,7 +195,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       setState(() {
         widget.preguntas.add(Pregunta(
           titulo: preguntaController.text,
-          categoria: widget.categoria,
+          categoria: "Default",
           opciones:
               opcionSeleccionada == "Sí/No" ? opcionesTemp : opcionesTemp2,
         ));
@@ -210,6 +211,88 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     });
   }
 
+  void _guardarEncuesta(Map<String, dynamic> data) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    var dataTemp = {
+      'nombre': data['nombre'],
+      'idFrecuencia': data['idFrecuencia'],
+      'idRama': data['idRama'],
+      'idClasificacion': data['idClasificacion'],
+      'preguntas': data['preguntas'],
+      'estado': "true",
+    };
+
+    try {
+      final encuestaInspeccionService = EncuestaInspeccionService();
+      var response;
+      if (widget.accion == "registrar") {
+        response = await encuestaInspeccionService
+            .registraEncuestaInspeccion(dataTemp);
+      } else if (widget.accion == "editar") {
+        response = await encuestaInspeccionService.actualizarEncuestaInspeccion(
+            widget.data["id"], dataTemp);
+      }
+      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+      if (response['status'] == 200) {
+        // Asumiendo que 'response' es un Map que contiene el código de estado
+        setState(() {
+          _isLoading = false;
+          returnPrincipalPage();
+        });
+        LogsInformativos(
+            "Se ha registrado la encuesta ${data['nombre']} correctamente",
+            dataTemp);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "La encuesta fue agregada correctamente",
+          backgroundColor: Colors.green,
+        );
+      } else {
+        // Maneja el caso en que el statusCode no sea 200
+        setState(() {
+          _isLoading = false;
+        });
+        showCustomFlushbar(
+          context: context,
+          title: "Hubo un problema",
+          message: "Hubo un error al agregar la encuesta",
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+      showCustomFlushbar(
+        context: context,
+        title: "Oops...",
+        message: error.toString(),
+        backgroundColor: Colors.red,
+      );
+    }
+  }
+
+  void _publicarEncuesta() {
+    var formData = {
+      "nombre": widget.nombreController.text,
+      "idFrecuencia": widget.frecuencia["id"],
+      "idClasificacion": widget.clasificacionController.text,
+      "idRama": widget.ramaController.text,
+      "preguntas":
+          widget.preguntas.map((pregunta) => pregunta.toJson()).toList(),
+    };
+    if (widget.accion == "registrar") {
+      _guardarEncuesta(formData);
+    } else if (widget.accion == "editar") {
+      _guardarEncuesta(formData);
+    }
+    // Aquí podrías enviar la encuesta a Firebase o una API
+  }
+
   String get buttonLabel {
     if (widget.accion == 'registrar') {
       return 'Guardar';
@@ -222,7 +305,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => CrearEncuestaPantalla2Screen(
+          builder: (context) => CrearEncuestaPantalla1Screen(
               showModal: widget.showModal,
               //final Function onCompleted;
               accion: widget.accion,
@@ -230,8 +313,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
               nombreController: widget.nombreController,
               ramaController: widget.ramaController,
               clasificacionController: widget.clasificacionController,
-              secciones: widget.secciones,
-              preguntas: widget.preguntas,
               onCompleted: widget.onCompleted)),
     ).then((_) {
       // Actualizar encuestas al regresar de la página
@@ -280,6 +361,29 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                   size: 24,
                                 )
                               : Text("Regresar"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _isLoading ? null : _publicarEncuesta,
+                          icon: Icon(FontAwesomeIcons.plus),
+                          label: _isLoading
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SpinKitFadingCircle(
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text("Cargando..."),
+                                  ],
+                                )
+                              : Text(buttonLabel),
                         ),
                       ],
                     ),
@@ -339,9 +443,8 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                               itemBuilder: (context, index) {
                                 // Verificar si la categoría coincide antes de crear el widget
                                 if (widget.preguntas[index].categoria !=
-                                    widget.categoria) {
-                                  return SizedBox
-                                      .shrink(); // Retornar un widget vacío si no coincide
+                                    "Default") {
+                                  return SizedBox.shrink();
                                 }
                                 return Card(
                                   margin: EdgeInsets.symmetric(vertical: 5),

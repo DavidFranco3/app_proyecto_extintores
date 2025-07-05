@@ -467,8 +467,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                         child: Row(
                           children: [
                             FaIcon(
-                              FontAwesomeIcons.fileZipper,
-                              color: Colors.yellow,
+                              FontAwesomeIcons.pencil,
+                              color: Colors.lightBlue,
                               size: 16,
                             ),
                             SizedBox(width: 8),

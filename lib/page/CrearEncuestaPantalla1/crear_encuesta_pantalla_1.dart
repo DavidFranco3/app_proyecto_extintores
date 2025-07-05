@@ -7,7 +7,7 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../Encuestas/encuestas.dart';
-import '../CrearEncuestaPantalla2/crear_encuesta_pantalla_2.dart';
+import '../CrearEncuesta/crear_encuesta.dart';
 import '../../components/Generales/pregunta.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -53,6 +53,24 @@ class _CrearEncuestaPantalla1ScreenState
     getFrecuencias();
     getClasificaciones();
     getRamas();
+
+    if (widget.accion == 'editar') {
+      widget.nombreController.text = widget.data['nombre'] ?? '';
+      widget.clasificacionController.text =
+          widget.data['idClasificacion'] ?? '';
+      widget.ramaController.text = widget.data['idRama'] ?? '';
+      frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
+      print(widget.data['preguntas']);
+      preguntas = (widget.data["preguntas"] as List<dynamic>?)
+    ?.map((item) {
+      final map = item as Map<String, dynamic>;
+      return Pregunta(
+        titulo: map['titulo'] ?? '',
+        categoria: map['categoria'] ?? '',
+        opciones: List<String>.from(map['opciones'] ?? []),
+      );
+    }).toList() ?? [];
+    }
   }
 
   Future<void> getClasificaciones() async {
@@ -196,18 +214,18 @@ class _CrearEncuestaPantalla1ScreenState
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CrearEncuestaPantalla2Screen(
+          builder: (context) => CrearEncuestaScreen(
             showModal: () {
               Navigator.pop(context); // Esto cierra el modal
             },
-            accion: "registrar",
-            data: row,
+            accion: widget.accion,
+            data: widget.data,
             nombreController: widget.nombreController,
             ramaController: widget.ramaController,
             clasificacionController: widget.clasificacionController,
-            secciones: secciones,
             preguntas: preguntas,
             onCompleted: widget.onCompleted,
+            frecuencia: row
           ),
         ),
       ).then((_) {});
@@ -282,7 +300,8 @@ class _CrearEncuestaPantalla1ScreenState
                                 value: widget.ramaController.text.isEmpty
                                     ? null
                                     : widget.ramaController.text,
-                                decoration: InputDecoration(labelText: 'Tipo de Sistema'),
+                                decoration: InputDecoration(
+                                    labelText: 'Tipo de Sistema'),
                                 isExpanded: true,
                                 items: dataRamas.map((tipo) {
                                   return DropdownMenuItem<String>(

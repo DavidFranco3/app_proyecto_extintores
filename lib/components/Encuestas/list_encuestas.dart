@@ -4,18 +4,19 @@ import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import '../Generales/formato_fecha.dart';
 import 'lista_preguntas.dart';
+import '../../page/CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
 
 class TblEncuestas extends StatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> encuestas;
   final Function onCompleted;
 
-  TblEncuestas(
-      {Key? key,
-      required this.showModal,
-      required this.encuestas,
-      required this.onCompleted})
-      : super(key: key);
+  TblEncuestas({
+    Key? key,
+    required this.showModal,
+    required this.encuestas,
+    required this.onCompleted,
+  }) : super(key: key);
 
   @override
   _TblEncuestasState createState() => _TblEncuestasState();
@@ -25,6 +26,31 @@ class _TblEncuestasState extends State<TblEncuestas> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
+
+  TextEditingController nombreController = TextEditingController();
+  TextEditingController clasificacionController = TextEditingController();
+  TextEditingController ramaController = TextEditingController();
+
+  void openRegistroPage(row) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CrearEncuestaPantalla1Screen(
+          showModal: () {
+            Navigator.pop(context);
+          },
+          onCompleted: widget.onCompleted,
+          accion: "editar",
+          data: row,
+          nombreController: nombreController,
+          ramaController: ramaController,
+          clasificacionController: clasificacionController,
+        ),
+      ),
+    ).then((_) {
+      widget.onCompleted;
+    });
+  }
 
   void openEliminarModal(row) {
     Navigator.push(
@@ -109,10 +135,23 @@ class _TblEncuestasState extends State<TblEncuestas> {
                       openEliminarModal(row['_originalRow']);
                     } else if (value == 'visualizar') {
                       openViewPreguntas(row['_originalRow']);
+                    } else if (value == "editar") {
+                      openRegistroPage(row['_originalRow']);
                     }
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'editar',
+                      child: Row(
+                        children: [
+                          FaIcon(FontAwesomeIcons.pen,
+                              color: Color(0xFFFFC107), size: 16),
+                          SizedBox(width: 8),
+                          Text('Editar'),
+                        ],
+                      ),
+                    ),
                     PopupMenuItem<String>(
                       value: 'eliminar',
                       child: Row(
