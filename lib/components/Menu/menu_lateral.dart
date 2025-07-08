@@ -15,6 +15,7 @@ import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
 import '../../page/GraficaInspecciones/grafica_inspecciones.dart';
 import '../../page/InspeccionEspecial/inspeccion_especial.dart';
 import '../../page/ReporteFinal/reporte_final.dart';
+import '../../page/Ramas/ramas.dart';
 import '../../page/SeleccionarInspeccionesClientes/seleccionar_inspecciones_clientes.dart';
 import '../Home/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -217,6 +218,12 @@ class _MenuLateralState extends State<MenuLateral> {
                 Icons.calendar_today,
                 'Periodos',
                 FrecuenciasPage(),
+              ),
+              _buildListTile(
+                context,
+                Icons.devices,
+                'Tipos de sistemas',
+                RamasPage(),
               ),
               // Menú principal para Extintores con opciones desplegables
               ExpansionTile(
