@@ -75,7 +75,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
   String imagenEficiencia = "";
   String imagenEficienciaCloudinary = "";
 
-    List<Map<String, dynamic>> uploadedEficiencias =
+  List<Map<String, dynamic>> uploadedEficiencias =
       []; // Array para guardar objetos con enlaces y comentarios
 
   Future<void> seleccionarImagen() async {
@@ -419,10 +419,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
   Future<void> getEncuestas(String idRama, String idFrecuencia,
       String idClasificacion, String idCliente) async {
     try {
-      print("rama" + idRama );
-      print("frecuencia" + idFrecuencia);
-      print("clasificacion" + idClasificacion);
-      print("cliente" + idCliente);
       final encuestaInspeccionClienteService =
           EncuestaInspeccionClienteService();
       final List<dynamic> response = await encuestaInspeccionClienteService
@@ -508,7 +504,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
       showCustomFlushbar(
         context: context,
         title: "Campos incompletos",
-        message: "Por favor, completa todos los campos obligatorios antes de continuar.",
+        message:
+            "Por favor, completa todos los campos obligatorios antes de continuar.",
         backgroundColor: Colors.red,
       );
       return;
@@ -1496,13 +1493,34 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
                                             SizedBox(height: 16),
 
-                                            TextField(
-                                              controller: _comentarioController,
+                                            // Comentario como select de preguntas
+                                            DropdownButtonFormField<String>(
+                                              value: _comentarioController
+                                                      .text.isEmpty
+                                                  ? null
+                                                  : _comentarioController.text,
+                                              isExpanded: true,
                                               decoration: InputDecoration(
-                                                  labelText: "Comentario"),
+                                                labelText:
+                                                    "Selecciona una pregunta (Comentario)",
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              items: preguntas.map((pregunta) {
+                                                return DropdownMenuItem<String>(
+                                                  value: pregunta.titulo,
+                                                  child: Text(pregunta.titulo),
+                                                );
+                                              }).toList(),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _comentarioController.text =
+                                                      value ?? '';
+                                                });
+                                              },
                                             ),
                                             SizedBox(height: 16),
 
+                                            // Campo Valor
                                             TextField(
                                               controller: _valorController,
                                               decoration: InputDecoration(
@@ -1516,6 +1534,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                             ),
                                             SizedBox(height: 16),
 
+                                            // Botón Agregar
                                             Center(
                                               child: ElevatedButton(
                                                 onPressed: _agregarImagen,

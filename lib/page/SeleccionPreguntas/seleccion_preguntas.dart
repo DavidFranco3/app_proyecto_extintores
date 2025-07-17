@@ -202,7 +202,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
               }
             }
             print("hola si");
-print(preguntasSeleccionadas);
+            print(preguntasSeleccionadas);
             if (preguntasSeleccionadas.isNotEmpty) {
               final estructura = {
                 'nombre': encuesta['nombre'],

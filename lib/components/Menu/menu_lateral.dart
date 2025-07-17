@@ -296,6 +296,12 @@ class _MenuLateralState extends State<MenuLateral> {
               ),
               _buildListTile(
                 context,
+                Icons.report_problem, // Ícono representativo de inspección
+                'Historial de actividades',
+                InspeccionesPantalla1Page(),
+              ),
+              _buildListTile(
+                context,
                 Icons.next_week_sharp, // Ícono representativo de inspección
                 'Actividades proximas',
                 InspeccionesProximasPage(),

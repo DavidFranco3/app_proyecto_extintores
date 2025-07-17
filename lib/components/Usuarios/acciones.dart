@@ -351,7 +351,7 @@ class _AccionesState extends State<Acciones> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Periodos"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Usuarios"), // Usa el menú lateral
       body: _isLoading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
