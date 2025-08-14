@@ -12,6 +12,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import '../../components/Logs/logs_informativos.dart';
 import '../../api/encuesta_inspeccion.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -62,32 +65,231 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   void initState() {
     super.initState();
     getFrecuencias();
-    getClasificaciones();
-    getRamas();
+    cargarClasificaciones();
+    cargarRamas();
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
   }
 
-  Future<void> getClasificaciones() async {
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineEncuestas');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final encuestasService = EncuestaInspeccionService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        if (operacion['accion'] == 'registrar') {
+          final response = await encuestasService
+              .registraEncuestaInspeccion(operacion['data']);
+
+          if (response['status'] == 200 && response['data'] != null) {
+            final encuestasBox = Hive.box('encuestasBox');
+            final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+
+            actuales.add({
+              'id': response['data']['_id'],
+              'nombre': response['data']['nombre'],
+              'descripcion': response['data']['descripcion'],
+              'estado': response['data']['estado'],
+              'createdAt': response['data']['createdAt'],
+              'updatedAt': response['data']['updatedAt'],
+            });
+
+            await encuestasBox.put('encuestas', actuales);
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'editar') {
+          final response = await encuestasService.actualizarEncuestaInspeccion(
+              operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final encuestasBox = Hive.box('encuestasBox');
+            final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await encuestasBox.put('encuestas', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'eliminar') {
+          final response = await encuestasService
+              .deshabilitarEncuestaInspeccion(
+                  operacion['id'], {'estado': 'false'});
+
+          if (response['status'] == 200) {
+            final encuestasBox = Hive.box('encuestasBox');
+            final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                'estado': 'false',
+                'updatedAt': DateTime.now().toString(),
+              };
+              await encuestasBox.put('encuestas', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        }
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      // 🔄 Si alguna falló, conserva solo las pendientes
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    // ✅ Actualizar lista completa desde API
+    try {
+      final List<dynamic> dataAPI =
+          await encuestasService.listarEncuestaInspeccion();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'nombre': item['nombre'],
+                'idFrecuencia': item['idFrecuencia'],
+                'idClasificacion': item['idClasificacion'],
+                'idRama': item['idRama'],
+                'frecuencia': item['frecuencia']['nombre'],
+                'clasificacion': item['clasificacion']['nombre'],
+                'rama': item['rama']['nombre'],
+                'preguntas': item['preguntas'],
+                'estado': item['estado'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final encuestasBox = Hive.box('encuestasBox');
+      await encuestasBox.put('encuestas', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
+  }
+
+  Future<void> cargarClasificaciones() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClasificacionesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClasificacionesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getClasificacionesDesdeAPI() async {
     try {
       final clasificacionesService = ClasificacionesService();
       final List<dynamic> response =
           await clasificacionesService.listarClasificaciones();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateadas = formatModelClasificaciones(response);
+
+        // Guardar en Hive
+        final box = Hive.box('clasificacionesBox');
+        await box.put('clasificaciones', formateadas);
+
         setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = formateadas;
+          loading = false;
         });
       } else {
         setState(() {
-          dataClasificaciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = [];
+          loading = false;
         });
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
+      print("Error al obtener las clasificaciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getClasificacionesDesdeHive() async {
+    final box = Hive.box('clasificacionesBox');
+    final List<dynamic>? guardadas = box.get('clasificaciones');
+
+    if (guardadas != null) {
+      final filtradas = (guardadas as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .where((item) => item['estado'] == "true")
+          .toList();
+
+      setState(() {
+        dataClasificaciones = filtradas;
+        loading = false;
+      });
+    } else {
+      setState(() {
+        dataClasificaciones = [];
+        loading = false;
       });
     }
   }
@@ -109,15 +311,31 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
   }
 
   Future<void> getFrecuencias() async {
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getFrecuenciasDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getFrecuenciasDesdeHive();
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeAPI() async {
     try {
       final frecuenciasService = FrecuenciasService();
       final List<dynamic> response =
           await frecuenciasService.listarFrecuencias();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateados = formatModelFrecuencias(response);
+
+        // Guardar en Hive
+        final box = Hive.box('frecuenciasBox');
+        await box.put('frecuencias', formateados);
+
         setState(() {
-          dataFrecuencias = formatModelFrecuencias(response);
+          dataFrecuencias = formateados;
           loading = false;
         });
       } else {
@@ -128,6 +346,34 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       }
     } catch (e) {
       print("Error al obtener las frecuencias: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeHive() async {
+    try {
+      final box = Hive.box('frecuenciasBox');
+      final List<dynamic>? guardados = box.get('frecuencias');
+
+      if (guardados != null) {
+        setState(() {
+          dataFrecuencias = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataFrecuencias = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -150,27 +396,53 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     return dataTemp;
   }
 
-  Future<void> getRamas() async {
+  Future<void> cargarRamas() async {
     try {
-      final ramasService = RamasService();
-      final List<dynamic> response = await ramasService.listarRamas();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataRamas = formatModelRamas(response);
-          loading = false; // Desactivar el estado de carga
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getRamasDesdeAPI();
       } else {
-        setState(() {
-          dataRamas = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las ramas: $e");
+      print("Error general al cargar ramas: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataRamas = [];
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeAPI() async {
+    final ramasService = RamasService();
+    final List<dynamic> response = await ramasService.listarRamas();
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelRamas(response);
+
+      final box = Hive.box('ramasBox');
+      await box.put('ramas', formateadas);
+
+      setState(() {
+        dataRamas = formateadas;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeHive() async {
+    final box = Hive.box('ramasBox');
+    final List<dynamic>? guardadas = box.get('ramas');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
+      setState(() {
+        dataRamas = locales;
       });
     }
   }
@@ -216,6 +488,8 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
       'idFrecuencia': data['idFrecuencia'],
@@ -225,6 +499,75 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       'estado': "true",
     };
 
+    if (!conectado) {
+      // Guardar localmente la operación pendiente
+      final box = Hive.box('operacionesOfflineEncuestas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': widget.accion, // "registrar" o "editar"
+        'id': widget.accion == "editar" ? widget.data["id"] : null,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      // Guardar la encuesta localmente
+      final encuestasBox = Hive.box('encuestasBox');
+      final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      if (widget.accion == "editar") {
+        // Actualizar localmente la encuesta con id que se tiene
+        final index = actuales
+            .indexWhere((element) => element['id'] == widget.data["id"]);
+        if (index != -1) {
+          actuales[index] = {
+            'id': widget.data["id"],
+            ...dataTemp,
+            'updatedAt': DateTime.now().toIso8601String(),
+          };
+        } else {
+          // Si no la encuentra, la agrega como nueva con id temporal
+          actuales.add({
+            'id': widget.data["id"] ?? DateTime.now().toIso8601String(),
+            ...dataTemp,
+            'createdAt': DateTime.now().toIso8601String(),
+            'updatedAt': DateTime.now().toIso8601String(),
+          });
+        }
+      } else {
+        // Si es registrar, agregar con id temporal
+        actuales.add({
+          'id': DateTime.now().toIso8601String(),
+          ...dataTemp,
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      }
+
+      await encuestasBox.put('encuestas', actuales);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      widget.onCompleted();
+      widget.showModal();
+
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Encuesta guardada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+
+      return;
+    }
+
+    // Si hay conexión, hacer llamada al servicio normalmente
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
       var response;
@@ -235,9 +578,8 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         response = await encuestaInspeccionService.actualizarEncuestaInspeccion(
             widget.data["id"], dataTemp);
       }
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
           returnPrincipalPage();
@@ -252,7 +594,6 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });

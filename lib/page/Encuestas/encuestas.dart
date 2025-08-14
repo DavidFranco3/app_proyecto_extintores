@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Encuestas/list_encuestas.dart';
 import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
@@ -19,77 +23,48 @@ class _EncuestasPageState extends State<EncuestasPage> {
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> filteredEncuestas = [];
 
-  TextEditingController nombreController = TextEditingController();
-  TextEditingController clasificacionController = TextEditingController();
-  TextEditingController ramaController = TextEditingController();
-
   String? selectedFrecuencia;
   String? selectedClasificacion;
 
   List<Map<String, dynamic>> dataFrecuencias = [];
   List<Map<String, dynamic>> dataClasificaciones = [];
 
+  TextEditingController nombreController = TextEditingController();
+  TextEditingController clasificacionController = TextEditingController();
+  TextEditingController ramaController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    getEncuestas();
-    getClasificaciones();
-    getFrecuencias();
+    cargarTodo();
   }
 
-  Future<void> getClasificaciones() async {
-    try {
-      final clasificacionesService = ClasificacionesService();
-      final List<dynamic> response =
-          await clasificacionesService.listarClasificaciones();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
-          loading = false; // Desactivar el estado de carga
-        });
-      } else {
-        setState(() {
-          dataClasificaciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
-      }
-    } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
-      setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
-      });
-    }
+  Future<void> cargarTodo() async {
+    await getClasificaciones();
+    await getFrecuencias();
+    await getEncuestas();
   }
 
-  Future<void> getFrecuencias() async {
-    try {
-      final frecuenciasService = FrecuenciasService();
-      final List<dynamic> response =
-          await frecuenciasService.listarFrecuencias();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataFrecuencias = formatModelFrecuencias(response);
-          loading = false;
-        });
-      } else {
-        setState(() {
-          loading = false;
-          dataFrecuencias = [];
-        });
-      }
-    } catch (e) {
-      print("Error al obtener las frecuencias: $e");
-      setState(() {
-        loading = false;
-      });
-    }
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
   }
+
+  // --- ENCUESTAS ---
 
   Future<void> getEncuestas() async {
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getEncuestasDesdeAPI();
+    } else {
+      print("Sin conexión, cargando encuestas desde Hive...");
+      await getEncuestasDesdeHive();
+    }
+  }
+
+  Future<void> getEncuestasDesdeAPI() async {
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
       final List<dynamic> response =
@@ -97,10 +72,14 @@ class _EncuestasPageState extends State<EncuestasPage> {
 
       if (response.isNotEmpty) {
         final encuestasFormateadas = formatModelEncuestas(response);
+
+        // Guardar en Hive
+        final box = Hive.box('encuestasBox');
+        await box.put('encuestas', encuestasFormateadas);
+
         setState(() {
           dataEncuestas = encuestasFormateadas;
-          filteredEncuestas =
-              encuestasFormateadas; // <- importante para mostrar
+          filteredEncuestas = encuestasFormateadas;
           loading = false;
         });
       } else {
@@ -111,9 +90,166 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
+      print("Error al obtener encuestas desde API: $e");
       setState(() {
         loading = false;
+      });
+    }
+  }
+
+  Future<void> getEncuestasDesdeHive() async {
+    try {
+      final box = Hive.box('encuestasBox');
+      final List<dynamic>? guardadas = box.get('encuestas');
+
+      if (guardadas != null) {
+        setState(() {
+          dataEncuestas = (guardadas as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          filteredEncuestas = dataEncuestas;
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataEncuestas = [];
+          filteredEncuestas = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error leyendo encuestas desde Hive: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  // --- CLASIFICACIONES ---
+
+  Future<void> getClasificaciones() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      await getClasificacionesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando clasificaciones desde Hive...");
+      await getClasificacionesDesdeHive();
+    }
+  }
+
+  Future<void> getClasificacionesDesdeAPI() async {
+    try {
+      final clasificacionesService = ClasificacionesService();
+      final List<dynamic> response =
+          await clasificacionesService.listarClasificaciones();
+
+      if (response.isNotEmpty) {
+        final clasificacionesFormateadas = formatModelClasificaciones(response);
+
+        final box = Hive.box('clasificacionesBox');
+        await box.put('clasificaciones', clasificacionesFormateadas);
+
+        setState(() {
+          dataClasificaciones = clasificacionesFormateadas;
+        });
+      } else {
+        setState(() {
+          dataClasificaciones = [];
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las clasificaciones desde API: $e");
+      setState(() {
+        dataClasificaciones = [];
+      });
+    }
+  }
+
+  Future<void> getClasificacionesDesdeHive() async {
+    try {
+      final box = Hive.box('clasificacionesBox');
+      final List<dynamic>? guardadas = box.get('clasificaciones');
+
+      if (guardadas != null) {
+        setState(() {
+          dataClasificaciones = (guardadas as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .toList();
+        });
+      } else {
+        setState(() {
+          dataClasificaciones = [];
+        });
+      }
+    } catch (e) {
+      print("Error leyendo clasificaciones desde Hive: $e");
+      setState(() {
+        dataClasificaciones = [];
+      });
+    }
+  }
+
+  // --- FRECUENCIAS ---
+
+  Future<void> getFrecuencias() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      await getFrecuenciasDesdeAPI();
+    } else {
+      print("Sin conexión, cargando frecuencias desde Hive...");
+      await getFrecuenciasDesdeHive();
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeAPI() async {
+    try {
+      final frecuenciasService = FrecuenciasService();
+      final List<dynamic> response =
+          await frecuenciasService.listarFrecuencias();
+
+      if (response.isNotEmpty) {
+        final frecuenciasFormateadas = formatModelFrecuencias(response);
+
+        final box = Hive.box('frecuenciasBox');
+        await box.put('frecuencias', frecuenciasFormateadas);
+
+        setState(() {
+          dataFrecuencias = frecuenciasFormateadas;
+        });
+      } else {
+        setState(() {
+          dataFrecuencias = [];
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las frecuencias desde API: $e");
+      setState(() {
+        dataFrecuencias = [];
+      });
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeHive() async {
+    try {
+      final box = Hive.box('frecuenciasBox');
+      final List<dynamic>? guardadas = box.get('frecuencias');
+
+      if (guardadas != null) {
+        setState(() {
+          dataFrecuencias = (guardadas as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .toList();
+        });
+      } else {
+        setState(() {
+          dataFrecuencias = [];
+        });
+      }
+    } catch (e) {
+      print("Error leyendo frecuencias desde Hive: $e");
+      setState(() {
+        dataFrecuencias = [];
       });
     }
   }
@@ -178,36 +314,26 @@ class _EncuestasPageState extends State<EncuestasPage> {
     }).toList();
   }
 
-  // Función para formatear los datos de las frecuencias
   List<Map<String, dynamic>> formatModelFrecuencias(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'cantidadDias': item['cantidadDias'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+    return data.map((item) => {
+          'id': item['_id'],
+          'nombre': item['nombre'],
+          'cantidadDias': item['cantidadDias'],
+          'estado': item['estado'],
+          'createdAt': item['createdAt'],
+          'updatedAt': item['updatedAt'],
+        }).toList();
   }
 
-  // Función para formatear los datos de las clasificaciones
   List<Map<String, dynamic>> formatModelClasificaciones(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'descripcion': item['descripcion'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+    return data.map((item) => {
+          'id': item['_id'],
+          'nombre': item['nombre'],
+          'descripcion': item['descripcion'],
+          'estado': item['estado'],
+          'createdAt': item['createdAt'],
+          'updatedAt': item['updatedAt'],
+        }).toList();
   }
 
   @override
@@ -241,8 +367,6 @@ class _EncuestasPageState extends State<EncuestasPage> {
                     ),
                   ),
                 ),
-
-                // Filtros con selects
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Column(
@@ -288,7 +412,6 @@ class _EncuestasPageState extends State<EncuestasPage> {
                     ],
                   ),
                 ),
-
                 Expanded(
                   child: TblEncuestas(
                     showModal: () {

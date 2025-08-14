@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
         context: context,
         title: "Bienvenido ${userName}",
         message:
-            "Bienvenido ${userName} recueda que la sesion expira automaticamente despues de 24 horas",
+            "Bienvenido ${userName} recueda que la sesion expira automaticamente despues de 48 horas",
         backgroundColor: Colors.green,
       );
       // Esperar un pequeño retraso antes de navegar

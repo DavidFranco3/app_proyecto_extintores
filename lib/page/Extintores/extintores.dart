@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+
 import '../../api/extintores.dart';
 import '../../components/Extintores/list_extintores.dart';
 import '../../components/Extintores/acciones.dart';
@@ -15,6 +19,7 @@ class ExtintoresPage extends StatefulWidget {
 class _ExtintoresPageState extends State<ExtintoresPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataExtintores = [];
+  bool showModal = false;
 
   @override
   void initState() {
@@ -22,21 +27,42 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     getExtintores();
   }
 
-  Future<void> getExtintores() async {
-    try {
-      final frecuenciasService = ExtintoresService();
-      final List<dynamic> response =
-          await frecuenciasService.listarExtintores();
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
+  Future<void> getExtintores() async {
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getExtintoresDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getExtintoresDesdeHive();
+    }
+  }
+
+  Future<void> getExtintoresDesdeAPI() async {
+    try {
+      final extintoresService = ExtintoresService();
+      final List<dynamic> response = await extintoresService.listarExtintores();
+
       if (response.isNotEmpty) {
+        final formateados = formatModelExtintores(response);
+
+        // Guardar en Hive
+        final box = Hive.box('extintoresBox');
+        await box.put('extintores', formateados);
+
         setState(() {
-          dataExtintores = formatModelExtintores(response);
+          dataExtintores = formateados;
           loading = false;
         });
       } else {
         setState(() {
-          dataExtintores = []; // Lista vacía
+          dataExtintores = [];
           loading = false;
         });
       }
@@ -48,9 +74,34 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getExtintoresDesdeHive() async {
+    try {
+      final box = Hive.box('extintoresBox');
+      final List<dynamic>? guardados = box.get('extintores');
 
-  // Función para abrir el modal de registro con el formulario de Acciones
+      if (guardados != null) {
+        setState(() {
+          dataExtintores = (guardados as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataExtintores = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error leyendo Hive: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  // Función para abrir el modal de registro
   void openRegistroModal() {
     Navigator.push(
       context,
@@ -58,7 +109,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
         builder: (BuildContext context) {
           return Acciones(
             showModal: () {
-              Navigator.pop(context); // Esto cierra la pantalla
+              Navigator.pop(context);
             },
             onCompleted: getExtintores,
             accion: "registrar",
@@ -69,62 +120,50 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     );
   }
 
-// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
   }
 
-  // Función para formatear los datos de las extintores
   List<Map<String, dynamic>> formatModelExtintores(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'numeroSerie': item['numeroSerie'],
-        'idTipoExtintor': item['idTipoExtintor'],
-        'extintor': item['tipoExtintor']['nombre'],
-        'capacidad': item['capacidad'],
-        'ultimaRecarga': item['ultimaRecarga'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+    return data.map((item) => {
+      'id': item['_id'],
+      'numeroSerie': item['numeroSerie'],
+      'idTipoExtintor': item['idTipoExtintor'],
+      'extintor': item['tipoExtintor']['nombre'],
+      'capacidad': item['capacidad'],
+      'ultimaRecarga': item['ultimaRecarga'],
+      'estado': item['estado'],
+      'createdAt': item['createdAt'],
+      'updatedAt': item['updatedAt'],
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Extintores"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Extintores"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Extintores",
-                      style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
-                      ),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                // Centra el botón de registrar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroModal,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
@@ -133,20 +172,17 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
                 Expanded(
                   child: TblExtintores(
                     showModal: () {
-                      Navigator.pop(
-                          context); // Cierra el modal después de registrar
+                      Navigator.pop(context);
                     },
                     extintores: dataExtintores,
-                    onCompleted:
-                        getExtintores, // Pasa la función para que se pueda llamar desde el componente
+                    onCompleted: getExtintores,
                   ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

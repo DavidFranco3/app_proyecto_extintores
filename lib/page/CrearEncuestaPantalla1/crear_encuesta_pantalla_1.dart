@@ -10,6 +10,9 @@ import '../Encuestas/encuestas.dart';
 import '../CrearEncuesta/crear_encuesta.dart';
 import '../../components/Generales/pregunta.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class CrearEncuestaPantalla1Screen extends StatefulWidget {
   final VoidCallback showModal;
@@ -51,8 +54,8 @@ class _CrearEncuestaPantalla1ScreenState
   void initState() {
     super.initState();
     getFrecuencias();
-    getClasificaciones();
-    getRamas();
+    cargarClasificaciones();
+    cargarRamas();
 
     if (widget.accion == 'editar') {
       widget.nombreController.text = widget.data['nombre'] ?? '';
@@ -73,28 +76,73 @@ class _CrearEncuestaPantalla1ScreenState
     }
   }
 
-  Future<void> getClasificaciones() async {
+  Future<void> cargarClasificaciones() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClasificacionesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClasificacionesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getClasificacionesDesdeAPI() async {
     try {
       final clasificacionesService = ClasificacionesService();
       final List<dynamic> response =
           await clasificacionesService.listarClasificaciones();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateadas = formatModelClasificaciones(response);
+
+        // Guardar en Hive
+        final box = Hive.box('clasificacionesBox');
+        await box.put('clasificaciones', formateadas);
+
         setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = formateadas;
+          loading = false;
         });
       } else {
         setState(() {
-          dataClasificaciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = [];
+          loading = false;
         });
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
+      print("Error al obtener las clasificaciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getClasificacionesDesdeHive() async {
+    final box = Hive.box('clasificacionesBox');
+    final List<dynamic>? guardadas = box.get('clasificaciones');
+
+    if (guardadas != null) {
+      final filtradas = (guardadas as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .where((item) => item['estado'] == "true")
+          .toList();
+
+      setState(() {
+        dataClasificaciones = filtradas;
+        loading = false;
+      });
+    } else {
+      setState(() {
+        dataClasificaciones = [];
+        loading = false;
       });
     }
   }
@@ -116,15 +164,31 @@ class _CrearEncuestaPantalla1ScreenState
   }
 
   Future<void> getFrecuencias() async {
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getFrecuenciasDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getFrecuenciasDesdeHive();
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeAPI() async {
     try {
       final frecuenciasService = FrecuenciasService();
       final List<dynamic> response =
           await frecuenciasService.listarFrecuencias();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateados = formatModelFrecuencias(response);
+
+        // Guardar en Hive
+        final box = Hive.box('frecuenciasBox');
+        await box.put('frecuencias', formateados);
+
         setState(() {
-          dataFrecuencias = formatModelFrecuencias(response);
+          dataFrecuencias = formateados;
           loading = false;
         });
       } else {
@@ -135,6 +199,34 @@ class _CrearEncuestaPantalla1ScreenState
       }
     } catch (e) {
       print("Error al obtener las frecuencias: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeHive() async {
+    try {
+      final box = Hive.box('frecuenciasBox');
+      final List<dynamic>? guardados = box.get('frecuencias');
+
+      if (guardados != null) {
+        setState(() {
+          dataFrecuencias = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataFrecuencias = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -157,27 +249,53 @@ class _CrearEncuestaPantalla1ScreenState
     return dataTemp;
   }
 
-  Future<void> getRamas() async {
+  Future<void> cargarRamas() async {
     try {
-      final ramasService = RamasService();
-      final List<dynamic> response = await ramasService.listarRamas();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataRamas = formatModelRamas(response);
-          loading = false; // Desactivar el estado de carga
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getRamasDesdeAPI();
       } else {
-        setState(() {
-          dataRamas = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las ramas: $e");
+      print("Error general al cargar ramas: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataRamas = [];
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeAPI() async {
+    final ramasService = RamasService();
+    final List<dynamic> response = await ramasService.listarRamas();
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelRamas(response);
+
+      final box = Hive.box('ramasBox');
+      await box.put('ramas', formateadas);
+
+      setState(() {
+        dataRamas = formateadas;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeHive() async {
+    final box = Hive.box('ramasBox');
+    final List<dynamic>? guardadas = box.get('ramas');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
+      setState(() {
+        dataRamas = locales;
       });
     }
   }

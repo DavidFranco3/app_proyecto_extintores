@@ -7,6 +7,9 @@ import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -43,6 +46,14 @@ class _AccionesState extends State<Acciones> {
         _isLoading = false;
       });
     });
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
   }
 
   @override
@@ -51,10 +62,152 @@ class _AccionesState extends State<Acciones> {
     super.dispose();
   }
 
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
     widget.showModal(); // Llama a setShow con el valor booleano
     widget.onCompleted();
+  }
+
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineRamas');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final ramasService = RamasService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        if (operacion['accion'] == 'registrar') {
+          final response = await ramasService.registrarRamas(operacion['data']);
+
+          if (response['status'] == 200 && response['data'] != null) {
+            final ramasBox = Hive.box('ramasBox');
+            final actualesRaw = ramasBox.get('ramas', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+
+            actuales.add({
+              'id': response['data']['_id'],
+              'nombre': response['data']['nombre'],
+              'descripcion': response['data']['descripcion'],
+              'estado': response['data']['estado'],
+              'createdAt': response['data']['createdAt'],
+              'updatedAt': response['data']['updatedAt'],
+            });
+
+            await ramasBox.put('ramas', actuales);
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'editar') {
+          final response = await ramasService.actualizarRamas(
+              operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final ramasBox = Hive.box('ramasBox');
+            final actualesRaw = ramasBox.get('ramas', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await ramasBox.put('ramas', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'eliminar') {
+          final response = await ramasService
+              .deshabilitarRamas(operacion['id'], {'estado': 'false'});
+
+          if (response['status'] == 200) {
+            final ramasBox = Hive.box('ramasBox');
+            final actualesRaw = ramasBox.get('ramas', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                'estado': 'false',
+                'updatedAt': DateTime.now().toString(),
+              };
+              await ramasBox.put('ramas', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        }
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      // 🔄 Si alguna falló, conserva solo las pendientes
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    // ✅ Actualizar lista completa desde API
+    try {
+      final List<dynamic> dataAPI = await ramasService.listarRamas();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'nombre': item['nombre'],
+                'estado': item['estado'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final ramasBox = Hive.box('ramasBox');
+      await ramasBox.put('ramas', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
   }
 
   void _guardarRama(Map<String, dynamic> data) async {
@@ -62,24 +215,65 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
       'estado': "true",
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineRamas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'registrar',
+        'id': null,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final ramasBox = Hive.box('ramasBox');
+      final actualesRaw = ramasBox.get('ramas', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      actuales.add({
+        'id': DateTime.now().toIso8601String(),
+        ...dataTemp,
+        'createdAt': DateTime.now().toString(),
+        'updatedAt': DateTime.now().toString(),
+      });
+      await ramasBox.put('ramas', actuales);
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Rama guardada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final ramasService = RamasService();
       var response = await ramasService.registrarRamas(dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha registrado la rama ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha registrado la rama ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
@@ -87,14 +281,13 @@ class _AccionesState extends State<Acciones> {
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
         showCustomFlushbar(
           context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la clasificacion",
+          title: "Error",
+          message: "No se pudo guardar la rama",
           backgroundColor: Colors.red,
         );
       }
@@ -116,26 +309,72 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineRamas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final ramasBox = Hive.box('ramasBox');
+      final actualesRaw = ramasBox.get('ramas', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      // Actualiza localmente el registro editado
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          ...dataTemp,
+          'updatedAt': DateTime.now().toString(),
+        };
+        await ramasBox.put('ramas', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Rama actualizada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final ramasService = RamasService();
-      var response =
-          await ramasService.actualizarRamas(id, dataTemp);
+      var response = await ramasService.actualizarRamas(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha modificado la rama ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha actualizado la rama ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Actualizacion exitosa",
-          message: "Los datos de la rama fueron agregados correctamente",
+          title: "Actualización exitosa",
+          message: "Los datos de la rama fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
       }
@@ -157,22 +396,68 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {'estado': "false"};
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineRamas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'eliminar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final ramasBox = Hive.box('ramasBox');
+      final actualesRaw = ramasBox.get('ramas', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          'estado': 'false',
+          'updatedAt': DateTime.now().toString(),
+        };
+        await ramasBox.put('ramas', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Rama eliminada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
       final ramasService = RamasService();
-      var response = await ramasService.deshabilitarRamas(
-          id, dataTemp);
+      var response = await ramasService.deshabilitarRamas(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha eliminado la rama ${data['nombre']} correctamente", {});
+            "Se ha eliminado la rama ${data['id']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Eliminacion exitosa",
+          title: "Eliminación exitosa",
           message: "Se han eliminado correctamente los datos de la rama",
           backgroundColor: Colors.green,
         );
@@ -227,7 +512,8 @@ class _AccionesState extends State<Acciones> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Tipos de sistema"), // Usa el menú lateral
+      drawer:
+          MenuLateral(currentPage: "Tipos de sistema"), // Usa el menú lateral
       body: _isLoading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(

@@ -24,6 +24,8 @@ import '../Logs/logs_informativos.dart';
 import '../../api/auth.dart';
 import '../../api/usuarios.dart';
 import '../../page/SeleccionPreguntas/seleccion_preguntas.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class MenuLateral extends StatefulWidget {
   final String currentPage;
@@ -36,11 +38,31 @@ class MenuLateral extends StatefulWidget {
 
 class _MenuLateralState extends State<MenuLateral> {
   String? tipoUsuario;
+  bool? tieneInternet;
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+
+    if (tipoConexion == ConnectivityResult.none) {
+      return false;
+    }
+
+    final tieneInternet = await InternetConnection().hasInternetAccess;
+    return tieneInternet;
+  }
 
   @override
   void initState() {
     super.initState();
-    _obtenerTipoUsuario();
+    verificarConexion().then((conectado) {
+      setState(() {
+        tieneInternet = conectado;
+      });
+      // Solo intenta obtener tipoUsuario si hay internet
+      if (conectado) {
+        _obtenerTipoUsuario();
+      }
+    });
   }
 
   Future<void> _obtenerTipoUsuario() async {
@@ -62,41 +84,48 @@ class _MenuLateralState extends State<MenuLateral> {
       });
     } catch (e) {
       print('Error al obtener tipo de usuario: $e');
+      setState(() {
+        tipoUsuario = null;
+      });
     }
   }
 
   Future<void> _logout(BuildContext context) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('isLoggedIn'); // Remueve el estado de sesión
-      LogsInformativos("Sesión cerrada correctamente", {}); // Log informativo
-      AuthService authService =
-          AuthService(); // Instancia el servicio de autenticación
-      await authService.logoutApi(); // Llama a la API para cerrar sesión
+      await prefs.remove('isLoggedIn');
+      LogsInformativos("Sesión cerrada correctamente", {});
+      AuthService authService = AuthService();
+      await authService.logoutApi();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-            builder: (context) => LoginPage()), // Navega a la página de login
-        (route) => false, // Elimina todas las rutas previas
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (route) => false,
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Error al cerrar sesión')), // Muestra error en caso de fallo
+        SnackBar(content: Text('Error al cerrar sesión')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: SizedBox(
+    if (tieneInternet == null) {
+      // Mientras se verifica conexión, muestra loader
+      return Drawer(
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Si no hay internet, muestra todo el menú sin filtrar, aunque tipoUsuario sea null
+    if (tieneInternet == false) {
+      return Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             Container(
-              height: 90, // Reduciendo el tamaño
+              height: 90,
               color: const Color.fromARGB(255, 112, 114, 113),
               child: Center(
                 child: Text(
@@ -105,220 +134,60 @@ class _MenuLateralState extends State<MenuLateral> {
                 ),
               ),
             ),
-            // Verifica el tipo de usuario para mostrar el menú correspondiente
-            if (tipoUsuario == 'administrador') ...[
-              _buildListTile(
-                context,
-                Icons.home,
-                'Inicio',
-                HomePage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.person,
-                'Clientes',
-                ClientesPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.fact_check,
-                'Actividad anual',
-                InspeccionEspecialPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.sticky_note_2,
-                'Reporte de actividades y pruebas',
-                ReporteFinalPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.manage_accounts,
-                'Configuración de Cliente',
-                EncuestasJerarquicasWidget(),
-              ),
-              // Submenú de Inspecciones
-              ExpansionTile(
-                leading: Icon(Icons.check_box_outline_blank),
-                title: Text(
-                  'Actividades',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
-                ),
-                dense: true,
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.zero), // Elimina la línea inferior
-                collapsedShape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.zero), // Elimina la línea superior
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Column(
-                      children: [
-                        _buildListTile(
-                          context,
-                          Icons.poll, // Icono relacionado con encuestas
-                          'Crear actividad',
-                          EncuestasPage(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons
-                              .assignment, // Icono relacionado con inspecciones
-                          'Aplicar actividad',
-                          EncuestaPage(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons
-                              .report_problem, // Ícono representativo de inspección
-                          'Historial de actividades',
-                          InspeccionesPantalla1Page(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons
-                              .report_problem, // Ícono representativo de inspección
-                          'Seleccionar actividad',
-                          ClienteInspeccionesApp(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons
-                              .next_week_sharp, // Ícono representativo de inspección
-                          'Actividades próximas',
-                          InspeccionesProximasPage(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons.date_range, // Ícono representativo de programa
-                          'Programa de actividades',
-                          ProgramaInspeccionesPage(),
-                        ),
-                        _buildListTile(
-                          context,
-                          Icons.show_chart, // Ícono representativo de gráfico
-                          'Gráfico de actividades',
-                          GraficaInspeccionesPage(),
-                        ),
-                      ],
-                    ),
+
+            // TODO sin filtro ni validación
+            _buildListTile(context, Icons.home, 'Inicio', HomePage()),
+            _buildListTile(context, Icons.person, 'Clientes', ClientesPage()),
+            _buildListTile(context, Icons.fact_check, 'Actividad anual', InspeccionEspecialPage()),
+            _buildListTile(context, Icons.sticky_note_2, 'Reporte de actividades y pruebas', ReporteFinalPage()),
+            _buildListTile(context, Icons.manage_accounts, 'Configuración de Cliente', EncuestasJerarquicasWidget()),
+            ExpansionTile(
+              leading: Icon(Icons.check_box_outline_blank),
+              title: Text('Actividades', style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
+              dense: true,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: Column(
+                    children: [
+                      _buildListTile(context, Icons.poll, 'Crear actividad', EncuestasPage()),
+                      _buildListTile(context, Icons.assignment, 'Aplicar actividad', EncuestaPage()),
+                      _buildListTile(context, Icons.report_problem, 'Historial de actividades', InspeccionesPantalla1Page()),
+                      _buildListTile(context, Icons.report_problem, 'Seleccionar actividad', ClienteInspeccionesApp()),
+                      _buildListTile(context, Icons.next_week_sharp, 'Actividades próximas', InspeccionesProximasPage()),
+                      _buildListTile(context, Icons.date_range, 'Programa de actividades', ProgramaInspeccionesPage()),
+                      _buildListTile(context, Icons.show_chart, 'Gráfico de actividades', GraficaInspeccionesPage()),
+                    ],
                   ),
-                ],
-              ),
-              _buildListTile(
-                context,
-                FontAwesomeIcons.list,
-                'Clasificaciones',
-                ClasificacionesPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.calendar_today,
-                'Periodos',
-                FrecuenciasPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.devices,
-                'Tipos de sistemas',
-                RamasPage(),
-              ),
-              // Menú principal para Extintores con opciones desplegables
-              ExpansionTile(
-                leading: Icon(FontAwesomeIcons.fireFlameCurved),
-                title: Text(
-                  'Extintores',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
                 ),
-                dense: true,
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.zero), // Elimina la línea inferior
-                collapsedShape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.zero), // Elimina la línea superior
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Column(
-                      children: [
-                        _buildListTile(
-                          context,
-                          FontAwesomeIcons.fireExtinguisher,
-                          'Extintores',
-                          ExtintoresPage(),
-                        ),
-                        _buildListTile(
-                          context,
-                          FontAwesomeIcons.wrench,
-                          'Tipos de extintores',
-                          TiposExtintoresPage(),
-                        ),
-                      ],
-                    ),
+              ],
+            ),
+            _buildListTile(context, FontAwesomeIcons.list, 'Clasificaciones', ClasificacionesPage()),
+            _buildListTile(context, Icons.calendar_today, 'Periodos', FrecuenciasPage()),
+            _buildListTile(context, Icons.devices, 'Tipos de sistemas', RamasPage()),
+            ExpansionTile(
+              leading: Icon(FontAwesomeIcons.fireFlameCurved),
+              title: Text('Extintores', style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
+              dense: true,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: Column(
+                    children: [
+                      _buildListTile(context, FontAwesomeIcons.fireExtinguisher, 'Extintores', ExtintoresPage()),
+                      _buildListTile(context, FontAwesomeIcons.wrench, 'Tipos de extintores', TiposExtintoresPage()),
+                    ],
                   ),
-                ],
-              ),
-              _buildListTile(
-                context,
-                FontAwesomeIcons.person,
-                'Usuarios',
-                UsuariosPage(),
-              ),
-              _buildListTile(
-                context,
-                FontAwesomeIcons.fileLines,
-                'Logs',
-                LogsPage(),
-              ),
-            ]
-            // Menú para Inspector
-            else if (tipoUsuario == 'inspector') ...[
-              _buildListTile(
-                context,
-                Icons.home,
-                'Inicio',
-                HomePage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.poll, // Icono relacionado con encuestas
-                'Crear actividad',
-                EncuestasPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.assignment, // Icono relacionado con inspecciones
-                'Aplicar actividad',
-                EncuestaPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.report_problem, // Ícono representativo de inspección
-                'Historial de actividades',
-                InspeccionesPantalla1Page(),
-              ),
-              _buildListTile(
-                context,
-                Icons.next_week_sharp, // Ícono representativo de inspección
-                'Actividades proximas',
-                InspeccionesProximasPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.date_range, // Ícono representativo de programa
-                'Programa de actividades',
-                ProgramaInspeccionesPage(),
-              ),
-              _buildListTile(
-                context,
-                Icons.show_chart, // Ícono representativo de gráfico
-                'Gráfico de actividades',
-                GraficaInspeccionesPage(),
-              ),
-            ],
+                ),
+              ],
+            ),
+            _buildListTile(context, FontAwesomeIcons.person, 'Usuarios', UsuariosPage()),
+            _buildListTile(context, FontAwesomeIcons.fileLines, 'Logs', LogsPage()),
+
             ListTile(
               leading: Icon(Icons.logout),
               title: Text('Cerrar sesión'),
@@ -328,38 +197,132 @@ class _MenuLateralState extends State<MenuLateral> {
             ),
           ],
         ),
+      );
+    }
+
+    // Si hay internet y tipoUsuario no está cargado, loader
+    if (tipoUsuario == null) {
+      return Drawer(
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Si hay internet y tipoUsuario cargado, muestra menú filtrado
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Container(
+            height: 90,
+            color: const Color.fromARGB(255, 112, 114, 113),
+            child: Center(
+              child: Text(
+                '',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          ),
+
+          if (tipoUsuario == 'administrador') ...[
+            _buildListTile(context, Icons.home, 'Inicio', HomePage()),
+            _buildListTile(context, Icons.person, 'Clientes', ClientesPage()),
+            _buildListTile(context, Icons.fact_check, 'Actividad anual', InspeccionEspecialPage()),
+            _buildListTile(context, Icons.sticky_note_2, 'Reporte de actividades y pruebas', ReporteFinalPage()),
+            _buildListTile(context, Icons.manage_accounts, 'Configuración de Cliente', EncuestasJerarquicasWidget()),
+            ExpansionTile(
+              leading: Icon(Icons.check_box_outline_blank),
+              title: Text('Actividades', style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
+              dense: true,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: Column(
+                    children: [
+                      _buildListTile(context, Icons.poll, 'Crear actividad', EncuestasPage()),
+                      _buildListTile(context, Icons.assignment, 'Aplicar actividad', EncuestaPage()),
+                      _buildListTile(context, Icons.report_problem, 'Historial de actividades', InspeccionesPantalla1Page()),
+                      _buildListTile(context, Icons.report_problem, 'Seleccionar actividad', ClienteInspeccionesApp()),
+                      _buildListTile(context, Icons.next_week_sharp, 'Actividades próximas', InspeccionesProximasPage()),
+                      _buildListTile(context, Icons.date_range, 'Programa de actividades', ProgramaInspeccionesPage()),
+                      _buildListTile(context, Icons.show_chart, 'Gráfico de actividades', GraficaInspeccionesPage()),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            _buildListTile(context, FontAwesomeIcons.list, 'Clasificaciones', ClasificacionesPage()),
+            _buildListTile(context, Icons.calendar_today, 'Periodos', FrecuenciasPage()),
+            _buildListTile(context, Icons.devices, 'Tipos de sistemas', RamasPage()),
+            ExpansionTile(
+              leading: Icon(FontAwesomeIcons.fireFlameCurved),
+              title: Text('Extintores', style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
+              dense: true,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: Column(
+                    children: [
+                      _buildListTile(context, FontAwesomeIcons.fireExtinguisher, 'Extintores', ExtintoresPage()),
+                      _buildListTile(context, FontAwesomeIcons.wrench, 'Tipos de extintores', TiposExtintoresPage()),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            _buildListTile(context, FontAwesomeIcons.person, 'Usuarios', UsuariosPage()),
+            _buildListTile(context, FontAwesomeIcons.fileLines, 'Logs', LogsPage()),
+          ] else if (tipoUsuario == 'inspector') ...[
+            _buildListTile(context, Icons.home, 'Inicio', HomePage()),
+            _buildListTile(context, Icons.poll, 'Crear actividad', EncuestasPage()),
+            _buildListTile(context, Icons.assignment, 'Aplicar actividad', EncuestaPage()),
+            _buildListTile(context, Icons.report_problem, 'Historial de actividades', InspeccionesPantalla1Page()),
+            _buildListTile(context, Icons.next_week_sharp, 'Actividades proximas', InspeccionesProximasPage()),
+            _buildListTile(context, Icons.date_range, 'Programa de actividades', ProgramaInspeccionesPage()),
+            _buildListTile(context, Icons.show_chart, 'Gráfico de actividades', GraficaInspeccionesPage()),
+          ],
+
+          ListTile(
+            leading: Icon(Icons.logout),
+            title: Text('Cerrar sesión'),
+            onTap: () {
+              _logout(context);
+            },
+          ),
+        ],
       ),
     );
   }
 
-  // Método para construir el ListTile con el color correspondiente
   Widget _buildListTile(
       BuildContext context, IconData icon, String title, Widget page) {
     return ListTile(
       leading: Icon(
         icon,
-        color: widget.currentPage == title
-            ? Colors.white
-            : null, // Cambia el color del ícono si es la página activa
+        color: widget.currentPage == title ? Colors.white : null,
       ),
       title: Text(
         title,
         style: TextStyle(
-          color: widget.currentPage == title
-              ? Colors.white
-              : null, // Cambia el color del texto si es la página activa
+          color: widget.currentPage == title ? Colors.white : null,
         ),
       ),
       tileColor: widget.currentPage == title
           ? Color.fromARGB(255, 233, 71, 66)
-          : null, // Cambia el color de fondo si es la página activa
+          : null,
       onTap: () {
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => page), // Navega a la página correspondiente
-        );
+        if (widget.currentPage != title) {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => page),
+          );
+        } else {
+          Navigator.pop(context);
+        }
       },
     );
   }

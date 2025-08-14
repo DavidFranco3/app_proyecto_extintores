@@ -12,6 +12,9 @@ import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -110,6 +113,14 @@ class _AccionesState extends State<Acciones> {
         _isLoading = false;
       });
     });
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
   }
 
   Future<void> cargarEstados() async {
@@ -164,16 +175,227 @@ class _AccionesState extends State<Acciones> {
     super.dispose();
   }
 
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
     widget.showModal(); // Llama a setShow con el valor booleano
     widget.onCompleted();
   }
 
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineClientes');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final clientesService = ClientesService();
+    final dropboxService = DropboxService();
+    final cloudinaryService = CloudinaryService();
+
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        // Si hay imagen local en data, subirla primero a Dropbox y Cloudinary
+        if (operacion['data'] != null) {
+          var data = Map<String, dynamic>.from(operacion['data']);
+
+          // Asumo que la imagen local se encuentra en data['imagenLocal'] o similar, ajusta según tu estructura
+          if (data.containsKey('imagenLocal') &&
+              data['imagenLocal'] != null &&
+              data['imagenLocal'].toString().isNotEmpty) {
+            String rutaImagenLocal = data['imagenLocal'];
+
+            // Subir a Dropbox
+            String? linkDropbox = await dropboxService.uploadImageToDropbox(
+                rutaImagenLocal, "clientes");
+            // Subir a Cloudinary
+            String? linkCloudinary = await cloudinaryService
+                .subirArchivoCloudinary(rutaImagenLocal, "clientes");
+
+            if (linkDropbox != null) {
+              data['imagen'] = linkDropbox;
+            }
+            if (linkCloudinary != null) {
+              data['imagenCloudinary'] = linkCloudinary;
+            }
+
+            // Remover el campo temporal de la ruta local para no enviarlo al backend
+            data.remove('imagenLocal');
+
+            // Actualizar el data de la operación con los links nuevos
+            operacion['data'] = data;
+          }
+        }
+
+        if (operacion['accion'] == 'registrar') {
+          final response =
+              await clientesService.registrarClientes(operacion['data']);
+
+          if (response['status'] == 200 && response['data'] != null) {
+            final clientesBox = Hive.box('clientesBox');
+            final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+
+            actuales.add({
+
+              'id': response['data']['_id'],
+                'nombre': response['data']['nombre'],
+                'imagen': response['data']['imagen'],
+                'imagenCloudinary': response['data']['imagenCloudinary'],
+                'correo': response['data']['correo'],
+                'telefono': response['data']['telefono'],
+                'calle': response['data']['direccion']['calle'],
+                'nExterior': response['data']['direccion']['nExterior']?.isNotEmpty ?? false
+                    ? response['data']['direccion']['nExterior']
+                    : 'S/N',
+                'nInterior': response['data']['direccion']['nInterior']?.isNotEmpty ?? false
+                    ? response['data']['direccion']['nInterior']
+                    : 'S/N',
+                'colonia': response['data']['direccion']['colonia'],
+                'estadoDom': response['data']['direccion']['estadoDom'],
+                'municipio': response['data']['direccion']['municipio'],
+                'cPostal': response['data']['direccion']['cPostal'],
+                'referencia': response['data']['direccion']['referencia'],
+                'estado': "true",
+                'createdAt': response['data']['createdAt'],
+                'updatedAt': response['data']['updatedAt'],
+              // añade los demás campos si es necesario
+            });
+
+            await clientesBox.put('clientes', actuales);
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'editar') {
+          final response = await clientesService.actualizarClientes(
+              operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final clientesBox = Hive.box('clientesBox');
+            final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await clientesBox.put('clientes', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'eliminar') {
+          final response = await clientesService
+              .deshabilitarClientes(operacion['id'], {'estado': 'false'});
+
+          if (response['status'] == 200) {
+            final clientesBox = Hive.box('clientesBox');
+            final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                'estado': 'false',
+                'updatedAt': DateTime.now().toString(),
+              };
+              await clientesBox.put('clientes', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        }
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    // Limpieza y actualización final igual que antes...
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    try {
+      final List<dynamic> dataAPI = await clientesService.listarClientes();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'nombre': item['nombre'],
+                'imagen': item['imagen'],
+                'imagenCloudinary': item['imagenCloudinary'],
+                'correo': item['correo'],
+                'telefono': item['telefono'],
+                'calle': item['direccion']['calle'],
+                'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
+                    ? item['direccion']['nExterior']
+                    : 'S/N',
+                'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
+                    ? item['direccion']['nInterior']
+                    : 'S/N',
+                'colonia': item['direccion']['colonia'],
+                'estadoDom': item['direccion']['estadoDom'],
+                'municipio': item['direccion']['municipio'],
+                'cPostal': item['direccion']['cPostal'],
+                'referencia': item['direccion']['referencia'],
+                'estado': item['estado'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final clientesBox = Hive.box('clientesBox');
+      await clientesBox.put('clientes', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
+  }
+
   void _guardarCliente(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
+
+    final conectado = await verificarConexion();
 
     var dataTemp = {
       'nombre': data['nombre'],
@@ -196,34 +418,72 @@ class _AccionesState extends State<Acciones> {
       'estado': "true",
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineClientes');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'registrar',
+        'id': null,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final clientesBox = Hive.box('clientesBox');
+      final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      actuales.add({
+        'id': DateTime.now().toIso8601String(),
+        ...dataTemp,
+        'createdAt': DateTime.now().toString(),
+        'updatedAt': DateTime.now().toString(),
+      });
+      await clientesBox.put('clientes', actuales);
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Clasificación guardada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final clientesService = ClientesService();
       var response = await clientesService.registrarClientes(dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha registrado eñ cliente ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha registrado el cliente ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
-          message: "El cliente fue agregado correctamente",
+          message: "La clasificación fue agregada correctamente",
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
         showCustomFlushbar(
           context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la clasificacion",
+          title: "Error",
+          message: "No se pudo guardar la clasificación",
           backgroundColor: Colors.red,
         );
       }
@@ -245,6 +505,8 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
       'imagen': data['imagen'],
@@ -265,21 +527,67 @@ class _AccionesState extends State<Acciones> {
       },
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineClientes');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final clientesBox = Hive.box('clientesBox');
+      final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      // Actualiza localmente el registro editado
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          ...dataTemp,
+          'updatedAt': DateTime.now().toString(),
+        };
+        await clientesBox.put('clientes', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Clasificación actualizada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final clientesService = ClientesService();
       var response = await clientesService.actualizarClientes(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha modificado la cliente ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha actualizado el cliente ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Actualizacion exitosa",
-          message: "Los datos del cliente fueron actualizados correctamente",
+          title: "Actualización exitosa",
+          message:
+              "Los datos de la clasificación fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
       }
@@ -301,22 +609,70 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {'estado': "false"};
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineClientes');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'eliminar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final clientesBox = Hive.box('clientesBox');
+      final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          'estado': 'false',
+          'updatedAt': DateTime.now().toString(),
+        };
+        await clientesBox.put('clientes', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Clasificación eliminada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
       final clientesService = ClientesService();
       var response = await clientesService.deshabilitarClientes(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha eliminado la cliente ${data['nombre']} correctamente", {});
+            "Se ha eliminado la cleintes ${data['id']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Eliminacion exitosa",
-          message: "Se han eliminado correctamente los datos del cliente",
+          title: "Eliminación exitosa",
+          message:
+              "Se han eliminado correctamente los datos de la clasificación",
           backgroundColor: Colors.green,
         );
       }

@@ -10,6 +10,9 @@ import '../../components/Header/header.dart';
 import '../../api/clientes.dart';
 import '../../api/inspecciones.dart';
 import 'package:intl/intl.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() => runApp(MaterialApp(home: ClienteInspeccionesApp()));
 
@@ -28,27 +31,93 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
   @override
   void initState() {
     super.initState();
-    getClientes();
+    cargarClientes();
   }
 
-  Future<void> getClientes() async {
-    setState(() => isLoading = true);
+  Future<void> cargarClientes() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClientesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClientesDesdeHive();
+    }
+  }
+
+  Future<void> cargarInspecciones(String idCliente) async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getInspeccionesDesdeAPI(idCliente);
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getInspeccionesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getClientesDesdeAPI() async {
     try {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
+
       if (response.isNotEmpty) {
-        setState(() {
-          dataClientes = formatModelClientes(response);
-        });
+        final formateadas = formatModelClientes(response);
+
+        final box = Hive.box('clientesBox');
+        await box.put('clientes', formateadas);
+
+        if (mounted) {
+          setState(() {
+            dataClientes = formateadas;
+            isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          dataClientes = [];
-        });
+        if (mounted) {
+          setState(() {
+            dataClientes = [];
+            isLoading = false;
+          });
+        }
       }
     } catch (e) {
       print("Error al obtener los clientes: $e");
-    } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> getClientesDesdeHive() async {
+    final box = Hive.box('clientesBox');
+    final List<dynamic>? guardados = box.get('clientes');
+
+    if (guardados != null) {
+      if (mounted) {
+        setState(() {
+          dataClientes = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item as Map))
+              .toList();
+          isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          dataClientes = [];
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -61,7 +130,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
         .toList();
   }
 
-  Future<void> getInspecciones(String idCliente) async {
+  Future<void> getInspeccionesDesdeAPI(String idCliente) async {
     setState(() {
       isLoading = true;
       dataInspecciones = [];
@@ -85,6 +154,21 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
       print("Error al obtener las inspecciones: $e");
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> getInspeccionesDesdeHive() async {
+    final box = Hive.box('inspeccionesClientesBox');
+    final List<dynamic>? guardadas = box.get('inspecciones');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
+      setState(() {
+        dataInspecciones = locales;
+      });
     }
   }
 
@@ -219,7 +303,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
                         fechaSeleccionada = null;
                       });
                       if (nuevoClienteId != null) {
-                        getInspecciones(nuevoClienteId);
+                        cargarInspecciones(nuevoClienteId);
                       }
                     },
                     items:

@@ -7,6 +7,10 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 class ReporteFinalPage extends StatefulWidget {
   @override
   _ReporteFinalPageState createState() => _ReporteFinalPageState();
@@ -15,52 +19,108 @@ class ReporteFinalPage extends StatefulWidget {
 class _ReporteFinalPageState extends State<ReporteFinalPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataReporteFinal = [];
+  bool showModal = false;
+
+  late Box reporteBox;
 
   @override
   void initState() {
     super.initState();
-    getReporteFinal();
+    reporteBox = Hive.box('reporteFinalBox');
+    cargarReporteFinal();
   }
 
-  Future<void> getReporteFinal() async {
-    try {
-      final reporteFinalService = ReporteFinalService();
-      final List<dynamic> response =
-          await reporteFinalService.listarReporteFinal();
+  /// Verifica si hay conexión a internet
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataReporteFinal = formatModelReporteFinal(response);
-          loading = false;
-        });
+  /// Carga el reporte final según la conexión
+  Future<void> cargarReporteFinal() async {
+    try {
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getReporteFinalDesdeAPI();
       } else {
-        setState(() {
-          loading = false;
-          dataReporteFinal = [];
-        });
+        await getReporteFinalDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener los reportes finales: $e");
+      print("Error general al cargar reporte final: $e");
+      setState(() {
+        dataReporteFinal = [];
+      });
+    } finally {
       setState(() {
         loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  /// Obtiene los datos desde la API y los guarda en Hive
+  Future<void> getReporteFinalDesdeAPI() async {
+    final reporteFinalService = ReporteFinalService();
+    final List<dynamic> response =
+        await reporteFinalService.listarReporteFinal();
 
-  // Función para abrir el modal de registro con el formulario de Acciones
+    if (response.isNotEmpty) {
+      final formateadas = formatModelReporteFinal(response)
+          .where((item) => item['estado'] == "true") // Filtrar activos
+          .toList();
+
+      await reporteBox.put('reportes', formateadas);
+
+      setState(() {
+        dataReporteFinal = formateadas;
+      });
+    } else {
+      setState(() {
+        dataReporteFinal = [];
+      });
+    }
+  }
+
+  /// Obtiene los datos guardados localmente en Hive
+  Future<void> getReporteFinalDesdeHive() async {
+    final List<dynamic>? guardadas = reporteBox.get('reportes');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(
+        guardadas.map((e) => Map<String, dynamic>.from(e)),
+      );
+
+      setState(() {
+        dataReporteFinal =
+            locales.where((item) => item['estado'] == "true").toList();
+      });
+    }
+  }
+
+  /// Formatea los datos para el modelo
+  List<Map<String, dynamic>> formatModelReporteFinal(List<dynamic> data) {
+    return data.map<Map<String, dynamic>>((item) {
+      return {
+        'id': item['_id'],
+        'descripcion': item['descripcion'],
+        'imagenes': item['imagenes'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      };
+    }).toList();
+  }
+
+  /// Abre la pantalla de registro
   void openRegistroModal() {
-    // Navegar a la página de registro en lugar de mostrar un modal
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => RegistrarReporteScreen(
           showModal: () {
-            Navigator.pop(context); // Esto cierra la pantalla
+            Navigator.pop(context);
           },
-          onCompleted: getReporteFinal,
+          onCompleted: cargarReporteFinal,
           accion: "registrar",
           data: null,
         ),
@@ -68,38 +128,22 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     );
   }
 
-// Cierra el modal
+  /// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
-  }
-
-  // Función para formatear los datos de las reportes finales
-  List<Map<String, dynamic>> formatModelReporteFinal(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'descripcion': item['descripcion'],
-        'imagenes': item['imagenes'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
+      appBar: Header(),
       drawer: MenuLateral(
         currentPage: "Reporte de Actividades y pruebas",
-      ), // Usa el menú lateral
+      ),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -109,8 +153,8 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                     child: Text(
                       "Reporte de Actividades y pruebas",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -119,8 +163,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroModal,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
@@ -129,18 +172,17 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                 Expanded(
                   child: TblReporteFinal(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(context);
                     },
                     reporteFinal: dataReporteFinal,
-                    onCompleted: getReporteFinal,
+                    onCompleted: cargarReporteFinal,
                   ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

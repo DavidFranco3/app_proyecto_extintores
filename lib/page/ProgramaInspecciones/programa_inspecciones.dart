@@ -3,8 +3,12 @@ import '../../api/inspecciones_proximas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import '../../components/Generales/calendario.dart'; // Importa el componente Calendario
+import '../../components/Generales/calendario.dart';
 import '../../components/Generales/event.dart';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class ProgramaInspeccionesPage extends StatefulWidget {
   @override
@@ -20,57 +24,73 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
   @override
   void initState() {
     super.initState();
-    getInspeccionesProximas();
+    cargarInspecciones();
   }
 
-  Future<void> getInspeccionesProximas() async {
+  Future<void> cargarInspecciones() async {
     try {
-      final inspeccionesProximasService = InspeccionesProximasService();
-      final List<dynamic> response =
-          await inspeccionesProximasService.listarInspeccionesProximas();
-
-      if (response.isNotEmpty) {
-        setState(() {
-          dataInspeccionesProximas = formatModelInspeccionesProximas(response);
-          eventosCalendario =
-              _convertirAEventosCalendario(dataInspeccionesProximas);
-          loading = false; // Desactivar el estado de carga
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getInspeccionesDesdeAPI();
       } else {
-        setState(() {
-          dataInspeccionesProximas = [];
-          loading = false;
-        });
+        await getInspeccionesDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las inspeccionesProximas: $e");
+      print("Error general al cargar inspecciones: $e");
+      setState(() {
+        dataInspeccionesProximas = [];
+      });
+    } finally {
       setState(() {
         loading = false;
       });
     }
   }
 
-  // Convierte los datos de inspecciones próximas en una lista de eventos
-  List<Event> _convertirAEventosCalendario(List<Map<String, dynamic>> data) {
-    List<Event> eventos = [];
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-    for (var item in data) {
-      DateTime fechaInspeccion = DateTime.parse(item['proximaInspeccion']);
-      String evento =
-          "Cliente: ${item['cliente']} - Inspeccion: ${item['cuestionario']}";
+  Future<void> getInspeccionesDesdeAPI() async {
+    final inspeccionesService = InspeccionesProximasService();
+    final List<dynamic> response =
+        await inspeccionesService.listarInspeccionesProximas();
 
-      // Crear un nuevo objeto Event
-      eventos.add(Event(title: evento, date: fechaInspeccion));
+    if (response.isNotEmpty) {
+      final formateadas = formatModelInspeccionesProximas(response);
+
+      final box = Hive.box('inspeccionesProximasBox');
+      await box.put('inspecciones', formateadas);
+
+      setState(() {
+        dataInspeccionesProximas = formateadas;
+        eventosCalendario = _convertirAEventosCalendario(formateadas);
+      });
     }
+  }
 
-    return eventos;
+  Future<void> getInspeccionesDesdeHive() async {
+    final box = Hive.box('inspeccionesProximasBox');
+    final List<dynamic>? guardadas = box.get('inspecciones');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
+      setState(() {
+        dataInspeccionesProximas = locales;
+        eventosCalendario = _convertirAEventosCalendario(locales);
+      });
+    }
   }
 
   List<Map<String, dynamic>> formatModelInspeccionesProximas(
       List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'idFrecuencia': item['idFrecuencia'],
         'idCliente': item['idCliente'],
@@ -82,22 +102,28 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
+  }
+
+  List<Event> _convertirAEventosCalendario(List<Map<String, dynamic>> data) {
+    return data.map<Event>((item) {
+      DateTime fechaInspeccion = DateTime.parse(item['proximaInspeccion']);
+      String evento =
+          "Cliente: ${item['cliente']} - Inspección: ${item['cuestionario']}";
+      return Event(title: evento, date: fechaInspeccion);
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Programa de actividades"), // Menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Programa de actividades"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               children: [
-                // Título de la página
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
@@ -110,12 +136,8 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
                     ),
                   ),
                 ),
-                // Aquí usamos el componente Calendario
                 Expanded(
-                  child: Calendario(
-                    eventosIniciales:
-                        eventosCalendario, // Pasamos los eventos al calendario
-                  ),
+                  child: Calendario(eventosIniciales: eventosCalendario),
                 ),
               ],
             ),

@@ -6,6 +6,9 @@ import '../../components/Clasificaciones/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class ClasificacionesPage extends StatefulWidget {
   @override
@@ -19,47 +22,91 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   @override
   void initState() {
     super.initState();
-    getClasificaciones();
+    cargarClasificaciones();
   }
 
-  Future<void> getClasificaciones() async {
+  Future<void> cargarClasificaciones() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClasificacionesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClasificacionesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getClasificacionesDesdeAPI() async {
     try {
       final clasificacionesService = ClasificacionesService();
       final List<dynamic> response =
           await clasificacionesService.listarClasificaciones();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateadas = formatModelClasificaciones(response);
+
+        // Guardar en Hive
+        final box = Hive.box('clasificacionesBox');
+        await box.put('clasificaciones', formateadas);
+
         setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = formateadas;
+          loading = false;
         });
       } else {
         setState(() {
-          dataClasificaciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = [];
+          loading = false;
         });
       }
     } catch (e) {
       print("Error al obtener las clasificaciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getClasificacionesDesdeHive() async {
+    final box = Hive.box('clasificacionesBox');
+    final List<dynamic>? guardadas = box.get('clasificaciones');
 
-  // Función para redirigir a la vista de registro de Acciones
+    if (guardadas != null) {
+      final filtradas = (guardadas as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .where((item) => item['estado'] == "true")
+          .toList();
+
+      setState(() {
+        dataClasificaciones = filtradas;
+        loading = false;
+      });
+    } else {
+      setState(() {
+        dataClasificaciones = [];
+        loading = false;
+      });
+    }
+  }
+
+  bool showModal = false;
+
   void openRegistroView() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (BuildContext context) => Acciones(
           showModal: () {
-            Navigator.pop(context); // Cierra la vista al completar
+            Navigator.pop(context);
           },
-          onCompleted: getClasificaciones,
+          onCompleted: cargarClasificaciones,
           accion: "registrar",
           data: null,
         ),
@@ -67,14 +114,12 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
     );
   }
 
-// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
   }
 
-  // Función para formatear los datos de las clasificaciones
   List<Map<String, dynamic>> formatModelClasificaciones(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
@@ -93,34 +138,30 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Clasificaciones"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Clasificaciones"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Clasificaciones",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-                // Centra el botón de registrar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroView, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroView,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
@@ -129,18 +170,17 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
                 Expanded(
                   child: TblClasificaciones(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(context);
                     },
                     clasificaciones: dataClasificaciones,
-                    onCompleted: getClasificaciones,
+                    onCompleted: cargarClasificaciones,
                   ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

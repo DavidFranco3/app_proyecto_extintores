@@ -13,6 +13,9 @@ import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -108,6 +111,14 @@ class _AccionesState extends State<Acciones> {
         _isLoading = false;
       });
     });
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
   }
 
   @override
@@ -120,16 +131,190 @@ class _AccionesState extends State<Acciones> {
     super.dispose();
   }
 
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
   // Corregimos la función para que acepte un parámetro bool
   void closeRegistroModal() {
     widget.showModal(); // Llama a setShow con el valor booleano
     widget.onCompleted();
   }
 
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineUsuarios');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final usuariosService = UsuariosService();
+    final dropboxService = DropboxService();
+    final cloudinaryService = CloudinaryService();
+
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        // Subir imagen firma si existe y no es null
+        if (operacion['data'] != null &&
+            operacion['data']['firma'] != null &&
+            (operacion['accion'] == 'registrar' ||
+                operacion['accion'] == 'editar')) {
+          String localFilePath = operacion['data']['firma'];
+
+          if (localFilePath.isNotEmpty) {
+            // Subir a Dropbox
+            String? sharedLink = await dropboxService.uploadImageToDropbox(
+                localFilePath, "usuarios");
+            // Subir a Cloudinary
+            String? sharedLinkCloud = await cloudinaryService
+                .subirArchivoCloudinary(localFilePath, "clientes");
+
+            if (sharedLink != null) {
+              operacion['data']['firma'] = sharedLink;
+            }
+            if (sharedLinkCloud != null) {
+              operacion['data']['firmaCloudinary'] = sharedLinkCloud;
+            }
+          }
+        }
+
+        if (operacion['accion'] == 'registrar') {
+          final response =
+              await usuariosService.registraUsuarios(operacion['data']);
+
+          if (response['status'] == 200 && response['data'] != null) {
+            final usuariosBox = Hive.box('usuariosBox');
+            final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+
+            actuales.add({
+              'id': response['data']['_id'],
+              'nombre': response['data']['nombre'],
+              'email': response['data']['email'],
+              'telefono': response['data']['telefono'],
+              'password': response['data']['password'],
+              'tipo': response['data']['tipo'],
+              'firma': response['data']['firma'],
+              'firmaCloudinary': response['data']['firmaCloudinary'],
+              'estado': "true",
+            });
+
+            await usuariosBox.put('usuarios', actuales);
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'editar') {
+          final response = await usuariosService.actualizarUsuario(
+              operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final usuariosBox = Hive.box('usuariosBox');
+            final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await usuariosBox.put('usuarios', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'eliminar') {
+          final response = await usuariosService.actualizaDeshabilitarUsuario(
+              operacion['id'], {'estado': 'false'});
+
+          if (response['status'] == 200) {
+            final usuariosBox = Hive.box('usuariosBox');
+            final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                'estado': 'false',
+                'updatedAt': DateTime.now().toString(),
+              };
+              await usuariosBox.put('usuarios', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        }
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    try {
+      final List<dynamic> dataAPI = await usuariosService.listarUsuarios();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'nombre': item['nombre'],
+                'email': item['email'],
+                'telefono': item['telefono'],
+                'tipo': item['tipo'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final usuariosBox = Hive.box('usuariosBox');
+      await usuariosBox.put('usuarios', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
+  }
+
   void _guardarUsuario(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
+
+    final conectado = await verificarConexion();
 
     var dataTemp = {
       'nombre': data['nombre'],
@@ -142,19 +327,58 @@ class _AccionesState extends State<Acciones> {
       'estado': "true",
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineUsuarios');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'registrar',
+        'id': null,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final usuariosBox = Hive.box('usuariosBox');
+      final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      actuales.add({
+        'id': DateTime.now().toIso8601String(),
+        ...dataTemp,
+        'createdAt': DateTime.now().toString(),
+        'updatedAt': DateTime.now().toString(),
+      });
+      await usuariosBox.put('usuarios', actuales);
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Usuario guardado localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final usuariosService = UsuariosService();
       var response = await usuariosService.registraUsuarios(dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha registrado el usuario ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha registrado el usuario ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
@@ -162,14 +386,13 @@ class _AccionesState extends State<Acciones> {
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
         showCustomFlushbar(
           context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar el usuario",
+          title: "Error",
+          message: "No se pudo guardar el usuario",
           backgroundColor: Colors.red,
         );
       }
@@ -191,28 +414,71 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
-      'email': data['email'],
-      'telefono': data['telefono'],
-      'password': data['password'],
-      'tipo': data['tipo'],
     };
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineUsuarios');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final usuariosBox = Hive.box('usuariosBox');
+      final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      // Actualiza localmente el registro editado
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          ...dataTemp,
+          'updatedAt': DateTime.now().toString(),
+        };
+        await usuariosBox.put('usuarios', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Usuario actualizado localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
       final usuariosService = UsuariosService();
       var response = await usuariosService.actualizarUsuario(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha modificado el usuario ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha actualizado el usuario ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Actualizacion exitosa",
+          title: "Actualización exitosa",
           message: "Los datos del usuario fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
@@ -235,22 +501,69 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {'estado': "false"};
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineUsuarios');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'eliminar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final usuariosBox = Hive.box('usuariosBox');
+      final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          'estado': 'false',
+          'updatedAt': DateTime.now().toString(),
+        };
+        await usuariosBox.put('usuarios', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Usuario eliminado localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
       final usuariosService = UsuariosService();
       var response =
           await usuariosService.actualizaDeshabilitarUsuario(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha eliminado el usuario ${data['nombre']} correctamente", {});
+            "Se ha eliminado el usuario ${data['id']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Eliminacion exitosa",
+          title: "Eliminación exitosa",
           message: "Se han eliminado correctamente los datos del usuario",
           backgroundColor: Colors.green,
         );

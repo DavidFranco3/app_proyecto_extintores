@@ -7,6 +7,10 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 class RamasPage extends StatefulWidget {
   @override
   _RamasPageState createState() => _RamasPageState();
@@ -19,48 +23,88 @@ class _RamasPageState extends State<RamasPage> {
   @override
   void initState() {
     super.initState();
-    getRamas();
+    cargarRamas();
   }
 
-  Future<void> getRamas() async {
+  Future<void> cargarRamas() async {
     try {
-      final ramasService = RamasService();
-      final List<dynamic> response =
-          await ramasService.listarRamas();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataRamas = formatModelRamas(response);
-          loading = false;
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getRamasDesdeAPI();
       } else {
-        setState(() {
-          loading = false;
-          dataRamas = [];
-        });
+        await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las ramas: $e");
+      print("Error general al cargar ramas: $e");
+      setState(() {
+        dataRamas = [];
+      });
+    } finally {
       setState(() {
         loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-  // Función para abrir el modal de registro con el formulario de Acciones
+  Future<void> getRamasDesdeAPI() async {
+    final ramasService = RamasService();
+    final List<dynamic> response = await ramasService.listarRamas();
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelRamas(response);
+
+      final box = Hive.box('ramasBox');
+      await box.put('ramas', formateadas);
+
+      setState(() {
+        dataRamas = formateadas;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeHive() async {
+    final box = Hive.box('ramasBox');
+    final List<dynamic>? guardadas = box.get('ramas');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
+      setState(() {
+        dataRamas = locales;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> formatModelRamas(List<dynamic> data) {
+    return data.map<Map<String, dynamic>>((item) {
+      return {
+        'id': item['_id'],
+        'nombre': item['nombre'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      };
+    }).toList();
+  }
+
+  // Navegar a pantalla de registro
   void openRegistroModal() {
-    // Navegar a la página de registro en lugar de mostrar un modal
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context); // Esto cierra la pantalla
+            Navigator.pop(context);
           },
-          onCompleted: getRamas,
+          onCompleted: cargarRamas,
           accion: "registrar",
           data: null,
         ),
@@ -68,58 +112,41 @@ class _RamasPageState extends State<RamasPage> {
     );
   }
 
-// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
   }
 
-  // Función para formatear los datos de las ramas
-  List<Map<String, dynamic>> formatModelRamas(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
-  }
+  bool showModal = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Tipos de sistemas"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Tipos de sistemas"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Tipos de sistemas",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-                // Centra el botón de registrar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroModal,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
@@ -128,20 +155,17 @@ class _RamasPageState extends State<RamasPage> {
                 Expanded(
                   child: TblRamas(
                     showModal: () {
-                      Navigator.pop(
-                          context); // Cierra el modal después de registrar
+                      Navigator.pop(context);
                     },
                     ramas: dataRamas,
-                    onCompleted:
-                        getRamas, // Pasa la función para que se pueda llamar desde el componente
+                    onCompleted: cargarRamas,
                   ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

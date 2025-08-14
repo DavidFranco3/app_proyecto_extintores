@@ -4,6 +4,9 @@ import '../../components/InspeccionesPantalla1/list_inspecciones_pantalla_1.dart
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class InspeccionesPantalla1Page extends StatefulWidget {
   @override
@@ -24,27 +27,78 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
   }
 
   Future<void> getClientes() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClientesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClientesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getClientesDesdeAPI() async {
     try {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
-        setState(() {
-          dataClientes = formatModelClientes(response);
-          loading = false; // Desactivar el estado de carga
-        });
+        final formateadas = formatModelClientes(response);
+
+        final box = Hive.box('clientesBox');
+        await box.put('clientes', formateadas);
+
+        if (mounted) {
+          setState(() {
+            dataClientes = formateadas;
+            loading = false;
+          });
+        }
       } else {
-        setState(() {
-          dataClientes = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        if (mounted) {
+          setState(() {
+            dataClientes = [];
+            loading = false;
+          });
+        }
       }
     } catch (e) {
       print("Error al obtener los clientes: $e");
-      setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> getClientesDesdeHive() async {
+    final box = Hive.box('clientesBox');
+    final List<dynamic>? guardados = box.get('clientes');
+
+    if (guardados != null) {
+      if (mounted) {
+        setState(() {
+          dataClientes = (guardados as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item as Map))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          dataClientes = [];
+          loading = false;
+        });
+      }
     }
   }
 

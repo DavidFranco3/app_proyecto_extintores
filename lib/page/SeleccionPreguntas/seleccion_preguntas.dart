@@ -6,6 +6,9 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/flushbar_helper.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class EncuestasJerarquicasWidget extends StatefulWidget {
   @override
@@ -29,9 +32,36 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     getClientes();
 
     clienteController = TextEditingController();
+
+    sincronizarOperacionesPendientesInspecciones();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientesInspecciones();
+      }
+    });
   }
 
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  // --- ENCUESTAS ---
+
   Future<void> getEncuestas() async {
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getEncuestasDesdeAPI();
+    } else {
+      print("Sin conexión, cargando encuestas desde Hive...");
+      await getEncuestasDesdeHive();
+    }
+  }
+
+  Future<void> getEncuestasDesdeAPI() async {
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
       final List<dynamic> response =
@@ -39,6 +69,11 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
       if (response.isNotEmpty) {
         final encuestasFormateadas = formatModelEncuestas(response);
+
+        // Guardar en Hive
+        final box = Hive.box('encuestasBox');
+        await box.put('encuestas', encuestasFormateadas);
+
         setState(() {
           dataEncuestas = encuestasFormateadas;
           loading = false;
@@ -50,7 +85,35 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
         });
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
+      print("Error al obtener encuestas desde API: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getEncuestasDesdeHive() async {
+    try {
+      final box = Hive.box('encuestasBox');
+      final List<dynamic>? guardadas = box.get('encuestas');
+
+      if (guardadas != null) {
+        setState(() {
+          dataEncuestas = (guardadas as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataEncuestas = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error leyendo encuestas desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -77,27 +140,117 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
   }
 
   Future<void> getClientes() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClientesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClientesDesdeHive();
+    }
+  }
+
+  Future<void> getClientesDesdeAPI() async {
     try {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
-        setState(() {
-          dataClientes = formatModelClientes(response);
-          loading = false; // Desactivar el estado de carga
-        });
+        final formateadas = formatModelClientes(response);
+
+        final box = Hive.box('clientesBox');
+        await box.put('clientes', formateadas);
+
+        if (mounted) {
+          setState(() {
+            dataClientes = formateadas;
+            loading = false;
+          });
+        }
       } else {
-        setState(() {
-          dataClientes = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        if (mounted) {
+          setState(() {
+            dataClientes = [];
+            loading = false;
+          });
+        }
       }
     } catch (e) {
       print("Error al obtener los clientes: $e");
-      setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> getClientesDesdeHive() async {
+    final box = Hive.box('clientesBox');
+    final List<dynamic>? guardados = box.get('clientes');
+
+    if (guardados != null) {
+      if (mounted) {
+        setState(() {
+          dataClientes = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item as Map))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          dataClientes = [];
+          loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> sincronizarOperacionesPendientesInspecciones() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflinePreguntas');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final encuestaService = EncuestaInspeccionClienteService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        final response = await encuestaService
+            .registraEncuestaInspeccionCliente(operacion['data']);
+
+        if (response['status'] == 200 && response['data'] != null) {
+          operacionesExitosas
+              .add(operacion['idTemporal'] ?? ''); // Identifica operación
+
+          // Aquí podrías actualizar alguna caja local si quieres guardar los datos sincronizados
+        }
+      } catch (e) {
+        print('Error sincronizando encuesta: $e');
+      }
+    }
+
+    // Limpiar solo las operaciones sincronizadas correctamente
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las encuestas sincronizadas. Limpieza completa.");
+    } else {
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['idTemporal']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas encuestas no se sincronizaron, se conservarán localmente.");
     }
   }
 
@@ -179,6 +332,14 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     List<String> seleccionados,
     TextEditingController clienteController,
   ) async {
+    setState(() {
+      _guardando = true;
+    });
+
+    final conectado = await verificarConexion();
+
+    final box = Hive.box('operacionesOfflinePreguntas');
+
     final List<Map<String, dynamic>> resultado = [];
     final List<Future> tareas = [];
 
@@ -190,7 +351,8 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
             final preguntasSeleccionadas = <Map<String, dynamic>>[];
 
-            final preguntas = encuesta['preguntas'] as List;
+            final preguntas =
+                encuesta['preguntas'] as List<Map<String, dynamic>>;
             for (int i = 0; i < preguntas.length; i++) {
               final preguntaId = '${encuestaId}_$i';
               if (seleccionados.contains(preguntaId)) {
@@ -201,8 +363,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                 });
               }
             }
-            print("hola si");
-            print(preguntasSeleccionadas);
+
             if (preguntasSeleccionadas.isNotEmpty) {
               final estructura = {
                 'nombre': encuesta['nombre'],
@@ -216,31 +377,62 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
               resultado.add(estructura);
 
-              final encuestaInspeccionClienteService =
-                  EncuestaInspeccionClienteService();
-              tareas.add(encuestaInspeccionClienteService
-                  .registraEncuestaInspeccionCliente(estructura));
+              if (conectado) {
+                final encuestaInspeccionClienteService =
+                    EncuestaInspeccionClienteService();
+                tareas.add(encuestaInspeccionClienteService
+                    .registraEncuestaInspeccionCliente(estructura));
+              } else {
+                final operaciones = box.get('operaciones', defaultValue: []);
+                operaciones.add({
+                  'accion': 'guardarEncuesta',
+                  'data': estructura,
+                  'idTemporal': UniqueKey().toString(),
+                });
+                box.put('operaciones', operaciones);
+              }
             }
           }
         });
       });
     });
 
-    // Esperar a que todas las tareas se completen
-    await Future.wait(tareas);
-
-    showCustomFlushbar(
-      context: context,
-      title: "Registro exitoso",
-      message: "Todas las encuestas se han guardado correctamente.",
-      backgroundColor: Colors.green,
-    );
+    if (conectado) {
+      try {
+        await Future.wait(tareas);
+        showCustomFlushbar(
+          context: context,
+          title: "Registro exitoso",
+          message: "Todas las encuestas se han guardado correctamente.",
+          backgroundColor: Colors.green,
+        );
+      } catch (e) {
+        showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message: "Ocurrió un error guardando las encuestas: $e",
+          backgroundColor: Colors.red,
+        );
+      }
+    } else {
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Las encuestas se guardaron localmente y se sincronizarán cuando haya internet.",
+        backgroundColor: Colors.orange,
+      );
+    }
 
     setState(() {
       _guardando = false;
       clienteController.clear();
       seleccionados.clear();
     });
+
+    if (conectado) {
+      await sincronizarOperacionesPendientesInspecciones();
+    }
 
     return resultado;
   }

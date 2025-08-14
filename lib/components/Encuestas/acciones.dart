@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../api/encuesta_inspeccion.dart';
 import '../Logs/logs_informativos.dart';
 import '../Generales/flushbar_helper.dart';
@@ -13,11 +17,12 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones(
-      {required this.showModal,
-      required this.onCompleted,
-      required this.accion,
-      required this.data});
+  Acciones({
+    required this.showModal,
+    required this.onCompleted,
+    required this.accion,
+    required this.data,
+  });
 
   @override
   _AccionesState createState() => _AccionesState();
@@ -44,9 +49,15 @@ class _AccionesState extends State<Acciones> {
     }
 
     Future.delayed(Duration(seconds: 1), () {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
+    });
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
     });
   }
 
@@ -58,41 +69,108 @@ class _AccionesState extends State<Acciones> {
     super.dispose();
   }
 
-  // Corregimos la función para que acepte un parámetro bool
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
   void closeRegistroModal() {
-    widget.showModal(); // Llama a setShow con el valor booleano
+    widget.showModal();
     widget.onCompleted();
   }
 
-  void _eliminarClasificacion(String id, data) async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
 
-    var dataTemp = {'estado': "false"};
+    final box = Hive.box('operacionesOfflineEncuestas');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final servicio = EncuestaInspeccionService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        if (operacion['accion'] == 'eliminar') {
+          final response = await servicio.deshabilitarEncuestaInspeccion(
+              operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            operacionesExitosas.add(operacion['operacionId']);
+          }
+        }
+        // Aquí puedes añadir más acciones como "registrar" o "editar" si lo necesitas después
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      final nuevas = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevas);
+      print("❗ Algunas operaciones no se sincronizaron. Se conservarán.");
+    }
+  }
+
+  void _eliminarClasificacion(String id, Map<String, dynamic> data) async {
+    setState(() => _isLoading = true);
+
+    final conectado = await verificarConexion();
+    final dataTemp = {'estado': "false"};
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineEncuestas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+
+      final nuevaOperacion = {
+        'operacionId': DateTime.now().millisecondsSinceEpoch.toString(),
+        'accion': 'eliminar',
+        'id': id,
+        'data': dataTemp,
+      };
+
+      operaciones.add(nuevaOperacion);
+      await box.put('operaciones', operaciones);
+
+      setState(() => _isLoading = false);
+      closeRegistroModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Encuesta marcada para eliminación. Se sincronizará cuando haya internet.",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
-      final encuestaInspeccionService = EncuestaInspeccionService();
-      var response = await encuestaInspeccionService
-          .deshabilitarEncuestaInspeccion(id, dataTemp);
+      final servicio = EncuestaInspeccionService();
+      final response = await servicio.deshabilitarEncuestaInspeccion(id, dataTemp);
+
       if (response['status'] == 200) {
-        setState(() {
-          _isLoading = false;
-          closeRegistroModal();
-        });
-        LogsInformativos(
-            "Se ha eliminado la encuesta ${data['nombre']} correctamente", {});
+        setState(() => _isLoading = false);
+        closeRegistroModal();
+        LogsInformativos("Se eliminó la encuesta ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Eliminacion exitosa",
+          title: "Eliminación exitosa",
           message: "Los datos de la encuesta fueron eliminados correctamente",
           backgroundColor: Colors.green,
         );
       }
     } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       showCustomFlushbar(
         context: context,
         title: "Oops...",
@@ -104,24 +182,22 @@ class _AccionesState extends State<Acciones> {
 
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
-      var formData = {
+      final formData = {
         'nombre': _nombreController.text,
         'frecuencia': _frecuenciaController.text,
         'clasificacion': _clasificacionController.text,
       };
 
-      _eliminarClasificacion(widget.data['id'], formData);
+      if (widget.accion == 'eliminar') {
+        _eliminarClasificacion(widget.data['id'], formData);
+      }
     }
   }
 
   String get buttonLabel {
-    if (widget.accion == 'registrar') {
-      return 'Guardar';
-    } else if (widget.accion == 'editar') {
-      return 'Actualizar';
-    } else {
-      return 'Eliminar';
-    }
+    if (widget.accion == 'registrar') return 'Guardar';
+    if (widget.accion == 'editar') return 'Actualizar';
+    return 'Eliminar';
   }
 
   bool get isEliminar => widget.accion == 'eliminar';
@@ -135,9 +211,9 @@ class _AccionesState extends State<Acciones> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Encuestas"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Encuestas"),
       body: _isLoading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -148,10 +224,7 @@ class _AccionesState extends State<Acciones> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         '${capitalize(widget.accion)} encuesta',
-                        style: TextStyle(
-                          fontSize: 24, // Tamaño grande
-                          fontWeight: FontWeight.bold, // Negrita
-                        ),
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -165,9 +238,8 @@ class _AccionesState extends State<Acciones> {
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El nombre es obligatorio'
-                                  : null,
+                              : (value) =>
+                                  value?.isEmpty ?? true ? 'El nombre es obligatorio' : null,
                         ),
                         TextFormField(
                           controller: _frecuenciaController,
@@ -175,34 +247,31 @@ class _AccionesState extends State<Acciones> {
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La frecuencia es obligatoria'
-                                  : null,
+                              : (value) =>
+                                  value?.isEmpty ?? true ? 'La frecuencia es obligatoria' : null,
                         ),
                         TextFormField(
                           controller: _clasificacionController,
-                          decoration:
-                              InputDecoration(labelText: 'Clasificacion'),
+                          decoration: InputDecoration(labelText: 'Clasificación'),
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null
                               : (value) => value?.isEmpty ?? true
-                                  ? 'La clasificacion es obligatoria'
+                                  ? 'La clasificación es obligatoria'
                                   : null,
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton(
-                              onPressed:
-                                  closeRegistroModal, // Cierra el modal pasando false
+                              onPressed: closeRegistroModal,
                               child: Text('Cancelar'),
                             ),
+                            SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: _isLoading ? null : _onSubmit,
                               child: _isLoading
-                                  ? SpinKitFadingCircle(
-                                      color: Colors.white, size: 24)
+                                  ? SpinKitFadingCircle(color: Colors.white, size: 24)
                                   : Text(buttonLabel),
                             ),
                           ],

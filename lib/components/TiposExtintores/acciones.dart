@@ -6,6 +6,9 @@ import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -45,6 +48,20 @@ class _AccionesState extends State<Acciones> {
         _isLoading = false;
       });
     });
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
   }
 
   @override
@@ -60,10 +77,155 @@ class _AccionesState extends State<Acciones> {
     widget.onCompleted();
   }
 
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineTiposExtintores');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final tiposExtintoresService = TiposExtintoresService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        if (operacion['accion'] == 'registrar') {
+          final response = await tiposExtintoresService
+              .registraTiposExtintores(operacion['data']);
+
+          if (response['status'] == 200 && response['data'] != null) {
+            final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+            final actualesRaw =
+                tiposExtintoresBox.get('tiposExtintores', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+
+            actuales.add({
+              'id': response['data']['_id'],
+              'nombre': response['data']['nombre'],
+              'descripcion': response['data']['descripcion'],
+              'estado': response['data']['estado'],
+              'createdAt': response['data']['createdAt'],
+              'updatedAt': response['data']['updatedAt'],
+            });
+
+            await tiposExtintoresBox.put('tiposExtintores', actuales);
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'editar') {
+          final response = await tiposExtintoresService
+              .actualizarTiposExtintores(operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+            final actualesRaw =
+                tiposExtintoresBox.get('tiposExtintores', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await tiposExtintoresBox.put('tiposExtintores', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'eliminar') {
+          final response = await tiposExtintoresService
+              .actualizaDeshabilitarTiposExtintores(
+                  operacion['id'], {'estado': 'false'});
+
+          if (response['status'] == 200) {
+            final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+            final actualesRaw =
+                tiposExtintoresBox.get('tiposExtintores', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                'estado': 'false',
+                'updatedAt': DateTime.now().toString(),
+              };
+              await tiposExtintoresBox.put('tiposExtintores', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        }
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      // 🔄 Si alguna falló, conserva solo las pendientes
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    // ✅ Actualizar lista completa desde API
+    try {
+      final List<dynamic> dataAPI =
+          await tiposExtintoresService.listarTiposExtintores();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'nombre': item['nombre'],
+                'descripcion': item['descripcion'],
+                'estado': item['estado'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+      await tiposExtintoresBox.put('tiposExtintores', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
+  }
+
   void _guardarTipoExtintor(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
+
+    final conectado = await verificarConexion();
 
     var dataTemp = {
       'nombre': data['nombre'],
@@ -71,20 +233,61 @@ class _AccionesState extends State<Acciones> {
       'estado': "true",
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineTiposExtintores');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'registrar',
+        'id': null,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+      final actualesRaw =
+          tiposExtintoresBox.get('tiposExtintores', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      actuales.add({
+        'id': DateTime.now().toIso8601String(),
+        ...dataTemp,
+        'createdAt': DateTime.now().toString(),
+        'updatedAt': DateTime.now().toString(),
+      });
+      await tiposExtintoresBox.put('tiposExtintores', actuales);
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Tipo de extintor guardado localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final tiposExtintoresService = TiposExtintoresService();
       var response =
           await tiposExtintoresService.registraTiposExtintores(dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha registrado la clasificacion ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha registrado el tipo de extintor ${data['nombre']} correctamente",
+            {});
         showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
@@ -92,14 +295,13 @@ class _AccionesState extends State<Acciones> {
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
         showCustomFlushbar(
           context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar el tipo de extintor",
+          title: "Error",
+          message: "No se pudo guardar el tipo de extintor",
           backgroundColor: Colors.red,
         );
       }
@@ -121,28 +323,77 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
       'descripcion': data['descripcion'],
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineTiposExtintores');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+      final actualesRaw =
+          tiposExtintoresBox.get('tiposExtintores', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      // Actualiza localmente el registro editado
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          ...dataTemp,
+          'updatedAt': DateTime.now().toString(),
+        };
+        await tiposExtintoresBox.put('tiposExtintores', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Tipo de extintor actualizado localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final tiposExtintoresService = TiposExtintoresService();
       var response =
           await tiposExtintoresService.actualizarTiposExtintores(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha modificado la clasificacion ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha actualizado el tipo de extintor ${data['nombre']} correctamente",
+            {});
         showCustomFlushbar(
           context: context,
-          title: "Actualizacion exitosa",
+          title: "Actualización exitosa",
           message:
-              "Los datos del tipo de extintor fueron actualizados correctamente",
+              "Los datos del tipo del extintor fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
       }
@@ -164,23 +415,71 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {'estado': "false"};
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineTiposExtintores');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'eliminar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final tiposExtintoresBox = Hive.box('tiposExtintoresBox');
+      final actualesRaw =
+          tiposExtintoresBox.get('tiposExtintores', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          'estado': 'false',
+          'updatedAt': DateTime.now().toString(),
+        };
+        await tiposExtintoresBox.put('tiposExtintores', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Tipo de extintor eliminada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
       final tiposExtintoresService = TiposExtintoresService();
       var response = await tiposExtintoresService
           .actualizaDeshabilitarTiposExtintores(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha eliminado la clasificacion ${data['nombre']} correctamente",
+            "Se ha eliminado el tipo de extintor ${data['id']} correctamente",
             {});
         showCustomFlushbar(
           context: context,
-          title: "Eliminacion exitosa",
+          title: "Eliminación exitosa",
           message:
               "Se han eliminado correctamente los datos del tipo de extintor",
           backgroundColor: Colors.green,
@@ -237,8 +536,8 @@ class _AccionesState extends State<Acciones> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer:
-          MenuLateral(currentPage: "Tipos de Extintores"), // Usa el menú lateral
+      drawer: MenuLateral(
+          currentPage: "Tipos de Extintores"), // Usa el menú lateral
       body: _isLoading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(

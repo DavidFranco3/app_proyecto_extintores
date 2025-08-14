@@ -5,6 +5,10 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 class GraficaDatosInspeccionesPage extends StatefulWidget {
   final String idInspeccion;
 
@@ -19,44 +23,88 @@ class _GraficaDatosInspeccionesPageState
     extends State<GraficaDatosInspeccionesPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataEncuestas = [];
+  late Box inspeccionAnualBox;
 
   @override
   void initState() {
     super.initState();
-    getEncuestas(); // Obtenemos las encuestas al iniciar
+    inspeccionAnualBox = Hive.box('inspeccionAnualBox');
+    cargarEncuestas();
   }
 
-  // Obtener las encuestas disponibles
-  Future<void> getEncuestas() async {
-    try {
-      final inspeccionAnualService = InspeccionAnualService();
-      final List<dynamic> response = await inspeccionAnualService
-          .listarInspeccionAnualId(widget.idInspeccion);
-      print(response);
+  /// Verifica conexión a internet
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-      if (response.isNotEmpty) {
-        setState(() {
-          dataEncuestas = formatModelEncuestas(response);
-          print("aca estoy");
-          print(dataEncuestas);
-          loading = false;
-        });
+  /// Decide de dónde cargar datos (API o Hive)
+  Future<void> cargarEncuestas() async {
+    try {
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getEncuestasDesdeAPI();
       } else {
-        setState(() {
-          dataEncuestas = [];
-          loading = false;
-        });
+        await getEncuestasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
-      loading = false;
+      print("Error general al cargar inspección anual: $e");
+      setState(() {
+        dataEncuestas = [];
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
     }
   }
 
+  /// Obtiene encuestas desde API y guarda en Hive
+  Future<void> getEncuestasDesdeAPI() async {
+    final inspeccionAnualService = InspeccionAnualService();
+    final List<dynamic> response = await inspeccionAnualService
+        .listarInspeccionAnualId(widget.idInspeccion);
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelEncuestas(response)
+          .where((item) => item['estado'] == "true")
+          .toList();
+
+      // Guardar en Hive usando idInspeccion como clave
+      await inspeccionAnualBox.put(widget.idInspeccion, formateadas);
+
+      setState(() {
+        dataEncuestas = formateadas;
+      });
+    } else {
+      setState(() {
+        dataEncuestas = [];
+      });
+    }
+  }
+
+  /// Obtiene encuestas desde Hive
+  Future<void> getEncuestasDesdeHive() async {
+    final List<dynamic>? guardadas =
+        inspeccionAnualBox.get(widget.idInspeccion);
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(
+        guardadas.map((e) => Map<String, dynamic>.from(e)),
+      );
+
+      setState(() {
+        dataEncuestas =
+            locales.where((item) => item['estado'] == "true").toList();
+      });
+    }
+  }
+
+  /// Formatea los datos recibidos
   List<Map<String, dynamic>> formatModelEncuestas(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'titulo': item['titulo'],
         'idCliente': item['idCliente'],
@@ -65,9 +113,8 @@ class _GraficaDatosInspeccionesPageState
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
   @override
@@ -91,14 +138,9 @@ class _GraficaDatosInspeccionesPageState
                     ),
                   ),
                 ),
-                // Dropdown para seleccionar la encuesta
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                ),
                 Expanded(
                   child: GraficaLineas(
                     encuestaAbierta: dataEncuestas,
-                    // Puedes pasar los datos filtrados si es necesario
                   ),
                 ),
               ],

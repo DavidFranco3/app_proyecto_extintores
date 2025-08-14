@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import '../../api/inspecciones.dart';
-import '../../api/auth.dart';
-import '../../api/logs.dart';
-import '../../api/usuarios.dart';
 import '../../components/Inspecciones/list_inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class InspeccionesInspectorPage extends StatefulWidget {
   final VoidCallback showModal;
   final dynamic data;
   final dynamic data2;
 
-  InspeccionesInspectorPage(
-      {required this.showModal, required this.data, required this.data2});
+  InspeccionesInspectorPage({
+    required this.showModal,
+    required this.data,
+    required this.data2,
+  });
+
   @override
   _InspeccionesInspectorPageState createState() =>
       _InspeccionesInspectorPageState();
@@ -29,88 +33,84 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
   @override
   void initState() {
     super.initState();
-    getInspecciones();
+    cargarInspecciones();
   }
 
-  Future<Map<String, dynamic>> _obtenerDatosComunes(String token) async {
-    try {
-      final authService = AuthService();
-      final usuarioService = UsuariosService();
-
-      // Obtener el id del usuario
-      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
-      print('ID Usuario obtenido: $idUsuario');
-
-      // Obtener los datos del usuario
-      Map<String, dynamic>? user =
-          await usuarioService.obtenerUsuario2(idUsuario);
-      print('Datos del usuario obtenidos: $user');
-
-      if (user == null) {
-        throw Exception("No se pudieron obtener los datos del usuario.");
-      }
-
-      final id = user['_id'];
-      final nombre = user['nombre'];
-      final email = user['email'];
-
-      // Obtener la IP
-      final ipResponse = await LogsService().obtenIP();
-      print('IP obtenida: $ipResponse');
-      final ipTemp = ipResponse;
-
-      // Obtener el número de logs
-      final noLogResponse = await LogsService().obtenerNumeroLog();
-      print('Respuesta número de log: $noLogResponse');
-      final noLog = noLogResponse['noLog'];
-      print('Número de log obtenido: $noLog');
-
-      return {
-        'id': id,
-        'nombre': nombre,
-        'email': email,
-        'ip': ipTemp,
-        'noLog': noLog,
-      };
-    } catch (e) {
-      print('Error al obtener datos comunes: $e');
-      rethrow; // Lanza el error para que lo maneje la función que lo llamó
-    }
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
   }
 
-  Future<void> getInspecciones() async {
+  Future<void> cargarInspecciones() async {
     try {
-      final inspeccionesService = InspeccionesService();
-      final List<dynamic> response =
-          await inspeccionesService.listarInspeccionesDatos(widget.data["id"]);
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataInspecciones = formatModelInspecciones(response);
-          loading = false; // Desactivar el estado de carga
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        print("Conectado a internet");
+        await getInspeccionesDesdeAPI();
       } else {
-        setState(() {
-          dataInspecciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        print("Sin conexión, cargando inspecciones desde Hive...");
+        await getInspeccionesDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      print("Error al cargar inspecciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataInspecciones = [];
+      });
+    } finally {
+      setState(() {
+        loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getInspeccionesDesdeAPI() async {
+    final inspeccionesService = InspeccionesService();
+    final List<dynamic> response =
+        await inspeccionesService.listarInspeccionesDatos(widget.data["id"]);
 
-  // Función para formatear los datos de las inspecciones
+    if (response.isNotEmpty) {
+      final formateadas = formatModelInspecciones(response);
+
+      // Guardar en Hive usando el id del cliente como clave
+      final box = Hive.box('inspeccionesInspectorBox');
+      await box.put(widget.data["id"], formateadas);
+
+      setState(() {
+        dataInspecciones = formateadas;
+      });
+    } else {
+      setState(() {
+        dataInspecciones = [];
+      });
+    }
+  }
+
+  Future<void> getInspeccionesDesdeHive() async {
+    final box = Hive.box('inspeccionesInspectorBox');
+    final List<dynamic>? guardadas =
+        box.get('inspeccionesInspector_${widget.data["id"]}');
+
+    if (guardadas != null) {
+      setState(() {
+        dataInspecciones = (guardadas as List)
+            .map<Map<String, dynamic>>(
+                (item) => Map<String, dynamic>.from(item as Map))
+            .where((item) => item['estado'] == "true")
+            .toList();
+        loading = false;
+      });
+    } else {
+      setState(() {
+        dataInspecciones = [];
+        loading = false;
+      });
+    }
+  }
+
   List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'idUsuario': item['idUsuario'],
         'idCliente': item['idCliente'],
@@ -143,44 +143,42 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
-  // Función para abrir el modal de registro con el formulario de Acciones
   void returnPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => InspeccionesPantalla2Page(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              data: widget.data2)),
-    ).then((_) {});
+        builder: (context) => InspeccionesPantalla2Page(
+          showModal: () {
+            Navigator.pop(context);
+          },
+          data: widget.data2,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(
-          currentPage: "Historial de actividades"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Historial de actividades"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Actividades",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -189,8 +187,7 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          returnPage, // Abre el modal con el formulario de acciones
+                      onPressed: returnPage,
                       icon: Icon(FontAwesomeIcons.arrowLeft),
                       label: Text("Regresar"),
                     ),
@@ -201,19 +198,17 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
                   child: Center(
                     child: Text(
                       "Cliente: ${widget.data["cliente"]}",
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
+                      style: TextStyle(fontSize: 18),
                     ),
                   ),
                 ),
                 Expanded(
                   child: TblInspecciones(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(context);
                     },
                     inspecciones: dataInspecciones,
-                    onCompleted: getInspecciones,
+                    onCompleted: cargarInspecciones,
                   ),
                 ),
               ],

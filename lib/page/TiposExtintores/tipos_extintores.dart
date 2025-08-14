@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+
 import '../../api/tipos_extintores.dart';
 import '../../components/TiposExtintores/list_tipos_extintores.dart';
 import '../../components/TiposExtintores/acciones.dart';
@@ -15,52 +19,101 @@ class TiposExtintoresPage extends StatefulWidget {
 class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataTiposExtintores = [];
+  bool showModal = false;
 
   @override
   void initState() {
     super.initState();
-    getTiposExtintores();
+    cargarTiposExtintores();
   }
 
-  Future<void> getTiposExtintores() async {
+  Future<void> cargarTiposExtintores() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getTiposExtintoresDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getTiposExtintoresDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getTiposExtintoresDesdeAPI() async {
     try {
       final tiposExtintoresService = TiposExtintoresService();
       final List<dynamic> response =
           await tiposExtintoresService.listarTiposExtintores();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
-        setState(() {
-          dataTiposExtintores = formatModelTiposExtintores(response);
-          loading = false;
-        });
+        final formateadas = formatModelTiposExtintores(response);
+
+        final box = Hive.box('tiposExtintoresBox');
+        await box.put('tiposExtintores', formateadas);
+
+        if (mounted) {
+          setState(() {
+            dataTiposExtintores = formateadas;
+            loading = false;
+          });
+        }
       } else {
-        setState(() {
-          loading = false;
-          dataTiposExtintores = [];
-        });
+        if (mounted) {
+          setState(() {
+            dataTiposExtintores = [];
+            loading = false;
+          });
+        }
       }
     } catch (e) {
-      print("Error al obtener las tiposExtintores: $e");
-      setState(() {
-        loading = false;
-      });
+      print("Error al obtener los tipos de extintores: $e");
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getTiposExtintoresDesdeHive() async {
+    final box = Hive.box('tiposExtintoresBox');
+    final List<dynamic>? guardados = box.get('tiposExtintores');
 
-  // Función para abrir el modal de registro con el formulario de Acciones
+    if (guardados != null) {
+      if (mounted) {
+        setState(() {
+          dataTiposExtintores = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item as Map))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          dataTiposExtintores = [];
+          loading = false;
+        });
+      }
+    }
+  }
+
   void openRegistroModal() {
-    // Navegar a la página de registro en lugar de mostrar un modal
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context); // Esto cierra la pantalla
+            Navigator.pop(context);
           },
-          onCompleted: getTiposExtintores,
+          onCompleted: cargarTiposExtintores,
           accion: "registrar",
           data: null,
         ),
@@ -68,38 +121,32 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     );
   }
 
-// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
   }
 
-  // Función para formatear los datos de las tiposExtintores
   List<Map<String, dynamic>> formatModelTiposExtintores(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map((item) {
+      return {
         'id': item['_id'],
         'nombre': item['nombre'],
         'descripcion': item['descripcion'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(
-        currentPage: "Tipos de extintores",
-      ), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Tipos de extintores"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -108,10 +155,8 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
                   child: Center(
                     child: Text(
                       "Tipos de extintores",
-                      style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
-                      ),
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -119,28 +164,28 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroModal,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
                   ),
                 ),
                 Expanded(
-                  child: TblTiposExtintores(
-                    showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
-                    },
-                    tiposExtintores: dataTiposExtintores,
-                    onCompleted: getTiposExtintores,
-                  ),
+                  child: dataTiposExtintores.isEmpty
+                      ? Center(
+                          child:
+                              Text("No hay tipos de extintores disponibles."))
+                      : TblTiposExtintores(
+                          showModal: () => Navigator.pop(context),
+                          tiposExtintores: dataTiposExtintores,
+                          onCompleted: cargarTiposExtintores,
+                        ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

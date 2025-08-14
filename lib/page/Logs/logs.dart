@@ -4,6 +4,9 @@ import '../../components/Logs/list_logs.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class LogsPage extends StatefulWidget {
   @override
@@ -17,41 +20,78 @@ class _LogsPageState extends State<LogsPage> {
   @override
   void initState() {
     super.initState();
-    getLogs();
+    cargarLogs();
   }
 
-  Future<void> getLogs() async {
+  Future<void> cargarLogs() async {
     try {
-      final logsService = LogsService();
-      final List<dynamic> response = await logsService.listarLogs();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataLogs = formatModelLogs(response);
-          loading = false;
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        print("Conectado a internet");
+        await getLogsDesdeAPI();
       } else {
-        setState(() {
-          loading = false;
-          dataLogs = [];
-        });
+        print("Sin conexión, cargando logs desde Hive...");
+        await getLogsDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener los logs: $e");
+      print("Error al cargar logs: $e");
+      setState(() {
+        dataLogs = [];
+      });
+    } finally {
       setState(() {
         loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-  // Función para formatear los datos de las logs
+  Future<void> getLogsDesdeAPI() async {
+    final logsService = LogsService();
+    final List<dynamic> response = await logsService.listarLogs();
+
+    if (response.isNotEmpty) {
+      final formateados = formatModelLogs(response);
+
+      // Guardar localmente
+      final box = Hive.box('logsBox');
+      await box.put('logs', formateados);
+
+      setState(() {
+        dataLogs = formateados;
+      });
+    } else {
+      setState(() {
+        dataLogs = [];
+      });
+    }
+  }
+
+  Future<void> getLogsDesdeHive() async {
+    final box = Hive.box('logsBox');
+    final List<dynamic>? guardados = box.get('logs');
+
+    if (guardados != null) {
+      setState(() {
+        dataLogs = List<Map<String, dynamic>>.from(guardados
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((item) => item['estado'] == "true"));
+      });
+    } else {
+      setState(() {
+        dataLogs = [];
+      });
+    }
+  }
+
   List<Map<String, dynamic>> formatModelLogs(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'folio': item['folio'],
         'usuario': item['usuario'],
@@ -62,30 +102,28 @@ class _LogsPageState extends State<LogsPage> {
         'detalles': item['detalles']['mensaje'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Logs"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Logs"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Logs",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -93,12 +131,10 @@ class _LogsPageState extends State<LogsPage> {
                 Expanded(
                   child: TblLogs(
                     showModal: () {
-                      Navigator.pop(
-                          context); // Cierra el modal después de registrar
+                      Navigator.pop(context);
                     },
                     logs: dataLogs,
-                    onCompleted:
-                        getLogs, // Pasa la función para que se pueda llamar desde el componente
+                    onCompleted: cargarLogs,
                   ),
                 ),
               ],

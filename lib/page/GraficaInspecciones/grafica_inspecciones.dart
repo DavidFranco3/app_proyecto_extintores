@@ -6,6 +6,10 @@ import '../../components/Header/header.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Generales/grafico.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 class GraficaInspeccionesPage extends StatefulWidget {
   @override
   _GraficaInspeccionesPageState createState() =>
@@ -16,83 +20,147 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataInspecciones = [];
   List<Map<String, dynamic>> dataEncuestas = [];
-  String?
-      selectedEncuestaId; // Variable para almacenar el ID de la encuesta seleccionada
+  String? selectedEncuestaId;
+
+  late Box encuestasBox;
+  late Box inspeccionesBox;
 
   @override
   void initState() {
     super.initState();
-    getEncuestas(); // Obtenemos las encuestas al iniciar
+    encuestasBox = Hive.box('encuestasBox');
+    inspeccionesBox = Hive.box('inspeccionesBox');
+    cargarEncuestas();
   }
 
-  // Obtener las encuestas disponibles
-  Future<void> getEncuestas() async {
-    try {
-      final encuestaInspeccionService = EncuestaInspeccionService();
-      final List<dynamic> response =
-          await encuestaInspeccionService.listarEncuestaInspeccion();
-
-      if (response.isNotEmpty) {
-        setState(() {
-          dataEncuestas = formatModelEncuestas(response);
-          loading = false;
-        });
-      } else {
-        setState(() {
-          dataEncuestas = [];
-          loading = false;
-        });
-      }
-    } catch (e) {
-      print("Error al obtener las encuestas: $e");
-      loading = false;
-    }
+  /// Verifica si hay conexión a internet
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
   }
 
-  // Obtener las inspecciones filtradas por encuesta
-  Future<void> getInspecciones(String encuestaId) async {
+  /// Cargar encuestas dependiendo de la conexión
+  Future<void> cargarEncuestas() async {
     try {
-      final inspeccionesService = InspeccionesService();
-      final List<dynamic> response =
-          await inspeccionesService.listarInspeccionesResultados(encuestaId);
-
-      if (response.isNotEmpty) {
-        setState(() {
-          // Procesamos las inspecciones y las asignamos
-          dataInspecciones = formatModelInspecciones(response);
-          loading = false;
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getEncuestasDesdeAPI();
       } else {
-        setState(() {
-          dataInspecciones = [];
-          loading = false;
-        });
+        await getEncuestasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      print("Error al cargar encuestas: $e");
+      setState(() {
+        dataEncuestas = [];
+      });
+    } finally {
       setState(() {
         loading = false;
       });
     }
   }
 
-  // Función para formatear los datos de las inspecciones
+  /// Obtener encuestas desde la API y guardarlas en Hive
+  Future<void> getEncuestasDesdeAPI() async {
+    final encuestaService = EncuestaInspeccionService();
+    final List<dynamic> response =
+        await encuestaService.listarEncuestaInspeccion();
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelEncuestas(response)
+          .where((item) => item['estado'] == "true")
+          .toList();
+
+      await encuestasBox.put('encuestas', formateadas);
+
+      setState(() {
+        dataEncuestas = formateadas;
+      });
+    }
+  }
+
+  /// Obtener encuestas desde Hive
+  Future<void> getEncuestasDesdeHive() async {
+    final List<dynamic>? guardadas = encuestasBox.get('encuestas');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(
+        guardadas.map((e) => Map<String, dynamic>.from(e)),
+      );
+
+      setState(() {
+        dataEncuestas =
+            locales.where((item) => item['estado'] == "true").toList();
+      });
+    }
+  }
+
+  /// Cargar inspecciones según la conexión
+  Future<void> cargarInspecciones(String encuestaId) async {
+    try {
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getInspeccionesDesdeAPI(encuestaId);
+      } else {
+        await getInspeccionesDesdeHive(encuestaId);
+      }
+    } catch (e) {
+      print("Error al cargar inspecciones: $e");
+      setState(() {
+        dataInspecciones = [];
+      });
+    }
+  }
+
+  /// Obtener inspecciones desde la API y guardarlas en Hive
+  Future<void> getInspeccionesDesdeAPI(String encuestaId) async {
+    final inspeccionesService = InspeccionesService();
+    final List<dynamic> response =
+        await inspeccionesService.listarInspeccionesResultados(encuestaId);
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelInspecciones(response);
+
+      // Guardar en Hive usando el ID como clave
+      await inspeccionesBox.put(encuestaId, formateadas);
+
+      setState(() {
+        dataInspecciones = formateadas;
+      });
+    }
+  }
+
+  /// Obtener inspecciones desde Hive
+  Future<void> getInspeccionesDesdeHive(String encuestaId) async {
+    final List<dynamic>? guardadas = inspeccionesBox.get(encuestaId);
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(
+        guardadas.map((e) => Map<String, dynamic>.from(e)),
+      );
+
+      setState(() {
+        dataInspecciones = locales;
+      });
+    }
+  }
+
+  /// Formatea datos de inspecciones
   List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'pregunta': item['pregunta'],
         'si': item['si'],
         'no': item['no'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
+  /// Formatea datos de encuestas
   List<Map<String, dynamic>> formatModelEncuestas(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'nombre': item['nombre'],
         'idFrecuencia': item['idFrecuencia'],
@@ -103,9 +171,8 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
   @override
@@ -142,9 +209,8 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                     items: dataEncuestas
                         .map((encuesta) => DropdownMenuItem<String>(
                               value: encuesta['id'],
-                              child: Text(encuesta['nombre'] +
-                                  " - " +
-                                  encuesta['frecuencia']),
+                              child: Text(
+                                  "${encuesta['nombre']} - ${encuesta['frecuencia']}"),
                             ))
                         .toList(),
                     onChanged: (String? newValue) {
@@ -152,8 +218,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                         selectedEncuestaId = newValue;
                       });
                       if (newValue != null) {
-                        getInspecciones(
-                            newValue); // Cargar las inspecciones para el ID de encuesta seleccionado
+                        cargarInspecciones(newValue);
                       }
                     },
                   ),
@@ -161,7 +226,6 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                 Expanded(
                   child: GraficaBarras(
                     dataInspecciones: dataInspecciones,
-                    // Puedes pasar los datos filtrados si es necesario
                   ),
                 ),
               ],

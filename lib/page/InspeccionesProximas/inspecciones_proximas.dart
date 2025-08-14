@@ -4,6 +4,9 @@ import '../../components/InspeccionesProximas/list_inspecciones_proximas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class InspeccionesProximasPage extends StatefulWidget {
   @override
@@ -18,43 +21,81 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
   @override
   void initState() {
     super.initState();
-    getInspeccionesProximas();
+    cargarInspeccionesProximas();
   }
 
-  Future<void> getInspeccionesProximas() async {
-    try {
-      final inspeccionesProximasService = InspeccionesProximasService();
-      final List<dynamic> response =
-          await inspeccionesProximasService.listarInspeccionesProximas();
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataInspeccionesProximas = formatModelInspeccionesProximas(response);
-          loading = false; // Desactivar el estado de carga
-        });
+  Future<void> cargarInspeccionesProximas() async {
+    try {
+      final conectado = await verificarConexion();
+      if (conectado) {
+        print("Conectado a internet");
+        await getInspeccionesProximasDesdeAPI();
       } else {
-        setState(() {
-          dataInspeccionesProximas = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        print("Sin conexión, cargando inspecciones próximas desde Hive...");
+        await getInspeccionesProximasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las inspeccionesProximas: $e");
+      print("Error general al cargar inspecciones próximas: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataInspeccionesProximas = [];
+      });
+    } finally {
+      setState(() {
+        loading = false;
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getInspeccionesProximasDesdeAPI() async {
+    final inspeccionesProximasService = InspeccionesProximasService();
+    final List<dynamic> response =
+        await inspeccionesProximasService.listarInspeccionesProximas();
 
-  // Función para formatear los datos de las inspeccionesProximas
+    if (response.isNotEmpty) {
+      final formateadas = formatModelInspeccionesProximas(response);
+
+      // Guardar en Hive
+      final box = Hive.box('inspeccionesProximasBox');
+      await box.put('inspecciones_proximas', formateadas);
+
+      setState(() {
+        dataInspeccionesProximas = formateadas;
+      });
+    } else {
+      setState(() {
+        dataInspeccionesProximas = [];
+      });
+    }
+  }
+
+  Future<void> getInspeccionesProximasDesdeHive() async {
+    final box = Hive.box('inspeccionesProximasBox');
+    final List<dynamic>? guardadas = box.get('inspecciones_proximas');
+
+    if (guardadas != null) {
+      setState(() {
+        dataInspeccionesProximas = List<Map<String, dynamic>>.from(
+            guardadas.map((e) => Map<String, dynamic>.from(e))
+            .where((item) => item['estado'] == "true"));
+
+      });
+    } else {
+      setState(() {
+        dataInspeccionesProximas = [];
+      });
+    }
+  }
+
   List<Map<String, dynamic>> formatModelInspeccionesProximas(
       List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'idFrecuencia': item['idFrecuencia'],
         'idEncuesta': item['idEncuesta'],
@@ -66,43 +107,39 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(
-          currentPage: "Actividades próximas"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Actividades próximas"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Actividades próximas",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-                // Centra el botón de registrar
                 Expanded(
                   child: TblInspeccionesProximas(
                     showModal: () {
-                      Navigator.pop(context); // Esto cierra el modal
+                      Navigator.pop(context);
                     },
                     inspeccionesProximas: dataInspeccionesProximas,
-                    onCompleted: getInspeccionesProximas,
+                    onCompleted: cargarInspeccionesProximas,
                   ),
                 ),
               ],

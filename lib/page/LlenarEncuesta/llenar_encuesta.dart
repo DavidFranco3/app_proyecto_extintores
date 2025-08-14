@@ -22,6 +22,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class EncuestaPage extends StatefulWidget {
   @override
@@ -126,6 +129,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
     _controller.clear();
   }
 
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -145,6 +154,14 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
     descripcionEficienciaController = TextEditingController();
     comentariosEficienciaController = TextEditingController();
+
+    sincronizarEncuestasPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarEncuestasPendientes();
+      }
+    });
   }
 
   @override
@@ -152,6 +169,44 @@ class _EncuestaPageState extends State<EncuestaPage> {
     comentariosController.dispose();
     descripcionController.dispose();
     super.dispose();
+  }
+
+  Future<void> sincronizarEncuestasPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('encuestasPendientes');
+    final pendientesRaw = box.get('encuestas', defaultValue: []);
+    final List<Map<String, dynamic>> pendientes = (pendientesRaw as List)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final inspeccionesService = InspeccionesService();
+    final List<int> exitosas = [];
+
+    for (int i = 0; i < pendientes.length; i++) {
+      final operacion = pendientes[i];
+      try {
+        if (operacion['accion'] == 'registrar') {
+          final response =
+              await inspeccionesService.registraInspecciones(operacion['data']);
+          if (response['status'] == 200) {
+            exitosas.add(i); // índice de la operación exitosa
+          }
+        }
+      } catch (e) {
+        print("Error sincronizando encuesta: $e");
+      }
+    }
+
+    // 🔄 Limpiar las encuestas que se sincronizaron
+    final nuevasPendientes = pendientes
+        .asMap()
+        .entries
+        .where((entry) => !exitosas.contains(entry.key))
+        .map((e) => e.value)
+        .toList();
+    await box.put('encuestas', nuevasPendientes);
   }
 
   void agregarRegistro() {
@@ -179,6 +234,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     imagenSeleccionada = null;
 
     setState(() {}); // Para que se actualice visualmente
+    print(registrosEficiencia);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Registro agregado correctamente")),
@@ -201,51 +257,123 @@ class _EncuestaPageState extends State<EncuestaPage> {
   }
 
   Future<void> getClientes() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClientesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClientesDesdeHive();
+    }
+  }
+
+  Future<void> getClientesDesdeAPI() async {
     try {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
-        setState(() {
-          dataClientes = formatModelClientes(response);
-          loading = false; // Desactivar el estado de carga
-        });
+        final formateadas = formatModelClientes(response);
+
+        final box = Hive.box('clientesBox');
+        await box.put('clientes', formateadas);
+
+        if (mounted) {
+          setState(() {
+            dataClientes = formateadas;
+            loading = false;
+          });
+        }
       } else {
-        setState(() {
-          dataClientes = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        if (mounted) {
+          setState(() {
+            dataClientes = [];
+            loading = false;
+          });
+        }
       }
     } catch (e) {
       print("Error al obtener los clientes: $e");
-      setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> getClientesDesdeHive() async {
+    final box = Hive.box('clientesBox');
+    final List<dynamic>? guardados = box.get('clientes');
+
+    if (guardados != null) {
+      if (mounted) {
+        setState(() {
+          dataClientes = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item as Map))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          dataClientes = [];
+          loading = false;
+        });
+      }
     }
   }
 
   Future<void> getRamas() async {
     try {
-      final ramasService = RamasService();
-      final List<dynamic> response = await ramasService.listarRamas();
-
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
-      if (response.isNotEmpty) {
-        setState(() {
-          dataRamas = formatModelRamas(response);
-          loading = false; // Desactivar el estado de carga
-        });
+      final conectado = await verificarConexion();
+      if (conectado) {
+        await getRamasDesdeAPI();
       } else {
-        setState(() {
-          dataRamas = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error al obtener las ramas: $e");
+      print("Error general al cargar ramas: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataRamas = [];
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeAPI() async {
+    final ramasService = RamasService();
+    final List<dynamic> response = await ramasService.listarRamas();
+
+    if (response.isNotEmpty) {
+      final formateadas = formatModelRamas(response);
+
+      final box = Hive.box('ramasBox');
+      await box.put('ramas', formateadas);
+
+      setState(() {
+        dataRamas = formateadas;
+      });
+    }
+  }
+
+  Future<void> getRamasDesdeHive() async {
+    final box = Hive.box('ramasBox');
+    final List<dynamic>? guardadas = box.get('ramas');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
+      setState(() {
+        dataRamas = locales;
       });
     }
   }
@@ -266,25 +394,69 @@ class _EncuestaPageState extends State<EncuestaPage> {
   }
 
   Future<void> getFrecuencias() async {
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getFrecuenciasDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getFrecuenciasDesdeHive();
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeAPI() async {
     try {
       final frecuenciasService = FrecuenciasService();
       final List<dynamic> response =
           await frecuenciasService.listarFrecuencias();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateados = formatModelFrecuencias(response);
+
+        // Guardar en Hive
+        final box = Hive.box('frecuenciasBox');
+        await box.put('frecuencias', formateados);
+
         setState(() {
-          dataFrecuencias = formatModelFrecuencias(response);
+          dataFrecuencias = formateados;
           loading = false;
         });
       } else {
         setState(() {
-          loading = false;
           dataFrecuencias = [];
+          loading = false;
         });
       }
     } catch (e) {
       print("Error al obtener las frecuencias: $e");
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getFrecuenciasDesdeHive() async {
+    try {
+      final box = Hive.box('frecuenciasBox');
+      final List<dynamic>? guardados = box.get('frecuencias');
+
+      if (guardados != null) {
+        setState(() {
+          dataFrecuencias = (guardados as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      } else {
+        setState(() {
+          dataFrecuencias = [];
+          loading = false;
+        });
+      }
+    } catch (e) {
+      print("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -308,27 +480,66 @@ class _EncuestaPageState extends State<EncuestaPage> {
   }
 
   Future<void> getClasificaciones() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClasificacionesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClasificacionesDesdeHive();
+    }
+  }
+
+  Future<void> getClasificacionesDesdeAPI() async {
     try {
       final clasificacionesService = ClasificacionesService();
       final List<dynamic> response =
           await clasificacionesService.listarClasificaciones();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateadas = formatModelClasificaciones(response);
+
+        // Guardar en Hive
+        final box = Hive.box('clasificacionesBox');
+        await box.put('clasificaciones', formateadas);
+
         setState(() {
-          dataClasificaciones = formatModelClasificaciones(response);
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = formateadas;
+          loading = false;
         });
       } else {
         setState(() {
-          dataClasificaciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
+          dataClasificaciones = [];
+          loading = false;
         });
       }
     } catch (e) {
       print("Error al obtener las clasificaciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getClasificacionesDesdeHive() async {
+    final box = Hive.box('clasificacionesBox');
+    final List<dynamic>? guardadas = box.get('clasificaciones');
+
+    if (guardadas != null) {
+      final filtradas = (guardadas as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .where((item) => item['estado'] == "true")
+          .toList();
+
+      setState(() {
+        dataClasificaciones = filtradas;
+        loading = false;
+      });
+    } else {
+      setState(() {
+        dataClasificaciones = [];
+        loading = false;
       });
     }
   }
@@ -418,16 +629,35 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
   Future<void> getEncuestas(String idRama, String idFrecuencia,
       String idClasificacion, String idCliente) async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet, obteniendo encuestas desde API...");
+      await getEncuestasDesdeAPI(
+          idRama, idFrecuencia, idClasificacion, idCliente);
+    } else {
+      print("Sin conexión, cargando encuestas desde Hive...");
+      await getEncuestasDesdeHive(
+          idRama, idFrecuencia, idClasificacion, idCliente);
+    }
+  }
+
+  Future<void> getEncuestasDesdeAPI(String idRama, String idFrecuencia,
+      String idClasificacion, String idCliente) async {
     try {
-      final encuestaInspeccionClienteService =
-          EncuestaInspeccionClienteService();
-      final List<dynamic> response = await encuestaInspeccionClienteService
+      final encuestaService = EncuestaInspeccionClienteService();
+      final List<dynamic> response = await encuestaService
           .listarEncuestaInspeccionClientePorRamaPorCliente(
               idRama, idFrecuencia, idClasificacion, idCliente);
 
       if (response.isNotEmpty) {
+        final formateadas = formatModelEncuestas(response);
+
+        // Guardar en Hive
+        final box = Hive.box('encuestasBox');
+        await box.put('encuestas', formateadas);
+
         setState(() {
-          dataEncuestas = formatModelEncuestas(response);
+          dataEncuestas = formateadas;
           loading = false;
         });
       } else {
@@ -439,6 +669,35 @@ class _EncuestaPageState extends State<EncuestaPage> {
     } catch (e) {
       print("Error al obtener las encuestas: $e");
       setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> getEncuestasDesdeHive(String idRama, String idFrecuencia,
+      String idClasificacion, String idCliente) async {
+    final box = Hive.box('encuestasBox');
+    final List<dynamic>? guardadas = box.get('encuestas');
+
+    if (guardadas != null) {
+      // Filtrar encuestas según los parámetros recibidos
+      final filtradas = (guardadas as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .where((item) =>
+              item['idRama'] == idRama &&
+              item['idFrecuencia'] == idFrecuencia &&
+              item['idClasificacion'] == idClasificacion &&
+              item['idCliente'] == idCliente)
+          .toList();
+
+      setState(() {
+        dataEncuestas = filtradas;
+        loading = false;
+      });
+    } else {
+      setState(() {
+        dataEncuestas = [];
         loading = false;
       });
     }
@@ -576,11 +835,23 @@ class _EncuestaPageState extends State<EncuestaPage> {
         _isLoading = false;
       });
 
+      // ❌ Si falla, guardar localmente
+      final box = Hive.box('encuestasPendientes');
+      List pendientes = box.get('encuestas', defaultValue: []);
+      pendientes.add({
+        'accion': 'registrar',
+        'data': data,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      await box.put('encuestas', pendientes);
+
+      setState(() => _isLoading = false);
       showCustomFlushbar(
         context: context,
-        title: "Oops...",
-        message: "Error inesperado: ${error.toString()}",
-        backgroundColor: Colors.red,
+        title: "Sin conexión",
+        message:
+            "La encuesta se guardó localmente y se enviará cuando haya internet",
+        backgroundColor: Colors.orange,
       );
     }
   }
@@ -792,7 +1063,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
         String? descripcion = imagenes["descripcion"];
         String? calificacion = imagenes["calificacion"];
         String? comentarios = imagenes["comentarios"];
-        String? imagen = imagenes["imagen"];
+        String? imagen = imagenes["imagen"]!.path;
 
         if (imagen != null) {
           String? sharedLink =
@@ -849,99 +1120,27 @@ class _EncuestaPageState extends State<EncuestaPage> {
     }
   }
 
-  String _orientacion = 'horizontal';
-  File? _imageHorizontal;
-  File? _imageVertical1;
-  File? _imageVertical2;
-
-  final TextEditingController _comentarioController = TextEditingController();
-  final TextEditingController _valorController = TextEditingController();
-
-  Future<void> _pickImage(Function(File) onImagePicked) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.camera);
+  Future<File?> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
-      onImagePicked(File(pickedFile.path));
+      return File(pickedFile.path);
     }
+    return null;
   }
 
-  Widget _buildImageContainer(File? image, {String? label}) {
-    return Container(
-      width: double.infinity,
-      height: 250,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: image == null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.cloud_upload, size: 50, color: Colors.blueAccent),
-                  if (label != null) Text(label),
-                ],
-              ),
-            )
-          : ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.file(image, fit: BoxFit.cover),
-            ),
-    );
-  }
+  void agregarImagenEncuesta(File? imagen,
+      {String? comentario, String? valor}) {
+    if (imagen == null) return;
 
-  void _agregarImagen() {
-    if (_comentarioController.text.isEmpty || _valorController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Completa comentario y valor")),
-      );
-      return;
-    }
-
-    if (_orientacion == 'horizontal') {
-      if (_imageHorizontal != null) {
-        setState(() {
-          imagePaths.add({
-            "imagePath": _imageHorizontal!.path,
-            "comentario": _comentarioController.text,
-            "valor": _valorController.text,
-          });
-          _imageHorizontal = null;
-          _comentarioController.clear();
-          _valorController.clear();
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Selecciona una imagen")),
-        );
-      }
-    } else {
-      if (_imageVertical1 != null && _imageVertical2 != null) {
-        setState(() {
-          imagePaths.addAll([
-            {
-              "imagePath": _imageVertical1!.path,
-              "comentario": _comentarioController.text,
-              "valor": _valorController.text,
-            },
-            {
-              "imagePath": _imageVertical2!.path,
-              "comentario": _comentarioController.text,
-              "valor": _valorController.text,
-            },
-          ]);
-          _imageVertical1 = null;
-          _imageVertical2 = null;
-          _comentarioController.clear();
-          _valorController.clear();
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Selecciona ambas imágenes verticales")),
-        );
-      }
-    }
+    setState(() {
+      imagePaths.add({
+        "imagePath": imagen.path,
+        "comentario": comentario ?? "",
+        "valor": valor ?? "",
+      });
+    });
+    print(imagePaths);
   }
 
   @override
@@ -1125,7 +1324,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                 : 300,
                             child: PageView.builder(
                               controller: _pageController,
-                              itemCount: 5,
+                              itemCount: 4,
                               itemBuilder: (context, pageIndex) {
                                 if (pageIndex == 0) {
                                   // Página con TODAS las preguntas
@@ -1141,6 +1340,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              // Título de la pregunta
                                               Text(
                                                 pregunta.titulo,
                                                 style: TextStyle(
@@ -1149,6 +1349,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                 ),
                                               ),
                                               SizedBox(height: 5),
+                                              // Opciones
                                               SizedBox(
                                                 height: 120,
                                                 child: ListView.builder(
@@ -1163,13 +1364,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                     final esNoAplica =
                                                         opcion.toLowerCase() ==
                                                             "no aplica";
-
                                                     return ListTile(
                                                       contentPadding:
                                                           EdgeInsets.zero,
                                                       title: Text(opcion),
                                                       leading: esNoAplica
-                                                          ? null // No se muestra ningún widget a la izquierda
+                                                          ? null
                                                           : Radio<String>(
                                                               value: opcion,
                                                               groupValue:
@@ -1179,7 +1379,8 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                                   (value) {
                                                                 setState(() {
                                                                   pregunta.respuesta =
-                                                                      value!;
+                                                                      value ??
+                                                                          '';
                                                                 });
                                                               },
                                                             ),
@@ -1187,6 +1388,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                   },
                                                 ),
                                               ),
+                                              // Observaciones
                                               TextField(
                                                 decoration: InputDecoration(
                                                   labelText: "Observaciones",
@@ -1197,6 +1399,76 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                   setState(() {
                                                     pregunta.observaciones =
                                                         value;
+                                                  });
+                                                },
+                                              ),
+                                              SizedBox(height: 10),
+                                              // Selector de imagen
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  final img =
+                                                      await _pickImage(); // devuelve File?
+                                                  if (img != null) {
+                                                    setState(() {
+                                                      // Guarda la imagen en la pregunta
+                                                      pregunta.imagen = img;
+                                                      pregunta.descripcion =
+                                                          pregunta.titulo;
+                                                    });
+
+                                                    // Guarda automáticamente en el arreglo global imagePaths
+                                                    agregarImagenEncuesta(
+                                                      img,
+                                                      comentario: pregunta
+                                                          .observaciones,
+                                                      valor: pregunta.valor,
+                                                    );
+                                                  }
+                                                },
+                                                child: Container(
+                                                  width: double.infinity,
+                                                  height: 200,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[200],
+                                                    border: Border.all(
+                                                        color: Colors.grey),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                  ),
+                                                  child: pregunta.imagen == null
+                                                      ? const Center(
+                                                          child: Icon(
+                                                            Icons.cloud_upload,
+                                                            size: 50,
+                                                            color: Colors
+                                                                .blueAccent,
+                                                          ),
+                                                        )
+                                                      : ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                          child: Image.file(
+                                                            pregunta.imagen!,
+                                                            fit: BoxFit.cover,
+                                                          ),
+                                                        ),
+                                                ),
+                                              ),
+                                              SizedBox(height: 10),
+                                              // NUEVO: Campo para valor debajo de la imagen
+                                              TextField(
+                                                decoration: InputDecoration(
+                                                  labelText: "Valor",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    pregunta.valor =
+                                                        value; // Asegúrate de tener el campo 'valor' en tu modelo Pregunta
                                                   });
                                                 },
                                               ),
@@ -1408,173 +1680,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                       ],
                                     ),
                                   );
-                                } else if (pageIndex == 3) {
-                                  // Página de imágenes
-                                  return Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16.0),
-                                      child: SingleChildScrollView(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Center(
-                                              child: Text(
-                                                "Carga de Imágenes",
-                                                style: TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                            ),
-                                            SizedBox(height: 10),
-
-                                            // Selector de orientación
-                                            Row(
-                                              children: [
-                                                Text("Orientación: "),
-                                                SizedBox(width: 10),
-                                                DropdownButton<String>(
-                                                  value: _orientacion,
-                                                  items: [
-                                                    DropdownMenuItem(
-                                                        value: 'horizontal',
-                                                        child:
-                                                            Text('Horizontal')),
-                                                    DropdownMenuItem(
-                                                        value: 'vertical',
-                                                        child:
-                                                            Text('Vertical')),
-                                                  ],
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _orientacion = value!;
-                                                      _imageHorizontal = null;
-                                                      _imageVertical1 = null;
-                                                      _imageVertical2 = null;
-                                                    });
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 16),
-
-                                            // Carga visual de imagen
-                                            if (_orientacion == 'horizontal')
-                                              GestureDetector(
-                                                onTap: () => _pickImage((img) {
-                                                  setState(() =>
-                                                      _imageHorizontal = img);
-                                                }),
-                                                child: _buildImageContainer(
-                                                    _imageHorizontal),
-                                              )
-                                            else ...[
-                                              GestureDetector(
-                                                onTap: () => _pickImage((img) {
-                                                  setState(() =>
-                                                      _imageVertical1 = img);
-                                                }),
-                                                child: _buildImageContainer(
-                                                    _imageVertical1,
-                                                    label: "Imagen 1"),
-                                              ),
-                                              SizedBox(height: 8),
-                                              GestureDetector(
-                                                onTap: () => _pickImage((img) {
-                                                  setState(() =>
-                                                      _imageVertical2 = img);
-                                                }),
-                                                child: _buildImageContainer(
-                                                    _imageVertical2,
-                                                    label: "Imagen 2"),
-                                              ),
-                                            ],
-
-                                            SizedBox(height: 16),
-
-                                            // Comentario como select de preguntas
-                                            DropdownButtonFormField<String>(
-                                              value: _comentarioController
-                                                      .text.isEmpty
-                                                  ? null
-                                                  : _comentarioController.text,
-                                              isExpanded: true,
-                                              decoration: InputDecoration(
-                                                labelText:
-                                                    "Selecciona una pregunta (Comentario)",
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              items: preguntas.map((pregunta) {
-                                                return DropdownMenuItem<String>(
-                                                  value: pregunta.titulo,
-                                                  child: Text(pregunta.titulo),
-                                                );
-                                              }).toList(),
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  _comentarioController.text =
-                                                      value ?? '';
-                                                });
-                                              },
-                                            ),
-                                            SizedBox(height: 16),
-
-                                            // Campo Valor
-                                            TextField(
-                                              controller: _valorController,
-                                              decoration: InputDecoration(
-                                                  labelText: "Valor"),
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              inputFormatters: [
-                                                FilteringTextInputFormatter
-                                                    .digitsOnly
-                                              ],
-                                            ),
-                                            SizedBox(height: 16),
-
-                                            // Botón Agregar
-                                            Center(
-                                              child: ElevatedButton(
-                                                onPressed: _agregarImagen,
-                                                child: Text("Agregar"),
-                                              ),
-                                            ),
-                                            SizedBox(height: 16),
-
-                                            // Vista de imágenes agregadas
-                                            if (imagePaths.isNotEmpty)
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                physics:
-                                                    NeverScrollableScrollPhysics(),
-                                                itemCount: imagePaths.length,
-                                                itemBuilder: (context, index) {
-                                                  return Card(
-                                                    margin:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 8),
-                                                    child: ListTile(
-                                                      leading: Image.file(
-                                                        File(imagePaths[index]
-                                                            ["imagePath"]),
-                                                        width: 50,
-                                                        height: 50,
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                      title: Text(
-                                                        '${imagePaths[index]["comentario"]} - ${imagePaths[index]["valor"]}',
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
                                 } else {
                                   // Página de firma
                                   return SafeArea(
@@ -1662,7 +1767,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             child: Text('Anterior'),
                           ),
                           TextButton(
-                            onPressed: currentPage < 4
+                            onPressed: currentPage < 3
                                 ? () => _pageController.nextPage(
                                       duration: Duration(milliseconds: 300),
                                       curve: Curves.easeIn,
@@ -1686,10 +1791,18 @@ class Pregunta {
   List<String> opciones;
   String respuesta;
 
+  // 🔹 Nuevos campos para fusionar página 0 y 4
+  String descripcion; // descripción asociada a la imagen
+  String valor; // descripción asociada a la imagen
+  File? imagen; // archivo de imagen asociado a la pregunta
+
   Pregunta({
     required this.titulo,
     required this.observaciones,
     required this.opciones,
     this.respuesta = '',
+    this.descripcion = '',
+    this.valor = '',
+    this.imagen,
   });
 }

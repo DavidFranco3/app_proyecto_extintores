@@ -13,6 +13,9 @@ import 'package:flutter/services.dart';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class CargarImagenesFinalesScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -28,10 +31,12 @@ class CargarImagenesFinalesScreen extends StatefulWidget {
     required this.data,
   });
 
-  _CargarImagenesFinalesScreenState createState() => _CargarImagenesFinalesScreenState();
+  _CargarImagenesFinalesScreenState createState() =>
+      _CargarImagenesFinalesScreenState();
 }
 
-class _CargarImagenesFinalesScreenState extends State<CargarImagenesFinalesScreen> {
+class _CargarImagenesFinalesScreenState
+    extends State<CargarImagenesFinalesScreen> {
   final _formKey = GlobalKey<FormState>();
   bool loading = true;
   bool _isLoading = false;
@@ -49,6 +54,13 @@ class _CargarImagenesFinalesScreenState extends State<CargarImagenesFinalesScree
         loading = false;
       });
     });
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
   }
 
   @override
@@ -56,46 +68,196 @@ class _CargarImagenesFinalesScreenState extends State<CargarImagenesFinalesScree
     super.dispose();
   }
 
-  void _guardarEncuesta(Map<String, dynamic> data) async {
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineInspecciones');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final inspeccionesService = InspeccionesService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+          final response =
+              await inspeccionesService.actualizarImagenesInspecciones(
+                  operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final inspeccionesBox = Hive.box('inspeccionesBox');
+            final actualesRaw =
+                inspeccionesBox.get('inspecciones', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await inspeccionesBox.put('inspecciones', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      // 🔄 Si alguna falló, conserva solo las pendientes
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    // ✅ Actualizar lista completa desde API
+    try {
+      final List<dynamic> dataAPI =
+          await inspeccionesService.listarInspecciones();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'idUsuario': item['idUsuario'],
+                'idCliente': item['idCliente'],
+                'idEncuesta': item['idEncuesta'],
+                'idRama': item['cuestionario']['idRama'],
+                'idClasificacion': item['cuestionario']['idClasificacion'],
+                'idFrecuencia': item['cuestionario']['idFrecuencia'],
+                'idCuestionario': item['cuestionario']['_id'],
+                'encuesta': item['encuesta'],
+                'imagenes': item?['imagenes'] ?? [],
+                'imagenesCloudinary': item?['imagenesCloudinary'] ?? [],
+                'imagenes_finales': item?['imagenesFinales'] ?? [],
+                'imagenes_finales_cloudinary':
+                    item?['imagenesFinalesCloudinary'] ?? [],
+                'comentarios': item['comentarios'],
+                'preguntas': item['encuesta'],
+                'descripcion': item['descripcion'],
+                'usuario': item['usuario']['nombre'],
+                'cliente': item['cliente']['nombre'],
+                'puestoCliente': item['cliente']['puesto'],
+                'responsableCliente': item['cliente']['responsable'],
+                'estadoDom': item['cliente']['direccion']['estadoDom'],
+                'municipio': item['cliente']['direccion']['municipio'],
+                'imagen_cliente': item['cliente']['imagen'],
+                'imagen_cliente_cloudinary': item['cliente']
+                    ['imagenCloudinary'],
+                'firma_usuario': item['usuario']['firma'],
+                'firma_usuario_cloudinary': item['usuario']['firmaCloudinary'],
+                'cuestionario': item['cuestionario']['nombre'],
+                'usuarios': item['usuario'],
+                'inspeccion_eficiencias': item['inspeccionEficiencias'],
+                'estado': item['estado'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final inspeccionesBox = Hive.box('inspeccionesBox');
+      await inspeccionesBox.put('inspecciones', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
+  }
+
+void _guardarEncuesta(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
+
+    final conectado = await verificarConexion();
 
     var dataTemp = {
       'imagenesFinales': data['imagenesFinales'],
       'imagenesFinalesCloudinary': data['imagenesFinalesCloudinary'],
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineInspecciones');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': widget.data["id"],
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final inspeccionesBox = Hive.box('inspeccionesBox');
+      final actualesRaw = inspeccionesBox.get('inspecciones', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == widget.data["id"]);
+      // Actualiza localmente el registro editado
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          ...dataTemp,
+          'updatedAt': DateTime.now().toString(),
+        };
+        await inspeccionesBox.put('inspecciones', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      returnPrincipalPage();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Encuesta actualizada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
-      final encuestaInspeccionService = InspeccionesService();
-      var response =
-          await encuestaInspeccionService.actualizarImagenesInspecciones(widget.data["id"], dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+      final inspeccionesService = InspeccionesService();
+      var response = await inspeccionesService.actualizarImagenesInspecciones(widget.data["id"], dataTemp);
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          returnPrincipalPage();
         });
+        returnPrincipalPage();
         LogsInformativos(
-            "Se ha registrado la encuesta correctamente",
-            dataTemp);
+            "Se ha actualizado la encuesta ${data['nombre']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Registro exitoso",
-          message: "Las imagenes fueron agregadas correctamente",
+          title: "Actualización exitosa",
+          message: "Los datos de la encuesta fueron actualizados correctamente",
           backgroundColor: Colors.green,
-        );
-      } else {
-        // Maneja el caso en que el statusCode no sea 200
-        setState(() {
-          _isLoading = false;
-        });
-        showCustomFlushbar(
-          context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la encuesta",
-          backgroundColor: Colors.red,
         );
       }
     } catch (error) {
@@ -129,8 +291,8 @@ class _CargarImagenesFinalesScreenState extends State<CargarImagenesFinalesScree
         if (imagePathStr != null) {
           String? sharedLink = await dropboxService.uploadImageToDropbox(
               imagePathStr, "inspecciones");
-          String? sharedLink2 =
-              await cloudinaryService.subirArchivoCloudinary(imagePathStr, "inspecciones");
+          String? sharedLink2 = await cloudinaryService.subirArchivoCloudinary(
+              imagePathStr, "inspecciones");
           if (sharedLink != null) {
             // Crear un mapa con el sharedLink y el comentario
             var imageInfo = {
@@ -228,8 +390,7 @@ class _CargarImagenesFinalesScreenState extends State<CargarImagenesFinalesScree
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-          currentPage:
-              "Cargar imagenes finales"), // Usa el menú lateral
+          currentPage: "Cargar imagenes finales"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(

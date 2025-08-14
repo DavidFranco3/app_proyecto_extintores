@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../../api/inspeccion_anual.dart';
 import '../../components/InspeccionEspecial/list_inspeccion_especial.dart';
 import '../InspeccionAnual/inspeccion_anual.dart';
@@ -15,70 +19,120 @@ class InspeccionEspecialPage extends StatefulWidget {
 class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataInspecciones = [];
+  bool showModal = false;
 
   @override
   void initState() {
     super.initState();
-    getInspecciones();
+    // Asegúrate de abrir la caja antes de usarla
+    Hive.openBox('inspeccionAnualBox').then((_) {
+      getInspecciones();
+    });
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
   }
 
   Future<void> getInspecciones() async {
+    setState(() {
+      loading = true;
+    });
+
+    final conectado = await verificarConexion();
+
+    if (conectado) {
+      await getInspeccionesDesdeAPI();
+    } else {
+      print("Sin conexión. Leyendo inspecciones desde Hive...");
+      await getInspeccionesDesdeHive();
+    }
+
+    setState(() {
+      loading = false;
+    });
+  }
+
+  Future<void> getInspeccionesDesdeAPI() async {
     try {
       final inspeccionAnualService = InspeccionAnualService();
       final List<dynamic> response =
           await inspeccionAnualService.listarInspeccionAnual();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        final formateadas = formatModelInspecciones(response);
+
+        final box = Hive.box('inspeccionAnualBox');
+        await box.put('inspecciones', formateadas);
+
         setState(() {
-          dataInspecciones = formatModelInspecciones(response);
-          loading = false; // Desactivar el estado de carga
+          dataInspecciones = formateadas;
         });
       } else {
         setState(() {
-          dataInspecciones = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
+          dataInspecciones = [];
         });
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      print("Error al obtener inspecciones: $e");
       setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
+        dataInspecciones = [];
       });
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getInspeccionesDesdeHive() async {
+    try {
+      final box = Hive.box('inspeccionAnualBox');
+      final List<dynamic>? almacenadas = box.get('inspecciones');
 
-  // Función para abrir el modal de registro con el formulario de Acciones
+      if (almacenadas != null) {
+        setState(() {
+          dataInspecciones = (almacenadas as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .where((item) => item['estado'] == "true")
+              .toList();
+        });
+      } else {
+        setState(() {
+          dataInspecciones = [];
+        });
+      }
+    } catch (e) {
+      print("Error leyendo inspecciones desde Hive: $e");
+      setState(() {
+        dataInspecciones = [];
+      });
+    }
+  }
+
   void openRegistroPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => InspeccionAnualPage(
-              showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
-              },
-              onCompleted: getInspecciones,
-              accion: "registrar",
-              data: null)),
-    ).then((_) {
-      // Actualizar inspecciones al regresar de la página
-    });
+        builder: (context) => InspeccionAnualPage(
+          showModal: () {
+            Navigator.pop(context);
+          },
+          onCompleted: getInspecciones,
+          accion: "registrar",
+          data: null,
+        ),
+      ),
+    );
   }
 
-// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
   }
 
-  // Función para formatear los datos de las clientes
   List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
+    return data.map<Map<String, dynamic>>((item) {
+      return {
         'id': item['_id'],
         'titulo': item['titulo'],
         'idCliente': item['idCliente'],
@@ -87,42 +141,37 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
+      };
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer:
-          MenuLateral(currentPage: "Actividad anual"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Actividad anual"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Actividad anual",
                       style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-                // Centra el botón de registrar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroPage, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroPage,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
@@ -131,20 +180,17 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
                 Expanded(
                   child: TblInspeccionEspecial(
                     showModal: () {
-                      Navigator.pop(
-                          context); // Cierra el modal después de registrar
+                      Navigator.pop(context);
                     },
                     inspeccionAnual: dataInspecciones,
-                    onCompleted:
-                        getInspecciones, // Pasa la función para que se pueda llamar desde el componente
+                    onCompleted: getInspecciones,
                   ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

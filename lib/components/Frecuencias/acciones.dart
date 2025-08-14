@@ -7,6 +7,9 @@ import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -46,6 +49,20 @@ class _AccionesState extends State<Acciones> {
         _isLoading = false;
       });
     });
+
+    sincronizarOperacionesPendientes();
+
+    Connectivity().onConnectivityChanged.listen((event) {
+      if (event != ConnectivityResult.none) {
+        sincronizarOperacionesPendientes();
+      }
+    });
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
   }
 
   @override
@@ -61,10 +78,155 @@ class _AccionesState extends State<Acciones> {
     widget.onCompleted();
   }
 
+  Future<void> sincronizarOperacionesPendientes() async {
+    final conectado = await verificarConexion();
+    if (!conectado) return;
+
+    final box = Hive.box('operacionesOfflineFrecuencias');
+    final operacionesRaw = box.get('operaciones', defaultValue: []);
+
+    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    final frecuenciasService = FrecuenciasService();
+    final List<String> operacionesExitosas = [];
+
+    for (var operacion in List.from(operaciones)) {
+      try {
+        if (operacion['accion'] == 'registrar') {
+          final response =
+              await frecuenciasService.registraFrecuencias(operacion['data']);
+
+          if (response['status'] == 200 && response['data'] != null) {
+            final frecuenciasBox = Hive.box('frecuenciasBox');
+            final actualesRaw =
+                frecuenciasBox.get('frecuencias', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+
+            actuales.add({
+              'id': response['data']['_id'],
+              'nombre': response['data']['nombre'],
+              'cantidadDias': response['data']['cantidadDias'],
+              'estado': response['data']['estado'],
+              'createdAt': response['data']['createdAt'],
+              'updatedAt': response['data']['updatedAt'],
+            });
+
+            await frecuenciasBox.put('frecuencias', actuales);
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'editar') {
+          final response = await frecuenciasService.actualizarFrecuencias(
+              operacion['id'], operacion['data']);
+
+          if (response['status'] == 200) {
+            final frecuenciasBox = Hive.box('frecuenciasBox');
+            final actualesRaw =
+                frecuenciasBox.get('frecuencias', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                ...operacion['data'],
+                'updatedAt': DateTime.now().toString(),
+              };
+              await frecuenciasBox.put('frecuencias', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        } else if (operacion['accion'] == 'eliminar') {
+          final response = await frecuenciasService
+              .actualizaDeshabilitarFrecuencias(
+                  operacion['id'], {'estado': 'false'});
+
+          if (response['status'] == 200) {
+            final frecuenciasBox = Hive.box('frecuenciasBox');
+            final actualesRaw =
+                frecuenciasBox.get('frecuencias', defaultValue: []);
+
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
+
+            final index = actuales
+                .indexWhere((element) => element['id'] == operacion['id']);
+            if (index != -1) {
+              actuales[index] = {
+                ...actuales[index],
+                'estado': 'false',
+                'updatedAt': DateTime.now().toString(),
+              };
+              await frecuenciasBox.put('frecuencias', actuales);
+            }
+          }
+
+          operacionesExitosas.add(operacion['operacionId']);
+        }
+      } catch (e) {
+        print('Error sincronizando operación: $e');
+      }
+    }
+
+    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
+    if (operacionesExitosas.length == operaciones.length) {
+      await box.put('operaciones', []);
+      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    } else {
+      // 🔄 Si alguna falló, conserva solo las pendientes
+      final nuevasOperaciones = operaciones
+          .where((op) => !operacionesExitosas.contains(op['operacionId']))
+          .toList();
+      await box.put('operaciones', nuevasOperaciones);
+      print(
+          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    }
+
+    // ✅ Actualizar lista completa desde API
+    try {
+      final List<dynamic> dataAPI =
+          await frecuenciasService.listarFrecuencias();
+
+      final formateadas = dataAPI
+          .map<Map<String, dynamic>>((item) => {
+                'id': item['_id'],
+                'nombre': item['nombre'],
+                'cantidadDias': item['cantidadDias'],
+                'estado': item['estado'],
+                'createdAt': item['createdAt'],
+                'updatedAt': item['updatedAt'],
+              })
+          .toList();
+
+      final frecuenciasBox = Hive.box('frecuenciasBox');
+      await frecuenciasBox.put('frecuencias', formateadas);
+    } catch (e) {
+      print('Error actualizando datos después de sincronización: $e');
+    }
+  }
+
   void _guardarFrecuencia(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
+
+    final conectado = await verificarConexion();
 
     var dataTemp = {
       'nombre': data['nombre'],
@@ -72,19 +234,59 @@ class _AccionesState extends State<Acciones> {
       'estado': "true",
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineFrecuencias');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'registrar',
+        'id': null,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final frecuenciasBox = Hive.box('frecuenciasBox');
+      final actualesRaw = frecuenciasBox.get('frecuencias', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      actuales.add({
+        'id': DateTime.now().toIso8601String(),
+        ...dataTemp,
+        'createdAt': DateTime.now().toString(),
+        'updatedAt': DateTime.now().toString(),
+      });
+      await frecuenciasBox.put('frecuencias', actuales);
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Frecuencias guardada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final frecuenciasService = FrecuenciasService();
       var response = await frecuenciasService.registraFrecuencias(dataTemp);
-      // Verifica el statusCode correctamente, según cómo esté estructurada la respuesta
+
       if (response['status'] == 200) {
-        // Asumiendo que 'response' es un Map que contiene el código de estado
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
             "Se ha registrado la frecuencia ${data['nombre']} correctamente",
-            dataTemp);
+            {});
         showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
@@ -92,14 +294,13 @@ class _AccionesState extends State<Acciones> {
           backgroundColor: Colors.green,
         );
       } else {
-        // Maneja el caso en que el statusCode no sea 200
         setState(() {
           _isLoading = false;
         });
         showCustomFlushbar(
           context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la clasificacion",
+          title: "Error",
+          message: "No se pudo guardar la frecuencia",
           backgroundColor: Colors.red,
         );
       }
@@ -121,27 +322,76 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {
       'nombre': data['nombre'],
       'cantidadDias': data['cantidadDias'],
     };
 
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineFrecuencias');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final frecuenciasBox = Hive.box('frecuenciasBox');
+      final actualesRaw = frecuenciasBox.get('frecuencias', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      // Actualiza localmente el registro editado
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          ...dataTemp,
+          'updatedAt': DateTime.now().toString(),
+        };
+        await frecuenciasBox.put('frecuencias', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Frecuencia actualizada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
     try {
       final frecuenciasService = FrecuenciasService();
       var response =
           await frecuenciasService.actualizarFrecuencias(id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha modificado la frecuencia ${data['nombre']} correctamente",
-            dataTemp);
+            "Se ha actualizado la frecuencia ${data['nombre']} correctamente",
+            {});
         showCustomFlushbar(
           context: context,
-          title: "Actualizacion exitosa",
-          message: "Los datos de la frecuencia fueron agregados correctamente",
+          title: "Actualización exitosa",
+          message:
+              "Los datos de la frecuencia fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
       }
@@ -163,23 +413,70 @@ class _AccionesState extends State<Acciones> {
       _isLoading = true;
     });
 
+    final conectado = await verificarConexion();
+
     var dataTemp = {'estado': "false"};
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineFrecuencias');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'eliminar',
+        'id': id,
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      final frecuenciasBox = Hive.box('frecuenciasBox');
+      final actualesRaw = frecuenciasBox.get('frecuencias', defaultValue: []);
+
+      final actuales = (actualesRaw as List)
+          .map<Map<String, dynamic>>(
+              (item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+
+      final index = actuales.indexWhere((element) => element['id'] == id);
+      if (index != -1) {
+        actuales[index] = {
+          ...actuales[index],
+          'estado': 'false',
+          'updatedAt': DateTime.now().toString(),
+        };
+        await frecuenciasBox.put('frecuencias', actuales);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+      widget.onCompleted();
+      widget.showModal();
+      showCustomFlushbar(
+        context: context,
+        title: "Sin conexión",
+        message:
+            "Frecuencia eliminada localmente y se sincronizará cuando haya internet",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
 
     try {
       final frecuenciasService = FrecuenciasService();
       var response = await frecuenciasService.actualizaDeshabilitarFrecuencias(
           id, dataTemp);
+
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
-          closeRegistroModal();
         });
+        widget.onCompleted();
+        widget.showModal();
         LogsInformativos(
-            "Se ha eliminado el periodo ${data['nombre']} correctamente", {});
+            "Se ha eliminado la frecuencia ${data['id']} correctamente", {});
         showCustomFlushbar(
           context: context,
-          title: "Eliminacion exitosa",
-          message: "Se han eliminado correctamente los datos del periodo",
+          title: "Eliminación exitosa",
+          message: "Se han eliminado correctamente los datos de la frecuencia",
           backgroundColor: Colors.green,
         );
       }

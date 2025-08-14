@@ -7,6 +7,9 @@ import '../../components/Header/header.dart';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import 'package:intl/intl.dart';
 import '../Inspecciones/inspecciones.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class InspeccionesPantalla2Page extends StatefulWidget {
   final VoidCallback showModal;
@@ -48,28 +51,60 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
   }
 
   Future<void> getInspecciones() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getInspeccionesDesdeAPI(widget.data["id"]);
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getInspeccionesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getInspeccionesDesdeAPI(String idCliente) async {
+    setState(() {
+      loading = true;
+      dataInspecciones = [];
+    });
+
     try {
       final inspeccionesService = InspeccionesService();
-      final List<dynamic> response = await inspeccionesService
-          .listarInspeccionesPorCliente(widget.data["id"]);
+      final List<dynamic> response =
+          await inspeccionesService.listarInspeccionesPorCliente(idCliente);
 
       if (response.isNotEmpty) {
         setState(() {
           dataInspecciones = formatModelInspecciones(response);
-          filteredInspecciones = List.from(dataInspecciones);
-          loading = false;
         });
       } else {
         setState(() {
           dataInspecciones = [];
-          filteredInspecciones = [];
-          loading = false;
         });
       }
     } catch (e) {
-      print("Error al obtener las inspeccionessssss: $e");
+      print("Error al obtener las inspecciones: $e");
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  Future<void> getInspeccionesDesdeHive() async {
+    final box = Hive.box('inspeccionesClientesBox');
+    final List<dynamic>? guardadas = box.get('inspecciones');
+
+    if (guardadas != null) {
+      final locales = List<Map<String, dynamic>>.from(guardadas
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((item) => item['estado'] == "true"));
+
       setState(() {
-        loading = false;
+        dataInspecciones = locales;
       });
     }
   }

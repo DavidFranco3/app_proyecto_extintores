@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../api/clientes.dart';
 import '../../components/Clientes/list_clientes.dart';
 import '../../components/Clientes/acciones.dart';
@@ -15,39 +19,89 @@ class ClientesPage extends StatefulWidget {
 class _ClientesPageState extends State<ClientesPage> {
   bool loading = true;
   List<Map<String, dynamic>> dataClientes = [];
+  bool showModal = false;
 
   @override
   void initState() {
     super.initState();
-    getClientes();
+    cargarClientes();
   }
 
-  Future<void> getClientes() async {
+  Future<void> cargarClientes() async {
+    final conectado = await verificarConexion();
+    if (conectado) {
+      print("Conectado a internet");
+      await getClientesDesdeAPI();
+    } else {
+      print("Sin conexión, cargando desde Hive...");
+      await getClientesDesdeHive();
+    }
+  }
+
+  Future<bool> verificarConexion() async {
+    final tipoConexion = await Connectivity().checkConnectivity();
+    if (tipoConexion == ConnectivityResult.none) return false;
+    return await InternetConnection().hasInternetAccess;
+  }
+
+  Future<void> getClientesDesdeAPI() async {
     try {
       final clientesService = ClientesService();
       final List<dynamic> response = await clientesService.listarClientes();
 
-      // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
-        setState(() {
-          dataClientes = formatModelClientes(response);
-          loading = false; // Desactivar el estado de carga
-        });
+        final formateadas = formatModelClientes(response);
+
+        final box = Hive.box('clientesBox');
+        await box.put('clientes', formateadas);
+
+        if (mounted) {
+          setState(() {
+            dataClientes = formateadas;
+            loading = false;
+          });
+        }
       } else {
-        setState(() {
-          dataClientes = []; // Lista vacía
-          loading = false; // Desactivar el estado de carga
-        });
+        if (mounted) {
+          setState(() {
+            dataClientes = [];
+            loading = false;
+          });
+        }
       }
     } catch (e) {
       print("Error al obtener los clientes: $e");
-      setState(() {
-        loading = false; // En caso de error, desactivar el estado de carga
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 
-  bool showModal = false; // Estado que maneja la visibilidad del modal
+  Future<void> getClientesDesdeHive() async {
+    final box = Hive.box('clientesBox');
+    final List<dynamic>? guardados = box.get('clientes');
+
+    if (guardados != null) {
+      if (mounted) {
+        setState(() {
+          dataClientes = (guardados as List)
+              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item as Map))
+              .where((item) => item['estado'] == "true")
+              .toList();
+          loading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          dataClientes = [];
+          loading = false;
+        });
+      }
+    }
+  }
 
   void openRegistroModal() {
     Navigator.push(
@@ -56,10 +110,8 @@ class _ClientesPageState extends State<ClientesPage> {
         builder: (BuildContext context) {
           return Scaffold(
             body: Acciones(
-              showModal: () {
-                Navigator.pop(context); // Esto cerrará la página
-              },
-              onCompleted: getClientes,
+              showModal: () => Navigator.pop(context),
+              onCompleted: cargarClientes,
               accion: "registrar",
               data: null,
             ),
@@ -69,14 +121,12 @@ class _ClientesPageState extends State<ClientesPage> {
     );
   }
 
-// Cierra el modal
   void closeModal() {
     setState(() {
-      showModal = false; // Cierra el modal
+      showModal = false;
     });
   }
 
-  // Función para formatear los datos de las clientes
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
@@ -110,55 +160,46 @@ class _ClientesPageState extends State<ClientesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(), // Usa el header con menú de usuario
-      drawer: MenuLateral(currentPage: "Clientes"), // Usa el menú lateral
+      appBar: Header(),
+      drawer: MenuLateral(currentPage: "Clientes"),
       body: loading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
+          ? Load()
           : Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Centra el encabezado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
                       "Clientes",
-                      style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
-                      ),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                // Centra el botón de registrar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          openRegistroModal, // Abre el modal con el formulario de acciones
+                      onPressed: openRegistroModal,
                       icon: Icon(FontAwesomeIcons.plus),
                       label: Text("Registrar"),
                     ),
                   ),
                 ),
                 Expanded(
-                  child: TblClientes(
-                    showModal: () {
-                      Navigator.pop(
-                          context); // Cierra el modal después de registrar
-                    },
-                    clientes: dataClientes,
-                    onCompleted:
-                        getClientes, // Pasa la función para que se pueda llamar desde el componente
-                  ),
+                  child: dataClientes.isEmpty
+                      ? Center(child: Text("No hay clientes disponibles."))
+                      : TblClientes(
+                          showModal: () => Navigator.pop(context),
+                          clientes: dataClientes,
+                          onCompleted: cargarClientes,
+                        ),
                 ),
               ],
             ),
-      // Modal: Se muestra solo si `showModal` es true
       floatingActionButton: showModal
           ? FloatingActionButton(
-              onPressed: closeModal, // Cierra el modal
+              onPressed: closeModal,
               child: Icon(Icons.close),
             )
           : null,

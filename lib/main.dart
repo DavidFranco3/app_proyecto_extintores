@@ -9,6 +9,7 @@ import 'api/auth.dart';
 import 'api/tokens.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'components/Generales/flushbar_helper.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 // 📌 Clave global para manejar el contexto en los diálogos
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -62,6 +63,34 @@ Future<void> main() async {
   });
 
   runApp(MyApp(isLoggedIn: isLoggedIn));
+  await Hive.initFlutter();
+  await Hive.openBox('clientesBox');
+  await Hive.openBox('reporteFinalBox');
+  await Hive.openBox('clasificacionesBox');
+  await Hive.openBox('encuestasBox');
+  await Hive.openBox('extintoresBox');
+  await Hive.openBox('frecuenciasBox');
+  await Hive.openBox('inspeccionesBox');
+  await Hive.openBox('inspeccionAnualBox');
+  await Hive.openBox('inspeccionesProximasBox');
+  await Hive.openBox('inspeccionesInspectorBox');
+  await Hive.openBox('logsBox');
+  await Hive.openBox('tokensBox');
+  await Hive.openBox('ramasBox');
+  await Hive.openBox('tiposExtintoresBox');
+  await Hive.openBox('usuariosBox');
+  await Hive.openBox('operacionesOfflineClasificaciones');
+  await Hive.openBox('operacionesOfflineExtintores');
+  await Hive.openBox('operacionesOfflineEncuestas');
+  await Hive.openBox('operacionesOfflineFrecuencias');
+  await Hive.openBox('operacionesOfflineRamas');
+  await Hive.openBox('operacionesOfflineTiposExtintores');
+  await Hive.openBox('operacionesOfflineInspecciones');
+  await Hive.openBox('operacionesOfflineInspeccionAnual');
+  await Hive.openBox('operacionesOfflineClientes');
+  await Hive.openBox('operacionesOfflineUsuarios');
+  await Hive.openBox('operacionesOfflineReportes');
+  await Hive.openBox('encuestasPendientes');
 }
 
 Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
