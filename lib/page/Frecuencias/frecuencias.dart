@@ -81,7 +81,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
 
       if (guardados != null) {
         setState(() {
-          dataFrecuencias = (guardados as List)
+          dataFrecuencias = guardados
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();

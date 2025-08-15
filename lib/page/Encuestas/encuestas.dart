@@ -104,7 +104,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
 
       if (guardadas != null) {
         setState(() {
-          dataEncuestas = (guardadas as List)
+          dataEncuestas = guardadas
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();
@@ -173,7 +173,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
 
       if (guardadas != null) {
         setState(() {
-          dataClasificaciones = (guardadas as List)
+          dataClasificaciones = guardadas
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
               .toList();
         });
@@ -237,7 +237,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
 
       if (guardadas != null) {
         setState(() {
-          dataFrecuencias = (guardadas as List)
+          dataFrecuencias = guardadas
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
               .toList();
         });

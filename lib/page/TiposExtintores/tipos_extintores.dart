@@ -87,7 +87,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataTiposExtintores = (guardados as List)
+          dataTiposExtintores = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")

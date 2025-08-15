@@ -98,7 +98,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
 
       if (guardados != null) {
         setState(() {
-          dataClientes = (guardados as List)
+          dataClientes = guardados
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();

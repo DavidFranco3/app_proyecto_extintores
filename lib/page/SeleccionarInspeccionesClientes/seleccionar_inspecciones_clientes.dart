@@ -104,7 +104,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataClientes = (guardados as List)
+          dataClientes = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item as Map))
               .toList();

@@ -86,7 +86,7 @@ class _ClientesPageState extends State<ClientesPage> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataClientes = (guardados as List)
+          dataClientes = guardados
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")
               .toList();

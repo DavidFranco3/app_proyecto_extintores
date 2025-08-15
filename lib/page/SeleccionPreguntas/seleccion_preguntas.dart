@@ -99,7 +99,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
       if (guardadas != null) {
         setState(() {
-          dataEncuestas = (guardadas as List)
+          dataEncuestas = guardadas
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
@@ -192,7 +192,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataClientes = (guardados as List)
+          dataClientes = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")
@@ -351,8 +351,9 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
             final preguntasSeleccionadas = <Map<String, dynamic>>[];
 
-            final preguntas =
-                encuesta['preguntas'] as List<Map<String, dynamic>>;
+            final preguntas = (encuesta['preguntas'] as List)
+                .map((e) => Map<String, dynamic>.from(e as Map))
+                .toList();
             for (int i = 0; i < preguntas.length; i++) {
               final preguntaId = '${encuestaId}_$i';
               if (seleccionados.contains(preguntaId)) {

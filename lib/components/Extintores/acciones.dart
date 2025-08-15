@@ -128,7 +128,7 @@ class _AccionesState extends State<Acciones> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataTiposExtintores = (guardados as List)
+          dataTiposExtintores = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item as Map))
               .toList();
@@ -294,8 +294,7 @@ class _AccionesState extends State<Acciones> {
           .where((op) => !operacionesExitosas.contains(op['operacionId']))
           .toList();
       await box.put('operaciones', nuevasOperaciones);
-      print(
-          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+      
     }
 
     // ✅ Actualizar lista completa desde API

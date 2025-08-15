@@ -309,7 +309,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataClientes = (guardados as List)
+          dataClientes = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")
@@ -442,7 +442,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
       if (guardados != null) {
         setState(() {
-          dataFrecuencias = (guardados as List)
+          dataFrecuencias = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
@@ -526,7 +526,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
     final List<dynamic>? guardadas = box.get('clasificaciones');
 
     if (guardadas != null) {
-      final filtradas = (guardadas as List)
+      final filtradas = guardadas
           .map<Map<String, dynamic>>(
               (item) => Map<String, dynamic>.from(item as Map))
           .where((item) => item['estado'] == "true")
@@ -681,7 +681,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
 
     if (guardadas != null) {
       // Filtrar encuestas según los parámetros recibidos
-      final filtradas = (guardadas as List)
+      final filtradas = guardadas
           .map<Map<String, dynamic>>(
               (item) => Map<String, dynamic>.from(item as Map))
           .where((item) =>
@@ -1410,19 +1410,9 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                       await _pickImage(); // devuelve File?
                                                   if (img != null) {
                                                     setState(() {
-                                                      // Guarda la imagen en la pregunta
-                                                      pregunta.imagen = img;
-                                                      pregunta.descripcion =
-                                                          pregunta.titulo;
+                                                      pregunta.imagen =
+                                                          img; // Imagen temporal
                                                     });
-
-                                                    // Guarda automáticamente en el arreglo global imagePaths
-                                                    agregarImagenEncuesta(
-                                                      img,
-                                                      comentario: pregunta
-                                                          .observaciones,
-                                                      valor: pregunta.valor,
-                                                    );
                                                   }
                                                 },
                                                 child: Container(
@@ -1457,8 +1447,10 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                 ),
                                               ),
                                               SizedBox(height: 10),
-                                              // NUEVO: Campo para valor debajo de la imagen
+                                              // Campo para valor
                                               TextField(
+                                                controller: pregunta
+                                                    .controllerValor, // ⬅️ usamos el controller
                                                 decoration: InputDecoration(
                                                   labelText: "Valor",
                                                   border: OutlineInputBorder(),
@@ -1467,10 +1459,40 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                                     TextInputType.number,
                                                 onChanged: (value) {
                                                   setState(() {
-                                                    pregunta.valor =
-                                                        value; // Asegúrate de tener el campo 'valor' en tu modelo Pregunta
+                                                    pregunta.controllerValor.text =
+                                                        value; // opcional, si aún quieres mantener el valor en el modelo
                                                   });
                                                 },
+                                              ),
+
+                                              SizedBox(height: 10),
+                                              // Botón "Guardar imagen"
+                                              ElevatedButton.icon(
+                                                onPressed: pregunta.imagen ==
+                                                        null
+                                                    ? null
+                                                    : () {
+                                                        // Guarda la imagen en el arreglo global
+                                                        agregarImagenEncuesta(
+                                                          pregunta.imagen,
+                                                          comentario:
+                                                              pregunta.titulo,
+                                                          valor: pregunta
+                                                              .controllerValor
+                                                              .text,
+                                                        );
+
+                                                        setState(() {
+                                                          // Limpia solo la imagen y el valor
+                                                          pregunta.imagen =
+                                                              null;
+                                                          pregunta
+                                                              .controllerValor
+                                                              .clear();
+                                                        });
+                                                      },
+                                                icon: Icon(Icons.save),
+                                                label: Text("Guardar imagen"),
                                               ),
                                             ],
                                           ),
@@ -1790,11 +1812,9 @@ class Pregunta {
   String observaciones;
   List<String> opciones;
   String respuesta;
-
-  // 🔹 Nuevos campos para fusionar página 0 y 4
-  String descripcion; // descripción asociada a la imagen
-  String valor; // descripción asociada a la imagen
-  File? imagen; // archivo de imagen asociado a la pregunta
+  String descripcion;
+  TextEditingController controllerValor;
+  File? imagen;
 
   Pregunta({
     required this.titulo,
@@ -1802,7 +1822,7 @@ class Pregunta {
     required this.opciones,
     this.respuesta = '',
     this.descripcion = '',
-    this.valor = '',
+    TextEditingController? controllerValor,
     this.imagen,
-  });
+  }) : controllerValor = controllerValor ?? TextEditingController();
 }

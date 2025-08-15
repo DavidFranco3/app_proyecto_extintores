@@ -86,7 +86,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
     if (guardados != null) {
       if (mounted) {
         setState(() {
-          dataUsuarios = (guardados as List)
+          dataUsuarios = guardados
               .map<Map<String, dynamic>>(
                   (item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")

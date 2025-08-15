@@ -91,6 +91,7 @@ Future<void> main() async {
   await Hive.openBox('operacionesOfflineUsuarios');
   await Hive.openBox('operacionesOfflineReportes');
   await Hive.openBox('encuestasPendientes');
+  await Hive.openBox('operacionesOfflinePreguntas');
 }
 
 Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {

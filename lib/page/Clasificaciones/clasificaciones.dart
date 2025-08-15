@@ -78,7 +78,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
     final List<dynamic>? guardadas = box.get('clasificaciones');
 
     if (guardadas != null) {
-      final filtradas = (guardadas as List)
+      final filtradas = guardadas
           .map<Map<String, dynamic>>(
               (item) => Map<String, dynamic>.from(item as Map))
           .where((item) => item['estado'] == "true")

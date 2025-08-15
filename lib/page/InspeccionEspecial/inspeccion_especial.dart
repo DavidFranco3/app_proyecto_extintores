@@ -90,7 +90,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
 
       if (almacenadas != null) {
         setState(() {
-          dataInspecciones = (almacenadas as List)
+          dataInspecciones = almacenadas
               .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();

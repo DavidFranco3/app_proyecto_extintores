@@ -307,6 +307,8 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                       } else if (value == 'enviarPdfBackend') {
                         PdfGenerator.enviarPdfAlBackend(
                             context, row['_originalRow']);
+                      } else if (value == 'guardarPdf3') {
+                        GenerarPdfPage.generarPdf(row['_originalRow']);
                       } else if (value == 'guardarPdf4') {
                         GenerarPdfPage4.guardarPDF(row['_originalRow']);
                       } else if (value == 'enviarPdf4Backend') {

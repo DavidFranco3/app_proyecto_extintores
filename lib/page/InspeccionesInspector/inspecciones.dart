@@ -93,7 +93,7 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
 
     if (guardadas != null) {
       setState(() {
-        dataInspecciones = (guardadas as List)
+        dataInspecciones = guardadas
             .map<Map<String, dynamic>>(
                 (item) => Map<String, dynamic>.from(item as Map))
             .where((item) => item['estado'] == "true")
