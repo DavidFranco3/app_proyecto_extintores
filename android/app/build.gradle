@@ -28,7 +28,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.isotech.aggo"
-    compileSdk = 35//flutter.compileSdkVersion
+    compileSdk = 36//flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"//flutter.ndkVersion
 
     compileOptions {
@@ -46,8 +46,8 @@ android {
         applicationId = "com.isotech.aggo"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21//flutter.minSdkVersion
-        targetSdk = 35//flutter.targetSdkVersion
+        minSdkVersion flutter.minSdkVersion//flutter.minSdkVersion
+        targetSdk = 36//flutter.targetSdkVersion
         versionCode = 3//flutter.versionCode
         versionName = 1.2//flutter.versionName
     }
