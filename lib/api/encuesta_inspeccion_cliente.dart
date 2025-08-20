@@ -74,7 +74,10 @@ class EncuestaInspeccionClienteService {
   }
 
   Future<List<dynamic>> listarEncuestaInspeccionClientePorRamaPorCliente(
-      String idRama, String idFrecuencia, String idClasificacion, String idCliente) async {
+      String idRama,
+      String idFrecuencia,
+      String idClasificacion,
+      String idCliente) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
@@ -147,6 +150,26 @@ class EncuestaInspeccionClienteService {
       throw Exception('Failed to load encuesta de Inspección');
     }
   }
+
+  Future<List<dynamic>> obtenerEncuestaInspeccionClienteEncuestas(String idCliente) async {
+  final token = await authService.getTokenApi();
+  final response = await http.get(
+    Uri.parse(
+        API_HOST + ENDPOINT_OBTENER_ENCUESTA_INSPECCION_CLIENTE_ENCUESTAS + '/$idCliente'),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return List<dynamic>.from(json.decode(response.body));
+  } else {
+    throw Exception('Failed to load encuesta de Inspección');
+  }
+}
+
 
 // Actualizar encuesta de Inspección
   Future<Map<String, dynamic>> actualizarEncuestaInspeccionCliente(

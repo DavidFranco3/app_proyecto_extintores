@@ -42,6 +42,58 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     });
   }
 
+  Future<void> precargarEncuestasCliente(String idCliente) async {
+    try {
+      final encuestaInspeccionClienteService =
+          EncuestaInspeccionClienteService();
+
+      final List<dynamic> encuestasCliente =
+          await encuestaInspeccionClienteService
+              .obtenerEncuestaInspeccionClienteEncuestas(idCliente);
+
+      final Set<String> seleccionPrevia = {};
+
+      for (var encCliente in encuestasCliente) {
+        final encontrada = dataEncuestas.firstWhere(
+          (e) =>
+              e['nombre'] == encCliente['nombre'] &&
+              e['idFrecuencia'] == encCliente['idFrecuencia'] &&
+              e['idClasificacion'] == encCliente['idClasificacion'] &&
+              e['idRama'] == encCliente['idRama'],
+          orElse: () => {},
+        );
+
+        if (encontrada.isNotEmpty) {
+          final encuestaId = encontrada['id'];
+          final frecuenciaId =
+              encontrada['idFrecuencia'] + '-' + encontrada['frecuencia'];
+          final clasificacionId =
+              encontrada['idClasificacion'] + '-' + encontrada['clasificacion'];
+          final ramaId = encontrada['idRama'] + '-' + encontrada['rama'];
+
+          // Marcar encuesta + preguntas
+          seleccionPrevia.add(encuestaId);
+          (encontrada['preguntas'] as List).asMap().forEach((i, _) {
+            seleccionPrevia.add('${encuestaId}_$i');
+          });
+
+          // Marcar jerarquía superior
+          seleccionPrevia.add(frecuenciaId);
+          seleccionPrevia.add(clasificacionId);
+          seleccionPrevia.add(ramaId);
+        }
+      }
+
+      setState(() {
+        seleccionados
+          ..clear()
+          ..addAll(seleccionPrevia);
+      });
+    } catch (e) {
+      print("Error al precargar encuestas del cliente: $e");
+    }
+  }
+
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
     if (tipoConexion == ConnectivityResult.none) return false;
@@ -314,6 +366,8 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     required bool seleccionar,
   }) {
     setState(() {
+      print("hijos");
+      print(hijos);
       if (seleccionar) {
         seleccionados.addAll(hijos);
       } else {
@@ -518,6 +572,8 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                   ),
                 ),
                 DropdownButtonFormField<String>(
+                  key: ValueKey(
+                      clienteController.text), // 👈 esto obliga a reconstruir
                   value: clienteController.text.isEmpty
                       ? null
                       : clienteController.text,
@@ -529,10 +585,14 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                       child: Text(cliente['nombre']!),
                     );
                   }).toList(),
-                  onChanged: (newValue) {
+                  onChanged: (newValue) async {
                     setState(() {
                       clienteController.text = newValue!;
+                      seleccionados.clear(); // 👉 limpia visualmente primero
                     });
+
+                    await precargarEncuestasCliente(
+                        newValue!); // 👉 vuelve a llenar 'seleccionados'
                   },
                   validator: (value) => value == null || value.isEmpty
                       ? 'El cliente es obligatorio'

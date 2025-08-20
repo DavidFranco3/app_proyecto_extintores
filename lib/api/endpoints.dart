@@ -67,6 +67,7 @@ const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA_CLIENTE = "/encuestaInspec
 const String ENDPOINT_LISTAR_ENCUESTA_INSPECCION_RAMA_POR_CLIENTE = "/encuestaInspeccionCliente/listarPorRamaCliente";
 const String ENDPOINT_REGISTRAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/registro";
 const String ENDPOINT_OBTENER_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/obtener";
+const String ENDPOINT_OBTENER_ENCUESTA_INSPECCION_CLIENTE_ENCUESTAS = "/encuestaInspeccionCliente/encuestasExistentes";
 const String ENDPOINT_ACTUALIZAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/actualizar";
 const String ENDPOINT_ELIMINAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/eliminar";
 const String ENDPOINT_DESHABILITAR_ENCUESTA_INSPECCION_CLIENTE = "/encuestaInspeccionCliente/deshabilitar";

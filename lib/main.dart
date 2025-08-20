@@ -62,7 +62,6 @@ Future<void> main() async {
         "📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
   });
 
-  runApp(MyApp(isLoggedIn: isLoggedIn));
   await Hive.initFlutter();
   await Hive.openBox('clientesBox');
   await Hive.openBox('reporteFinalBox');
@@ -92,6 +91,8 @@ Future<void> main() async {
   await Hive.openBox('operacionesOfflineReportes');
   await Hive.openBox('encuestasPendientes');
   await Hive.openBox('operacionesOfflinePreguntas');
+
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
