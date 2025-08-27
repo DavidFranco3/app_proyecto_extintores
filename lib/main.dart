@@ -3,127 +3,91 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'components/Login/login.dart';
-import 'components/Home/home.dart';
-import 'api/auth.dart';
-import 'api/tokens.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'components/Generales/flushbar_helper.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-// 📌 Clave global para manejar el contexto en los diálogos
+import 'firebase_options.dart'; // Generado por FlutterFire CLI
+import 'components/Login/login.dart';
+import 'components/Home/home.dart';
+import 'components/Generales/flushbar_helper.dart';
+import 'api/auth.dart';
+import 'api/tokens.dart';
+
+// 🌎 Navigator global para diálogos y flushbar
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// 📌 Inicializar `flutter_local_notifications`
+// 🔔 Plugin de notificaciones locales
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-// 📌 Manejo de notificaciones en segundo plano o cerrada
+// 📌 Manejo de notificaciones en segundo plano
 Future<void> _onBackgroundMessage(RemoteMessage message) async {
-  print(
-      "📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
+  print("📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
 }
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // 🔥 Inicializar Firebase
+// 📌 Configuración de notificaciones locales
+Future<void> configurarNotificacionesLocales() async {
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  // 🔄 Configurar notificaciones locales
-  await configurarNotificacionesLocales();
+  const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
 
-  FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
+  const InitializationSettings settings =
+      InitializationSettings(android: androidSettings, iOS: iosSettings);
 
-  final prefs = await SharedPreferences.getInstance();
-  if (!prefs.containsKey('isLoggedIn')) {
-    await prefs.setBool('isLoggedIn', false);
+  await flutterLocalNotificationsPlugin.initialize(settings);
+}
+
+// 📌 Mostrar notificación local
+Future<void> mostrarNotificacionLocal(String title, String body) async {
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'canal_id',
+    'canal_nombre',
+    importance: Importance.high,
+    priority: Priority.high,
+    ticker: 'ticker',
+  );
+
+  const NotificationDetails platformDetails =
+      NotificationDetails(android: androidDetails);
+
+  await flutterLocalNotificationsPlugin.show(0, title, body, platformDetails);
+}
+
+// 📌 Mostrar alerta dentro de la app
+void mostrarAlertaNotificacion(String title, String body) {
+  if (navigatorKey.currentContext != null) {
+    showCustomFlushbar(
+      context: navigatorKey.currentContext!,
+      title: title,
+      message: body,
+      backgroundColor: Colors.green,
+    );
   }
-  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-  // 📌 Obtener el token FCM
-  await obtenerTokenFCM();
-
-  // 📩 Escuchar notificaciones en primer plano
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print(
-        "📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
-
-    // 📌 Mostrar notificación en la barra de estado
-    mostrarNotificacionLocal(message.notification?.title ?? "Sin título",
-        message.notification?.body ?? "Sin mensaje");
-
-    // 📌 Mostrar alerta en la app
-    mostrarAlertaNotificacion(message.notification?.title ?? "Notificación",
-        message.notification?.body ?? "Mensaje");
-  });
-
-  // 📩 Manejar notificación cuando la app se abre desde el segundo plano
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print(
-        "📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
-  });
-
-  await Hive.initFlutter();
-  await Hive.openBox('clientesBox');
-  await Hive.openBox('reporteFinalBox');
-  await Hive.openBox('clasificacionesBox');
-  await Hive.openBox('encuestasBox');
-  await Hive.openBox('extintoresBox');
-  await Hive.openBox('frecuenciasBox');
-  await Hive.openBox('inspeccionesBox');
-  await Hive.openBox('inspeccionAnualBox');
-  await Hive.openBox('inspeccionesProximasBox');
-  await Hive.openBox('inspeccionesInspectorBox');
-  await Hive.openBox('logsBox');
-  await Hive.openBox('tokensBox');
-  await Hive.openBox('ramasBox');
-  await Hive.openBox('tiposExtintoresBox');
-  await Hive.openBox('usuariosBox');
-  await Hive.openBox('operacionesOfflineClasificaciones');
-  await Hive.openBox('operacionesOfflineExtintores');
-  await Hive.openBox('operacionesOfflineEncuestas');
-  await Hive.openBox('operacionesOfflineFrecuencias');
-  await Hive.openBox('operacionesOfflineRamas');
-  await Hive.openBox('operacionesOfflineTiposExtintores');
-  await Hive.openBox('operacionesOfflineInspecciones');
-  await Hive.openBox('operacionesOfflineInspeccionAnual');
-  await Hive.openBox('operacionesOfflineClientes');
-  await Hive.openBox('operacionesOfflineUsuarios');
-  await Hive.openBox('operacionesOfflineReportes');
-  await Hive.openBox('encuestasPendientes');
-  await Hive.openBox('operacionesOfflinePreguntas');
-
-  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
+// 📌 Obtener datos comunes del usuario
 Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
   try {
     final authService = AuthService();
-
-    // Obtener el id del usuario
     final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
     print('ID Usuario obtenido: $idUsuario');
-
     return {'idUsuario': idUsuario};
   } catch (e) {
     print('Error al obtener datos comunes: $e');
-    rethrow; // Lanza el error para que lo maneje la función que lo llamó
+    rethrow;
   }
 }
 
-// 📌 Obtener y almacenar el token FCM
+// 📌 Obtener y almacenar token FCM
 Future<void> obtenerTokenFCM() async {
   try {
     final String? tokenn = await AuthService().getTokenApi();
     print('Token obtenido para logout: $tokenn');
 
-    // Forzar que el token no sea null
-    if (tokenn == null) {
-      throw Exception("Token de autenticación es nulo");
-    }
+    if (tokenn == null) throw Exception("Token de autenticación es nulo");
 
-    // Obtener los datos comunes utilizando el token
     final datosComunes = await obtenerDatosComunes(tokenn);
-    print('Datos comunes obtenidos para logout: $datosComunes');
 
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
@@ -148,52 +112,68 @@ Future<void> obtenerTokenFCM() async {
   }
 }
 
-// 📌 Configurar notificaciones locales
-Future<void> configurarNotificacionesLocales() async {
-  const AndroidInitializationSettings androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  const DarwinInitializationSettings iosSettings =
-      DarwinInitializationSettings();
-
-  const InitializationSettings settings =
-      InitializationSettings(android: androidSettings, iOS: iosSettings);
-
-  await flutterLocalNotificationsPlugin.initialize(settings);
-}
-
-// 📌 Mostrar una notificación en la barra de estado
-void mostrarNotificacionLocal(String title, String body) async {
-  const AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails(
-    'canal_id',
-    'canal_nombre',
-    importance: Importance.high,
-    priority: Priority.high,
-    ticker: 'ticker',
+  // 🔥 Inicializar Firebase multiplataforma
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  const NotificationDetails platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
+  // 🔄 Configurar notificaciones locales
+  await configurarNotificacionesLocales();
 
-  await flutterLocalNotificationsPlugin.show(
-    0, // ID de la notificación
-    title,
-    body,
-    platformChannelSpecifics,
-  );
-}
+  // 🔔 Configurar FCM background
+  FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
 
-// 📌 Mostrar alerta de notificación dentro de la app
-void mostrarAlertaNotificacion(String title, String body) {
-  if (navigatorKey.currentContext != null) {
-    showCustomFlushbar(
-      context: navigatorKey.currentContext!,
-      title: title,
-      message: body,
-      backgroundColor: Colors.green,
+  // 📌 Inicializar SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  if (!prefs.containsKey('isLoggedIn')) await prefs.setBool('isLoggedIn', false);
+  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+  // 📌 Inicializar FCM
+  await obtenerTokenFCM();
+
+  // 📌 Escuchar notificaciones en primer plano
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
+    mostrarNotificacionLocal(
+      message.notification?.title ?? "Sin título",
+      message.notification?.body ?? "Sin mensaje",
     );
+    mostrarAlertaNotificacion(
+      message.notification?.title ?? "Notificación",
+      message.notification?.body ?? "Mensaje",
+    );
+  });
+
+  // 📌 Notificación al abrir la app desde segundo plano
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print(
+        "📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
+  });
+
+  // 📦 Inicializar Hive
+  await Hive.initFlutter();
+  final boxes = [
+    'clientesBox', 'reporteFinalBox', 'clasificacionesBox', 'encuestasBox',
+    'extintoresBox', 'frecuenciasBox', 'inspeccionesBox', 'inspeccionAnualBox',
+    'inspeccionesProximasBox', 'inspeccionesInspectorBox', 'logsBox', 'tokensBox',
+    'ramasBox', 'tiposExtintoresBox', 'usuariosBox',
+    'operacionesOfflineClasificaciones', 'operacionesOfflineExtintores',
+    'operacionesOfflineEncuestas', 'operacionesOfflineFrecuencias',
+    'operacionesOfflineRamas', 'operacionesOfflineTiposExtintores',
+    'operacionesOfflineInspecciones', 'operacionesOfflineInspeccionAnual',
+    'operacionesOfflineClientes', 'operacionesOfflineUsuarios',
+    'operacionesOfflineReportes', 'encuestasPendientes', 'operacionesOfflinePreguntas'
+  ];
+
+  for (var box in boxes) {
+    await Hive.openBox(box);
   }
+
+  // 🚀 Ejecutar app
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
@@ -204,17 +184,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey, // ✅ Utilizando el navigator global
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      supportedLocales: [
-        Locale('es', 'ES'), // Español
-      ],
-      localizationsDelegates: [
+      supportedLocales: const [Locale('es', 'ES')],
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      locale: Locale('es', 'ES'),
+      locale: const Locale('es', 'ES'),
       home: isLoggedIn ? HomePage() : LoginPage(),
     );
   }
