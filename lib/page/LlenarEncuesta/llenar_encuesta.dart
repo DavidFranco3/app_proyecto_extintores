@@ -27,11 +27,12 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class EncuestaPage extends StatefulWidget {
+  const EncuestaPage({super.key}); // <-- super parameter
   @override
-  _EncuestaPageState createState() => _EncuestaPageState();
+  EncuestaPageState createState() => EncuestaPageState();
 }
 
-class _EncuestaPageState extends State<EncuestaPage> {
+class EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> dataRamas = [];
@@ -228,9 +229,6 @@ class _EncuestaPageState extends State<EncuestaPage> {
     });
 
     // Limpiar los campos
-    descripcionEficienciaController.clear();
-    comentariosEficienciaController.clear();
-    calificacionSeleccionada = null;
     imagenSeleccionada = null;
 
     setState(() {}); // Para que se actualice visualmente
@@ -1151,10 +1149,12 @@ class _EncuestaPageState extends State<EncuestaPage> {
       body: loading
           ? Load()
           : Stack(
+              fit: StackFit.expand,
               children: [
                 SingleChildScrollView(
                   padding: EdgeInsets.only(
-                      bottom: 80), // deja espacio para el botón fijo
+                      bottom:
+                          60), // igual a la altura del botón/ deja espacio para el botón fijo
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Column(
@@ -1164,7 +1164,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                           child: Text(
                             "Aplicar actividad",
                             style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
+                                fontSize: 23, fontWeight: FontWeight.bold),
                           ),
                         ),
                         SizedBox(height: 10),
@@ -1198,336 +1198,381 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 20),
-                        DropdownButtonFormField<String>(
-                          value: selectedClienteId,
-                          hint: Text('Selecciona un Cliente'),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedClienteId = newValue;
-                            });
-                            if (newValue != null && selectedClienteId != null) {
-                              getEncuestas(
-                                  selectedRamaId!,
-                                  selectedFrecuenciaId!,
-                                  selectedIdClasificacion!,
-                                  selectedClienteId!);
-                            }
-                          },
-                          isExpanded: true,
-                          items: dataClientes.map((rama) {
-                            return DropdownMenuItem<String>(
-                              value: rama['id'],
-                              child: Text(rama['nombre']!),
-                            );
-                          }).toList(),
-                        ),
-                        DropdownButtonFormField<String>(
-                          value: selectedRamaId,
-                          hint: Text('Selecciona un Tipo de Sistema'),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedRamaId = newValue;
-                            });
-                            if (newValue != null && selectedRamaId != null) {
-                              getEncuestas(
-                                  selectedRamaId!,
-                                  selectedFrecuenciaId!,
-                                  selectedIdClasificacion!,
-                                  selectedClienteId!);
-                            }
-                          },
-                          isExpanded: true,
-                          items: dataRamas.map((rama) {
-                            return DropdownMenuItem<String>(
-                              value: rama['id'],
-                              child: Text(rama['nombre']!),
-                            );
-                          }).toList(),
-                        ),
-                        DropdownButtonFormField<String>(
-                          value: selectedIdClasificacion,
-                          hint: Text('Selecciona una clasificación'),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedIdClasificacion = newValue;
-                            });
-                            if (newValue != null &&
-                                selectedIdClasificacion != null) {
-                              getEncuestas(
-                                  selectedRamaId!,
-                                  selectedFrecuenciaId!,
-                                  selectedIdClasificacion!,
-                                  selectedClienteId!);
-                            }
-                          },
-                          isExpanded: true,
-                          items: dataClasificaciones.map((rama) {
-                            return DropdownMenuItem<String>(
-                              value: rama['id'],
-                              child: Text(rama['nombre']!),
-                            );
-                          }).toList(),
-                        ),
-                        DropdownButtonFormField<String>(
-                          value: selectedFrecuenciaId,
-                          hint: Text('Selecciona un periodo'),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedFrecuenciaId = newValue;
-                            });
-                            if (newValue != null && selectedRamaId != null) {
-                              getEncuestas(
-                                  selectedRamaId!,
-                                  selectedFrecuenciaId!,
-                                  selectedIdClasificacion!,
-                                  selectedClienteId!);
-                            }
-                          },
-                          isExpanded: true,
-                          items: dataFrecuencias.map((rama) {
-                            return DropdownMenuItem<String>(
-                              value: rama['id'],
-                              child: Text(rama['nombre']!),
-                            );
-                          }).toList(),
-                        ),
-                        DropdownButtonFormField<String>(
-                          value: selectedEncuestaId,
-                          hint: Text('Selecciona una actividad'),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedEncuestaId = newValue;
-                              currentPage = 0;
-                              final encuestaSeleccionada =
-                                  dataEncuestas.firstWhere(
-                                      (encuesta) => encuesta['id'] == newValue);
-                              selectedIdFrecuencia =
-                                  encuestaSeleccionada['idFrecuencia'];
-                            });
-                            if (newValue != null) {
-                              actualizarPreguntas(newValue);
-                            }
-                          },
-                          isExpanded: true,
-                          items: dataEncuestas.map((encuesta) {
-                            return DropdownMenuItem<String>(
-                              value: encuesta['id'],
-                              child: Text(encuesta['nombre']!),
-                            );
-                          }).toList(),
+                        Column(
+                          children: [
+                            // Primera fila: 2 dropdowns
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: selectedClienteId,
+                                    hint: const Text('Selecciona un Cliente'),
+                                    isExpanded: true,
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        selectedClienteId = newValue;
+                                      });
+                                      if (newValue != null) {
+                                        getEncuestas(
+                                          selectedRamaId!,
+                                          selectedFrecuenciaId!,
+                                          selectedIdClasificacion!,
+                                          selectedClienteId!,
+                                        );
+                                      }
+                                    },
+                                    items: dataClientes.map((rama) {
+                                      return DropdownMenuItem<String>(
+                                        value: rama['id'],
+                                        child: Text(rama['nombre']!),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: selectedRamaId,
+                                    hint: const Text(
+                                        'Selecciona un Tipo de Sistema'),
+                                    isExpanded: true,
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        selectedRamaId = newValue;
+                                      });
+                                      if (newValue != null) {
+                                        getEncuestas(
+                                          selectedRamaId!,
+                                          selectedFrecuenciaId!,
+                                          selectedIdClasificacion!,
+                                          selectedClienteId!,
+                                        );
+                                      }
+                                    },
+                                    items: dataRamas.map((rama) {
+                                      return DropdownMenuItem<String>(
+                                        value: rama['id'],
+                                        child: Text(rama['nombre']!),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Segunda fila: 2 dropdowns
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: selectedIdClasificacion,
+                                    hint: const Text(
+                                        'Selecciona una clasificación'),
+                                    isExpanded: true,
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        selectedIdClasificacion = newValue;
+                                      });
+                                      if (newValue != null) {
+                                        getEncuestas(
+                                          selectedRamaId!,
+                                          selectedFrecuenciaId!,
+                                          selectedIdClasificacion!,
+                                          selectedClienteId!,
+                                        );
+                                      }
+                                    },
+                                    items: dataClasificaciones.map((rama) {
+                                      return DropdownMenuItem<String>(
+                                        value: rama['id'],
+                                        child: Text(rama['nombre']!),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: selectedFrecuenciaId,
+                                    hint: const Text('Selecciona un periodo'),
+                                    isExpanded: true,
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        selectedFrecuenciaId = newValue;
+                                      });
+                                      if (newValue != null) {
+                                        getEncuestas(
+                                          selectedRamaId!,
+                                          selectedFrecuenciaId!,
+                                          selectedIdClasificacion!,
+                                          selectedClienteId!,
+                                        );
+                                      }
+                                    },
+                                    items: dataFrecuencias.map((rama) {
+                                      return DropdownMenuItem<String>(
+                                        value: rama['id'],
+                                        child: Text(rama['nombre']!),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Última fila: 1 dropdown
+                            DropdownButtonFormField<String>(
+                              value: selectedEncuestaId,
+                              hint: const Text('Selecciona una actividad'),
+                              isExpanded: true,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  selectedEncuestaId = newValue;
+                                  currentPage = 0;
+                                  final encuestaSeleccionada =
+                                      dataEncuestas.firstWhere(
+                                    (encuesta) => encuesta['id'] == newValue,
+                                  );
+                                  selectedIdFrecuencia =
+                                      encuestaSeleccionada['idFrecuencia'];
+                                });
+                                if (newValue != null) {
+                                  actualizarPreguntas(newValue);
+                                }
+                              },
+                              items: dataEncuestas.map((encuesta) {
+                                return DropdownMenuItem<String>(
+                                  value: encuesta['id'],
+                                  child: Text(encuesta['nombre']!),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ),
                         if (selectedEncuestaId != null && preguntas.isNotEmpty)
                           SizedBox(
                             height: MediaQuery.of(context).size.width > 700
                                 ? 700
-                                : 300,
+                                : 450,
                             child: PageView.builder(
                               controller: _pageController,
-                              itemCount: 4,
+                              itemCount: 3,
                               itemBuilder: (context, pageIndex) {
                                 if (pageIndex == 0) {
                                   // Página con TODAS las preguntas
-                                  return ListView.builder(
-                                    itemCount: preguntas.length,
-                                    itemBuilder: (context, index) {
-                                      final pregunta = preguntas[index];
-                                      return Card(
-                                        margin: EdgeInsets.all(10),
-                                        child: Padding(
-                                          padding: EdgeInsets.all(10.0),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              // Título de la pregunta
-                                              Text(
-                                                pregunta.titulo,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                              SizedBox(height: 5),
-                                              // Opciones
-                                              SizedBox(
-                                                height: 120,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  physics:
-                                                      ClampingScrollPhysics(),
-                                                  itemCount:
-                                                      pregunta.opciones.length,
-                                                  itemBuilder: (context, i) {
-                                                    final opcion =
-                                                        pregunta.opciones[i];
-                                                    final esNoAplica =
-                                                        opcion.toLowerCase() ==
+                                  return ListView(
+                                    children: [
+                                      // Listado de preguntas
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: preguntas.length,
+                                        itemBuilder: (context, index) {
+                                          final pregunta = preguntas[index];
+                                          return Card(
+                                            margin: EdgeInsets.all(4),
+                                            child: Padding(
+                                              padding: EdgeInsets.all(4.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  // Título de la pregunta
+                                                  Text(
+                                                    pregunta.titulo,
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 15,
+                                                    ),
+                                                  ),
+                                                  // Opciones
+                                                  SizedBox(
+                                                    height: 100,
+                                                    child: ListView.builder(
+                                                      shrinkWrap: true,
+                                                      physics:
+                                                          ClampingScrollPhysics(),
+                                                      itemCount: pregunta
+                                                          .opciones.length,
+                                                      itemBuilder:
+                                                          (context, i) {
+                                                        final opcion = pregunta
+                                                            .opciones[i];
+                                                        final esNoAplica = opcion
+                                                                .toLowerCase() ==
                                                             "no aplica";
-                                                    return ListTile(
-                                                      contentPadding:
-                                                          EdgeInsets.zero,
-                                                      title: Text(opcion),
-                                                      leading: esNoAplica
-                                                          ? null
-                                                          : Radio<String>(
-                                                              value: opcion,
-                                                              groupValue:
+                                                        return ListTile(
+                                                          contentPadding:
+                                                              EdgeInsets.zero,
+                                                          title: Text(opcion),
+                                                          leading: esNoAplica
+                                                              ? null
+                                                              : Radio<String>(
+                                                                  value: opcion,
+                                                                  groupValue:
+                                                                      pregunta
+                                                                          .respuesta,
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    setState(
+                                                                        () {
+                                                                      pregunta.respuesta =
+                                                                          value ??
+                                                                              '';
+                                                                    });
+                                                                  },
+                                                                ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ),
+                                                  // Observaciones
+                                                  TextField(
+                                                    decoration: InputDecoration(
+                                                      labelText:
+                                                          "Observaciones",
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                    ),
+                                                    maxLines: 2,
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        pregunta.observaciones =
+                                                            value;
+                                                      });
+                                                    },
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  // Selector de imagen
+                                                  GestureDetector(
+                                                    onTap: () async {
+                                                      final img =
+                                                          await _pickImage(); // devuelve File?
+                                                      if (img != null) {
+                                                        setState(() {
+                                                          pregunta.imagen =
+                                                              img; // Imagen temporal
+                                                        });
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      width: double.infinity,
+                                                      height: 200,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.grey[200],
+                                                        border: Border.all(
+                                                            color: Colors.grey),
+                                                      ),
+                                                      child: pregunta.imagen ==
+                                                              null
+                                                          ? const Center(
+                                                              child: Icon(
+                                                                Icons
+                                                                    .cloud_upload,
+                                                                size: 50,
+                                                                color: Colors
+                                                                    .blueAccent,
+                                                              ),
+                                                            )
+                                                          : ClipRRect(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                              child: Image.file(
+                                                                pregunta
+                                                                    .imagen!,
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                              ),
+                                                            ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  // Campo para valor
+                                                  TextField(
+                                                    controller: pregunta
+                                                        .controllerValor,
+                                                    decoration: InputDecoration(
+                                                      labelText: "Valor",
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                    ),
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        pregunta.controllerValor
+                                                            .text = value;
+                                                      });
+                                                    },
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  // Botón "Guardar imagen"
+                                                  ElevatedButton.icon(
+                                                    onPressed:
+                                                        pregunta.imagen == null
+                                                            ? null
+                                                            : () {
+                                                                // Guarda la imagen en el arreglo global
+                                                                agregarImagenEncuesta(
                                                                   pregunta
-                                                                      .respuesta,
-                                                              onChanged:
-                                                                  (value) {
+                                                                      .imagen,
+                                                                  comentario:
+                                                                      pregunta
+                                                                          .titulo,
+                                                                  valor: pregunta
+                                                                      .controllerValor
+                                                                      .text,
+                                                                );
+
                                                                 setState(() {
-                                                                  pregunta.respuesta =
-                                                                      value ??
-                                                                          '';
+                                                                  // Limpia solo la imagen y el valor
+                                                                  pregunta.imagen =
+                                                                      null;
+                                                                  pregunta
+                                                                      .controllerValor
+                                                                      .clear();
                                                                 });
                                                               },
-                                                            ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                              // Observaciones
-                                              TextField(
-                                                decoration: InputDecoration(
-                                                  labelText: "Observaciones",
-                                                  border: OutlineInputBorder(),
-                                                ),
-                                                maxLines: 2,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    pregunta.observaciones =
-                                                        value;
-                                                  });
-                                                },
-                                              ),
-                                              SizedBox(height: 10),
-                                              // Selector de imagen
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  final img =
-                                                      await _pickImage(); // devuelve File?
-                                                  if (img != null) {
-                                                    setState(() {
-                                                      pregunta.imagen =
-                                                          img; // Imagen temporal
-                                                    });
-                                                  }
-                                                },
-                                                child: Container(
-                                                  width: double.infinity,
-                                                  height: 200,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[200],
-                                                    border: Border.all(
-                                                        color: Colors.grey),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
+                                                    icon: Icon(Icons.save),
+                                                    label:
+                                                        Text("Guardar imagen"),
                                                   ),
-                                                  child: pregunta.imagen == null
-                                                      ? const Center(
-                                                          child: Icon(
-                                                            Icons.cloud_upload,
-                                                            size: 50,
-                                                            color: Colors
-                                                                .blueAccent,
-                                                          ),
-                                                        )
-                                                      : ClipRRect(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
-                                                          child: Image.file(
-                                                            pregunta.imagen!,
-                                                            fit: BoxFit.cover,
-                                                          ),
-                                                        ),
-                                                ),
+                                                ],
                                               ),
-                                              SizedBox(height: 10),
-                                              // Campo para valor
-                                              TextField(
-                                                controller: pregunta
-                                                    .controllerValor, // ⬅️ usamos el controller
-                                                decoration: InputDecoration(
-                                                  labelText: "Valor",
-                                                  border: OutlineInputBorder(),
-                                                ),
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    pregunta.controllerValor.text =
-                                                        value; // opcional, si aún quieres mantener el valor en el modelo
-                                                  });
-                                                },
-                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
 
-                                              SizedBox(height: 10),
-                                              // Botón "Guardar imagen"
-                                              ElevatedButton.icon(
-                                                onPressed: pregunta.imagen ==
-                                                        null
-                                                    ? null
-                                                    : () {
-                                                        // Guarda la imagen en el arreglo global
-                                                        agregarImagenEncuesta(
-                                                          pregunta.imagen,
-                                                          comentario:
-                                                              pregunta.titulo,
-                                                          valor: pregunta
-                                                              .controllerValor
-                                                              .text,
-                                                        );
-
-                                                        setState(() {
-                                                          // Limpia solo la imagen y el valor
-                                                          pregunta.imagen =
-                                                              null;
-                                                          pregunta
-                                                              .controllerValor
-                                                              .clear();
-                                                        });
-                                                      },
-                                                icon: Icon(Icons.save),
-                                                label: Text("Guardar imagen"),
+                                      // Descripción General al final
+                                      Padding(
+                                        padding: EdgeInsets.all(16.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Descripción General",
+                                              style: TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.bold,
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            SizedBox(height: 10),
+                                            TextField(
+                                              controller: descripcionController,
+                                              maxLines: 4,
+                                              decoration: InputDecoration(
+                                                hintText:
+                                                    "Escribe aquí la descripción de la actividad...",
+                                                border: OutlineInputBorder(),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      );
-                                    },
+                                      ),
+                                    ],
                                   );
                                 } else if (pageIndex == 1) {
-                                  // Página de descripción
-                                  return Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Descripción General",
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        SizedBox(height: 10),
-                                        TextField(
-                                          controller: descripcionController,
-                                          maxLines: 4,
-                                          decoration: InputDecoration(
-                                            hintText:
-                                                "Escribe aquí la descripción de la actividad...",
-                                            border: OutlineInputBorder(),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                } else if (pageIndex == 2) {
                                   // Página de comentarios finales
                                   return SingleChildScrollView(
                                     padding: const EdgeInsets.all(16.0),
@@ -1537,7 +1582,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                       children: [
                                         const Text("Descripción del problema",
                                             style: TextStyle(
-                                                fontSize: 16,
+                                                fontSize: 15,
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
                                         TextField(
@@ -1552,7 +1597,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                         const SizedBox(height: 16),
                                         const Text("Calificación",
                                             style: TextStyle(
-                                                fontSize: 16,
+                                                fontSize: 15,
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
                                         DropdownButtonFormField<String>(
@@ -1581,7 +1626,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                         const SizedBox(height: 16),
                                         const Text("Comentarios",
                                             style: TextStyle(
-                                                fontSize: 16,
+                                                fontSize: 15,
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
                                         TextField(
@@ -1598,7 +1643,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                         const Text(
                                           "Foto",
                                           style: TextStyle(
-                                              fontSize: 18,
+                                              fontSize: 17,
                                               fontWeight: FontWeight.bold),
                                         ),
                                         GestureDetector(
@@ -1639,66 +1684,51 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                             "Imagen seleccionada",
                                             style: TextStyle(
                                                 color: Colors.green,
-                                                fontSize: 16),
+                                                fontSize: 15),
                                           ),
                                         if (imagenSeleccionada == null)
                                           const Text(
                                             "Selecciona una imagen",
                                             style: TextStyle(
                                                 color: Colors.red,
-                                                fontSize: 16),
+                                                fontSize: 15),
                                           ),
                                         const SizedBox(height: 20),
                                         Center(
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              agregarRegistro();
-                                            },
-                                            child:
-                                                const Text("Agregar registro"),
+                                          child: Column(
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  agregarRegistro();
+                                                  // 👉 Limpia solo la imagen seleccionada
+                                                  setState(() {
+                                                    imagenSeleccionada = null;
+                                                  });
+                                                },
+                                                child: const Text(
+                                                    "Agregar registro"),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              ElevatedButton(
+                                                
+                                                onPressed: () {
+                                                  // 👉 Limpia todo el formulario
+                                                  setState(() {
+                                                    descripcionEficienciaController
+                                                        .clear();
+                                                    comentariosEficienciaController
+                                                        .clear();
+                                                    calificacionSeleccionada =
+                                                        null;
+                                                    imagenSeleccionada = null;
+                                                  });
+                                                },
+                                                child: const Text(
+                                                    "Limpiar formulario"),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        const SizedBox(height: 24),
-                                        if (registrosEficiencia.isNotEmpty)
-                                          const Text(
-                                            "Registros agregados",
-                                            style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        if (registrosEficiencia.isNotEmpty)
-                                          ListView.builder(
-                                            shrinkWrap: true,
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
-                                            itemCount:
-                                                registrosEficiencia.length,
-                                            itemBuilder: (context, index) {
-                                              final registro =
-                                                  registrosEficiencia[index];
-                                              return Card(
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8),
-                                                child: ListTile(
-                                                  leading: Image.file(
-                                                    File(registro["imagen"]
-                                                        .path),
-                                                    width: 50,
-                                                    height: 50,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                  title: Text(
-                                                    '${registro["comentarios"]} - ${registro["calificacion"]}',
-                                                    style: const TextStyle(
-                                                        fontSize: 14),
-                                                  ),
-                                                  subtitle: Text(
-                                                      registro["descripcion"]),
-                                                ),
-                                              );
-                                            },
-                                          ),
                                       ],
                                     ),
                                   );
@@ -1714,7 +1744,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                                             const Text(
                                               "Firma del cliente",
                                               style: TextStyle(
-                                                fontSize: 18,
+                                                fontSize: 17,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -1758,23 +1788,13 @@ class _EncuestaPageState extends State<EncuestaPage> {
                 ),
                 if (preguntas.isNotEmpty)
                   Positioned(
-                    bottom: 10,
-                    left: 10,
-                    right: 10,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     child: Container(
                       height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          )
-                        ],
-                      ),
+                      color: Colors
+                          .transparent, // quita border y borderRadius para que quede al ras
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1789,7 +1809,7 @@ class _EncuestaPageState extends State<EncuestaPage> {
                             child: Text('Anterior'),
                           ),
                           TextButton(
-                            onPressed: currentPage < 3
+                            onPressed: currentPage < 2
                                 ? () => _pageController.nextPage(
                                       duration: Duration(milliseconds: 300),
                                       curve: Curves.easeIn,
