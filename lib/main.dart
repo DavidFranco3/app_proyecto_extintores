@@ -5,7 +5,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import 'firebase_options.dart'; // Generado por FlutterFire CLI
 import 'components/Login/login.dart';
 import 'components/Home/home.dart';

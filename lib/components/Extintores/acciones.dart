@@ -672,7 +672,7 @@ class _AccionesState extends State<Acciones> {
                                   : null,
                         ),
                         DropdownButtonFormField<String>(
-                          value: _idTipoExtintorController.text.isEmpty
+                          initialValue: _idTipoExtintorController.text.isEmpty
                               ? null
                               : _idTipoExtintorController.text,
                           decoration:

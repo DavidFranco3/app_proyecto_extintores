@@ -1205,7 +1205,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedClienteId,
+                                    initialValue: selectedClienteId,
                                     hint: const Text('Selecciona un Cliente'),
                                     isExpanded: true,
                                     onChanged: (String? newValue) {
@@ -1231,7 +1231,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                                 ),
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedRamaId,
+                                    initialValue: selectedRamaId,
                                     hint: const Text(
                                         'Selecciona un Tipo de Sistema'),
                                     isExpanded: true,
@@ -1263,7 +1263,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedIdClasificacion,
+                                    initialValue: selectedIdClasificacion,
                                     hint: const Text(
                                         'Selecciona una clasificación'),
                                     isExpanded: true,
@@ -1290,7 +1290,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                                 ),
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedFrecuenciaId,
+                                    initialValue: selectedFrecuenciaId,
                                     hint: const Text('Selecciona un periodo'),
                                     isExpanded: true,
                                     onChanged: (String? newValue) {
@@ -1318,7 +1318,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                             ),
                             // Última fila: 1 dropdown
                             DropdownButtonFormField<String>(
-                              value: selectedEncuestaId,
+                              initialValue: selectedEncuestaId,
                               hint: const Text('Selecciona una actividad'),
                               isExpanded: true,
                               onChanged: (String? newValue) {
@@ -1385,44 +1385,45 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                   // Opciones
                                                   SizedBox(
                                                     height: 100,
-                                                    child: ListView.builder(
-                                                      shrinkWrap: true,
-                                                      physics:
-                                                          ClampingScrollPhysics(),
-                                                      itemCount: pregunta
-                                                          .opciones.length,
-                                                      itemBuilder:
-                                                          (context, i) {
-                                                        final opcion = pregunta
-                                                            .opciones[i];
-                                                        final esNoAplica = opcion
-                                                                .toLowerCase() ==
-                                                            "no aplica";
-                                                        return ListTile(
-                                                          contentPadding:
-                                                              EdgeInsets.zero,
-                                                          title: Text(opcion),
-                                                          leading: esNoAplica
-                                                              ? null
-                                                              : Radio<String>(
-                                                                  value: opcion,
-                                                                  groupValue:
-                                                                      pregunta
-                                                                          .respuesta,
-                                                                  onChanged:
-                                                                      (value) {
-                                                                    setState(
-                                                                        () {
-                                                                      pregunta.respuesta =
-                                                                          value ??
-                                                                              '';
-                                                                    });
-                                                                  },
-                                                                ),
-                                                        );
+                                                    child: RadioGroup<String>(
+                                                      groupValue:
+                                                          pregunta.respuesta,
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          pregunta.respuesta =
+                                                              value ?? '';
+                                                        });
                                                       },
+                                                      child: ListView.builder(
+                                                        shrinkWrap: true,
+                                                        physics:
+                                                            const ClampingScrollPhysics(),
+                                                        itemCount: pregunta
+                                                            .opciones.length,
+                                                        itemBuilder:
+                                                            (context, i) {
+                                                          final opcion =
+                                                              pregunta
+                                                                  .opciones[i];
+                                                          final esNoAplica =
+                                                              opcion.toLowerCase() ==
+                                                                  "no aplica";
+
+                                                          return ListTile(
+                                                            contentPadding:
+                                                                EdgeInsets.zero,
+                                                            title: Text(opcion),
+                                                            leading: esNoAplica
+                                                                ? null
+                                                                : Radio<String>(
+                                                                    value:
+                                                                        opcion),
+                                                          );
+                                                        },
+                                                      ),
                                                     ),
                                                   ),
+
                                                   // Observaciones
                                                   TextField(
                                                     decoration: InputDecoration(
@@ -1601,7 +1602,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
                                         DropdownButtonFormField<String>(
-                                          value: calificacionSeleccionada,
+                                          initialValue: calificacionSeleccionada,
                                           items: [
                                             "Crítico",
                                             "No crítico",
@@ -1710,7 +1711,6 @@ class EncuestaPageState extends State<EncuestaPage> {
                                               ),
                                               const SizedBox(height: 10),
                                               ElevatedButton(
-                                                
                                                 onPressed: () {
                                                   // 👉 Limpia todo el formulario
                                                   setState(() {

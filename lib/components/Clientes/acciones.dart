@@ -957,7 +957,7 @@ class _AccionesState extends State<Acciones> {
                                   : null,
                         ),
                         DropdownButtonFormField<String>(
-                          value: _estadoDomController.text.isEmpty
+                          initialValue: _estadoDomController.text.isEmpty
                               ? null
                               : _estadoDomController.text,
                           decoration: InputDecoration(labelText: 'Estado'),
@@ -988,7 +988,7 @@ class _AccionesState extends State<Acciones> {
                         // Dropdown para seleccionar Municipio
                         DropdownButtonFormField<String>(
                           isExpanded: true, // Expande el menú
-                          value: _municipioController.text.isNotEmpty
+                          initialValue: _municipioController.text.isNotEmpty
                               ? _municipioController.text
                               : null,
                           decoration: InputDecoration(labelText: 'Municipio'),
