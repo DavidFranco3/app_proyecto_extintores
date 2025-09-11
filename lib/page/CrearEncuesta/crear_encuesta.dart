@@ -15,6 +15,7 @@ import '../../api/encuesta_inspeccion.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -758,22 +759,49 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                             ),
                             SizedBox(height: 10),
 // Combo para seleccionar entre Sí, No, No aplica
-                            DropdownButtonFormField<String>(
-                              value: opcionSeleccionada,
-                              hint: Text("Selecciona una opción"),
+                            DropdownSearch<String>(
+                              key: Key('opcionDropdown'),
+                              items: (filter, _) {
+                                final opciones = ["Sí/No", "No aplica"];
+                                return opciones
+                                    .where((o) => o
+                                        .toLowerCase()
+                                        .contains(filter.toLowerCase()))
+                                    .toList();
+                              },
+                              selectedItem: opcionSeleccionada,
                               onChanged: (String? newValue) {
                                 setState(() {
                                   opcionSeleccionada = newValue;
                                 });
                               },
-                              items:
-                                  ["Sí/No", "No aplica"].map((String opcion) {
-                                return DropdownMenuItem<String>(
-                                  value: opcion,
-                                  child: Text(opcion),
-                                );
-                              }).toList(),
+                              dropdownBuilder: (context, selectedItem) => Text(
+                                selectedItem ?? "",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: selectedItem == null
+                                        ? Colors.grey
+                                        : Colors.black),
+                              ),
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: InputDecoration(
+                                  labelText: 'Opción',
+                                  border: UnderlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                ),
+                              ),
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                              ),
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'La opcion es obligatoria'
+                                      : null,
                             ),
+
                             SizedBox(height: 10),
 
                             SizedBox(height: 10),

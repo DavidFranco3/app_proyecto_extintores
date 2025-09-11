@@ -10,6 +10,7 @@ import '../Load/load.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -294,7 +295,6 @@ class _AccionesState extends State<Acciones> {
           .where((op) => !operacionesExitosas.contains(op['operacionId']))
           .toList();
       await box.put('operaciones', nuevasOperaciones);
-      
     }
 
     // ✅ Actualizar lista completa desde API
@@ -671,27 +671,51 @@ class _AccionesState extends State<Acciones> {
                                   ? 'El numero de serie es obligatorio'
                                   : null,
                         ),
-                        DropdownButtonFormField<String>(
-                          initialValue: _idTipoExtintorController.text.isEmpty
+                        DropdownSearch<String>(
+                          key: Key('tipoExtintorDropdown'),
+                          enabled: dataTiposExtintores
+                              .isNotEmpty, // Deshabilitado si no hay datos
+
+                          items: (filter, _) {
+                            return dataTiposExtintores
+                                .where((tipo) => tipo['nombre']
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()))
+                                .map((tipo) => tipo['id'].toString())
+                                .toList();
+                          },
+                          selectedItem: _idTipoExtintorController.text.isEmpty
                               ? null
                               : _idTipoExtintorController.text,
-                          decoration:
-                              InputDecoration(labelText: 'Tipo de extintor'),
-                          isExpanded: true,
-                          items: dataTiposExtintores.map((tipo) {
-                            return DropdownMenuItem<String>(
-                              value: tipo['id'],
-                              child: Text(tipo[
-                                  'nombre']), // Muestra el nombre en el select
-                            );
-                          }).toList(),
                           onChanged: isEliminar
                               ? null
-                              : (newValue) {
+                              : (String? newValue) {
                                   setState(() {
                                     _idTipoExtintorController.text = newValue!;
                                   });
                                 },
+                          dropdownBuilder: (context, selectedItem) {
+                            // Mostrar el nombre del tipo de extintor en lugar del ID
+                            final tipo = dataTiposExtintores.firstWhere(
+                                (t) => t['id'].toString() == selectedItem,
+                                orElse: () => {'nombre': ''});
+                            return Text(
+                              tipo['nombre'] ?? '',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 14),
+                            );
+                          },
+                          decoratorProps: DropDownDecoratorProps(
+                            decoration: InputDecoration(
+                              labelText: 'Tipo de extintor',
+                              border: UnderlineInputBorder(),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                            ),
+                          ),
+                          popupProps: PopupProps.menu(showSearchBox: true),
                           validator: isEliminar
                               ? null
                               : (value) => value == null || value.isEmpty

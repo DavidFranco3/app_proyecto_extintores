@@ -15,6 +15,7 @@ import '../Load/load.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -254,28 +255,31 @@ class _AccionesState extends State<Acciones> {
             actuales.removeWhere((element) => element['id'] == operacion['id']);
 
             actuales.add({
-
               'id': response['data']['_id'],
-                'nombre': response['data']['nombre'],
-                'imagen': response['data']['imagen'],
-                'imagenCloudinary': response['data']['imagenCloudinary'],
-                'correo': response['data']['correo'],
-                'telefono': response['data']['telefono'],
-                'calle': response['data']['direccion']['calle'],
-                'nExterior': response['data']['direccion']['nExterior']?.isNotEmpty ?? false
-                    ? response['data']['direccion']['nExterior']
-                    : 'S/N',
-                'nInterior': response['data']['direccion']['nInterior']?.isNotEmpty ?? false
-                    ? response['data']['direccion']['nInterior']
-                    : 'S/N',
-                'colonia': response['data']['direccion']['colonia'],
-                'estadoDom': response['data']['direccion']['estadoDom'],
-                'municipio': response['data']['direccion']['municipio'],
-                'cPostal': response['data']['direccion']['cPostal'],
-                'referencia': response['data']['direccion']['referencia'],
-                'estado': "true",
-                'createdAt': response['data']['createdAt'],
-                'updatedAt': response['data']['updatedAt'],
+              'nombre': response['data']['nombre'],
+              'imagen': response['data']['imagen'],
+              'imagenCloudinary': response['data']['imagenCloudinary'],
+              'correo': response['data']['correo'],
+              'telefono': response['data']['telefono'],
+              'calle': response['data']['direccion']['calle'],
+              'nExterior':
+                  response['data']['direccion']['nExterior']?.isNotEmpty ??
+                          false
+                      ? response['data']['direccion']['nExterior']
+                      : 'S/N',
+              'nInterior':
+                  response['data']['direccion']['nInterior']?.isNotEmpty ??
+                          false
+                      ? response['data']['direccion']['nInterior']
+                      : 'S/N',
+              'colonia': response['data']['direccion']['colonia'],
+              'estadoDom': response['data']['direccion']['estadoDom'],
+              'municipio': response['data']['direccion']['municipio'],
+              'cPostal': response['data']['direccion']['cPostal'],
+              'referencia': response['data']['direccion']['referencia'],
+              'estado': "true",
+              'createdAt': response['data']['createdAt'],
+              'updatedAt': response['data']['updatedAt'],
               // añade los demás campos si es necesario
             });
 
@@ -956,67 +960,105 @@ class _AccionesState extends State<Acciones> {
                                   ? 'La colonia es obligatoria'
                                   : null,
                         ),
-                        DropdownButtonFormField<String>(
-                          initialValue: _estadoDomController.text.isEmpty
+                        DropdownSearch<String>(
+                          key: Key('estadoDropdown'),
+                          items: (filter, _) {
+                            return _estadosFuture
+                                .where((e) => e['nombre']
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()))
+                                .map((e) => e['nombre'].toString())
+                                .toList();
+                          },
+                          selectedItem: _estadoDomController.text.isEmpty
                               ? null
                               : _estadoDomController.text,
-                          decoration: InputDecoration(labelText: 'Estado'),
-                          isExpanded: true,
-                          items: _estadosFuture.map((estado) {
-                            return DropdownMenuItem<String>(
-                              value: estado['nombre'],
-                              child: Text(estado[
-                                  'nombre']), // Muestra el nombre en el select
-                            );
-                          }).toList(),
                           onChanged: isEliminar
                               ? null
-                              : (newValue) {
+                              : (String? newValue) {
                                   setState(() {
-                                    _estadoDomController.text =
-                                        newValue!; // Actualiza el estado
+                                    _estadoDomController.text = newValue!;
                                     _municipioController.text =
-                                        ''; // Limpia el municipio cuando cambia el estado
+                                        ''; // limpia municipio al cambiar
                                   });
                                 },
+                          dropdownBuilder: (context, selectedItem) => Text(
+                            selectedItem ?? "",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          decoratorProps: DropDownDecoratorProps(
+                            decoration: InputDecoration(
+                              labelText: "Estado",
+                              border: UnderlineInputBorder(),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                            ),
+                          ),
+                          popupProps: PopupProps.menu(showSearchBox: true),
                           validator: isEliminar
                               ? null
                               : (value) => value == null || value.isEmpty
                                   ? 'El estado es obligatorio'
                                   : null,
                         ),
+
                         // Dropdown para seleccionar Municipio
-                        DropdownButtonFormField<String>(
-                          isExpanded: true, // Expande el menú
-                          initialValue: _municipioController.text.isNotEmpty
+                        DropdownSearch<String>(
+                          key: Key('municipioDropdown'),
+                          enabled: _estadoDomController.text
+                              .isNotEmpty, // Deshabilitado si no hay estado
+
+                          items: (filter, _) {
+                            if (_estadoDomController.text.isEmpty ||
+                                !_municipiosMap
+                                    .containsKey(_estadoDomController.text)) {
+                              return [];
+                            }
+
+                            final municipios =
+                                _municipiosMap[_estadoDomController.text]!;
+
+                            return municipios
+                                .where((m) => m
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()))
+                                .toList();
+                          },
+                          selectedItem: _municipioController.text.isNotEmpty
                               ? _municipioController.text
                               : null,
-                          decoration: InputDecoration(labelText: 'Municipio'),
-                          items: (_estadoDomController.text.isNotEmpty &&
-                                  _municipiosMap
-                                      .containsKey(_estadoDomController.text))
-                              ? _municipiosMap[_estadoDomController.text]!
-                                  .map((municipio) {
-                                  return DropdownMenuItem<String>(
-                                    value: municipio,
-                                    child: Text(municipio),
-                                  );
-                                }).toList()
-                              : [],
                           onChanged: isEliminar
                               ? null
-                              : (newValue) {
+                              : (String? newValue) {
                                   setState(() {
-                                    _municipioController.text =
-                                        newValue!; // Actualiza el municipio seleccionado
+                                    _municipioController.text = newValue!;
                                   });
                                 },
+                          dropdownBuilder: (context, selectedItem) => Text(
+                            selectedItem ?? "",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          decoratorProps: DropDownDecoratorProps(
+                            decoration: InputDecoration(
+                              labelText: 'Municipio',
+                              border: UnderlineInputBorder(),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                            ),
+                          ),
+                          popupProps: PopupProps.menu(showSearchBox: true),
                           validator: isEliminar
                               ? null
                               : (value) => value == null || value.isEmpty
                                   ? 'El municipio es obligatorio'
                                   : null,
                         ),
+
                         TextFormField(
                           controller: _cpostalController,
                           decoration: InputDecoration(

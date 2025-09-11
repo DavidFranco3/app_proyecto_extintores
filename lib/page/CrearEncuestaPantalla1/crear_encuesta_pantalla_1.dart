@@ -13,6 +13,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class CrearEncuestaPantalla1Screen extends StatefulWidget {
   final VoidCallback showModal;
@@ -64,15 +65,15 @@ class _CrearEncuestaPantalla1ScreenState
       widget.ramaController.text = widget.data['idRama'] ?? '';
       frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
       print(widget.data['preguntas']);
-      preguntas = (widget.data["preguntas"] as List<dynamic>?)
-    ?.map((item) {
-      final map = item as Map<String, dynamic>;
-      return Pregunta(
-        titulo: map['titulo'] ?? '',
-        categoria: map['categoria'] ?? '',
-        opciones: List<String>.from(map['opciones'] ?? []),
-      );
-    }).toList() ?? [];
+      preguntas = (widget.data["preguntas"] as List<dynamic>?)?.map((item) {
+            final map = item as Map<String, dynamic>;
+            return Pregunta(
+              titulo: map['titulo'] ?? '',
+              categoria: map['categoria'] ?? '',
+              opciones: List<String>.from(map['opciones'] ?? []),
+            );
+          }).toList() ??
+          [];
     }
   }
 
@@ -333,18 +334,17 @@ class _CrearEncuestaPantalla1ScreenState
         context,
         MaterialPageRoute(
           builder: (context) => CrearEncuestaScreen(
-            showModal: () {
-              Navigator.pop(context); // Esto cierra el modal
-            },
-            accion: widget.accion,
-            data: widget.data,
-            nombreController: widget.nombreController,
-            ramaController: widget.ramaController,
-            clasificacionController: widget.clasificacionController,
-            preguntas: preguntas,
-            onCompleted: widget.onCompleted,
-            frecuencia: row
-          ),
+              showModal: () {
+                Navigator.pop(context); // Esto cierra el modal
+              },
+              accion: widget.accion,
+              data: widget.data,
+              nombreController: widget.nombreController,
+              ramaController: widget.ramaController,
+              clasificacionController: widget.clasificacionController,
+              preguntas: preguntas,
+              onCompleted: widget.onCompleted,
+              frecuencia: row),
         ),
       ).then((_) {});
     }
@@ -414,51 +414,117 @@ class _CrearEncuestaPantalla1ScreenState
                                   return null;
                                 },
                               ),
-                              DropdownButtonFormField<String>(
-                                value: widget.ramaController.text.isEmpty
+                              // Dropdown de Tipo de Sistema (Rama)
+                              // Dropdown de Rama
+                              DropdownSearch<String>(
+                                key: Key('ramaDropdown'),
+                                enabled: dataRamas.isNotEmpty,
+                                items: (filter, _) {
+                                  return dataRamas
+                                      .where((tipo) => tipo['nombre']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .map((tipo) => tipo['nombre']
+                                          .toString()) // ✅ valor = nombre
+                                      .toList();
+                                },
+                                selectedItem: widget.ramaController.text.isEmpty
                                     ? null
                                     : widget.ramaController.text,
-                                decoration: InputDecoration(
-                                    labelText: 'Tipo de Sistema'),
-                                isExpanded: true,
-                                items: dataRamas.map((tipo) {
-                                  return DropdownMenuItem<String>(
-                                    value: tipo['id'],
-                                    child: Text(tipo['nombre']),
-                                  );
-                                }).toList(),
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    widget.ramaController.text = newValue!;
-                                  });
-                                },
-                                validator: (value) =>
-                                    value == null || value.isEmpty
+                                onChanged: dataRamas.isEmpty
+                                    ? null
+                                    : (String? newValue) {
+                                        setState(() {
+                                          widget.ramaController.text =
+                                              newValue!;
+                                        });
+                                      },
+                                dropdownBuilder: (context, selectedItem) =>
+                                    Text(
+                                  selectedItem ?? '',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: selectedItem == null
+                                          ? Colors.grey
+                                          : Colors.black),
+                                ),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: InputDecoration(
+                                    labelText: 'Tipo de Sistema',
+                                    border: UnderlineInputBorder(),
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  constraints: BoxConstraints(maxHeight: 300),
+                                ),
+                                validator: dataRamas.isEmpty
+                                    ? null
+                                    : (value) => value == null || value.isEmpty
                                         ? 'La rama es obligatoria'
                                         : null,
                               ),
-                              DropdownButtonFormField<String>(
-                                value:
+
+// Dropdown de Clasificación
+                              DropdownSearch<String>(
+                                key: Key('clasificacionDropdown'),
+                                enabled: dataClasificaciones.isNotEmpty,
+                                items: (filter, _) {
+                                  return dataClasificaciones
+                                      .where((tipo) => tipo['nombre']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .map((tipo) => tipo['nombre']
+                                          .toString()) // ✅ valor = nombre
+                                      .toList();
+                                },
+                                selectedItem:
                                     widget.clasificacionController.text.isEmpty
                                         ? null
                                         : widget.clasificacionController.text,
-                                decoration:
-                                    InputDecoration(labelText: 'Clasificación'),
-                                isExpanded: true,
-                                items: dataClasificaciones.map((tipo) {
-                                  return DropdownMenuItem<String>(
-                                    value: tipo['id'],
-                                    child: Text(tipo['nombre']),
-                                  );
-                                }).toList(),
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    widget.clasificacionController.text =
-                                        newValue!;
-                                  });
-                                },
-                                validator: (value) =>
-                                    value == null || value.isEmpty
+                                onChanged: dataClasificaciones.isEmpty
+                                    ? null
+                                    : (String? newValue) {
+                                        setState(() {
+                                          widget.clasificacionController.text =
+                                              newValue!;
+                                        });
+                                      },
+                                dropdownBuilder: (context, selectedItem) =>
+                                    Text(
+                                  selectedItem ??
+                                      '',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: selectedItem == null
+                                          ? Colors.grey
+                                          : Colors.black),
+                                ),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: InputDecoration(
+                                    labelText: 'Clasificación',
+                                    border: UnderlineInputBorder(),
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  constraints: BoxConstraints(maxHeight: 300),
+                                ),
+                                validator: dataClasificaciones.isEmpty
+                                    ? null
+                                    : (value) => value == null || value.isEmpty
                                         ? 'La clasificación es obligatoria'
                                         : null,
                               ),

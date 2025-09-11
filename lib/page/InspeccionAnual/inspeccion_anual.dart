@@ -12,6 +12,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../InspeccionEspecial/inspeccion_especial.dart';
 import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class InspeccionAnualPage extends StatefulWidget {
   final VoidCallback showModal;
@@ -99,7 +100,8 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
       if (guardados != null) {
         setState(() {
           dataClientes = guardados
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();
           loading = false;
@@ -119,28 +121,30 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
   }
 
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
-    return data.map((item) => {
-          'id': item['_id'],
-          'nombre': item['nombre'],
-          'imagen': item['imagen'],
-          'correo': item['correo'],
-          'telefono': item['telefono'],
-          'calle': item['direccion']['calle'],
-          'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-              ? item['direccion']['nExterior']
-              : 'S/N',
-          'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-              ? item['direccion']['nInterior']
-              : 'S/N',
-          'colonia': item['direccion']['colonia'],
-          'estadoDom': item['direccion']['estadoDom'],
-          'municipio': item['direccion']['municipio'],
-          'cPostal': item['direccion']['cPostal'],
-          'referencia': item['direccion']['referencia'],
-          'estado': item['estado'],
-          'createdAt': item['createdAt'],
-          'updatedAt': item['updatedAt'],
-        }).toList();
+    return data
+        .map((item) => {
+              'id': item['_id'],
+              'nombre': item['nombre'],
+              'imagen': item['imagen'],
+              'correo': item['correo'],
+              'telefono': item['telefono'],
+              'calle': item['direccion']['calle'],
+              'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
+                  ? item['direccion']['nExterior']
+                  : 'S/N',
+              'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
+                  ? item['direccion']['nInterior']
+                  : 'S/N',
+              'colonia': item['direccion']['colonia'],
+              'estadoDom': item['direccion']['estadoDom'],
+              'municipio': item['direccion']['municipio'],
+              'cPostal': item['direccion']['cPostal'],
+              'referencia': item['direccion']['referencia'],
+              'estado': item['estado'],
+              'createdAt': item['createdAt'],
+              'updatedAt': item['updatedAt'],
+            })
+        .toList();
   }
 
   void _agregarPregunta() {
@@ -258,8 +262,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                         onPressed: _isLoading ? null : _publicarEncuesta,
                         icon: Icon(Icons.add),
                         label: _isLoading
-                            ? SpinKitFadingCircle(
-                                color: Colors.white, size: 24)
+                            ? SpinKitFadingCircle(color: Colors.white, size: 24)
                             : Text("Guardar"),
                       ),
                       SizedBox(width: 16),
@@ -267,8 +270,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                         onPressed: returnPrincipalPage,
                         icon: Icon(Icons.arrow_back),
                         label: _isLoading
-                            ? SpinKitFadingCircle(
-                                color: Colors.red, size: 24)
+                            ? SpinKitFadingCircle(color: Colors.red, size: 24)
                             : Text("Regresar"),
                       ),
                     ],
@@ -286,24 +288,58 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                             controller: nombreController,
                             decoration: InputDecoration(labelText: "Nombre"),
                           ),
-                          DropdownButtonFormField<String>(
-                            value: clienteController.text.isEmpty
+                          DropdownSearch<String>(
+                            key: Key('clienteDropdown'),
+                            enabled: dataClientes.isNotEmpty,
+                            items: (filter, _) {
+                              return dataClientes
+                                  .where((c) => c['nombre']
+                                      .toString()
+                                      .toLowerCase()
+                                      .contains(filter.toLowerCase()))
+                                  .map((c) => c['id'].toString())
+                                  .toList();
+                            },
+                            selectedItem: clienteController.text.isEmpty
                                 ? null
                                 : clienteController.text,
-                            decoration:
-                                InputDecoration(labelText: 'Cliente'),
-                            isExpanded: true,
-                            items: dataClientes.map((tipo) {
-                              return DropdownMenuItem<String>(
-                                value: tipo['id'],
-                                child: Text(tipo['nombre']),
+                            onChanged: dataClientes.isEmpty
+                                ? null
+                                : (String? newValue) {
+                                    setState(() {
+                                      clienteController.text = newValue!;
+                                    });
+                                  },
+                            dropdownBuilder: (context, selectedItem) {
+                              final cliente = dataClientes.firstWhere(
+                                  (c) => c['id'].toString() == selectedItem,
+                                  orElse: () => {'nombre': ''});
+                              return Text(
+                                cliente['nombre'] != ''
+                                    ? cliente['nombre']
+                                    : "Selecciona un Cliente",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: selectedItem == null
+                                        ? Colors.grey
+                                        : Colors.black),
                               );
-                            }).toList(),
-                            onChanged: (newValue) {
-                              setState(() {
-                                clienteController.text = newValue!;
-                              });
                             },
+                            decoratorProps: DropDownDecoratorProps(
+                              decoration: InputDecoration(
+                                labelText: 'Cliente',
+                                border: UnderlineInputBorder(),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                              ),
+                            ),
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true,
+                              fit: FlexFit.loose,
+                              constraints: BoxConstraints(maxHeight: 300),
+                            ),
                           ),
                         ],
                       ),
@@ -326,14 +362,12 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                         children: [
                           TextField(
                             controller: preguntaController,
-                            decoration:
-                                InputDecoration(labelText: "Pregunta"),
+                            decoration: InputDecoration(labelText: "Pregunta"),
                           ),
                           TextField(
                             controller: observacionController,
                             decoration: InputDecoration(
-                                labelText:
-                                    "Valores (separados por coma)"),
+                                labelText: "Valores (separados por coma)"),
                             keyboardType:
                                 TextInputType.numberWithOptions(decimal: true),
                             inputFormatters: [
@@ -355,8 +389,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                                       "Valores: ${preguntas[index].valores}\n"),
                                   trailing: IconButton(
                                     icon: Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () =>
-                                        _eliminarPregunta(index),
+                                    onPressed: () => _eliminarPregunta(index),
                                   ),
                                 ),
                               );

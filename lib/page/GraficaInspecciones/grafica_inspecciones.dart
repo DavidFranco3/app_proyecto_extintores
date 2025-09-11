@@ -5,7 +5,7 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Generales/grafico.dart';
-
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -199,28 +199,58 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                 // Dropdown para seleccionar la encuesta
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: "Seleccionar Encuesta",
-                      border: OutlineInputBorder(),
-                    ),
-                    value: selectedEncuestaId,
-                    isExpanded: true,
-                    items: dataEncuestas
-                        .map((encuesta) => DropdownMenuItem<String>(
-                              value: encuesta['id'],
-                              child: Text(
-                                  "${encuesta['nombre']} - ${encuesta['frecuencia']}"),
-                            ))
-                        .toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedEncuestaId = newValue;
-                      });
-                      if (newValue != null) {
-                        cargarInspecciones(newValue);
-                      }
+                  child: DropdownSearch<String>(
+                    key: Key('encuestaDropdown'),
+                    enabled: dataEncuestas.isNotEmpty,
+                    items: (filter, _) {
+                      return dataEncuestas
+                          .where((e) => "${e['nombre']} - ${e['frecuencia']}"
+                              .toLowerCase()
+                              .contains(filter.toLowerCase()))
+                          .map((e) => e['id'].toString())
+                          .toList();
                     },
+                    selectedItem: selectedEncuestaId,
+                    onChanged: dataEncuestas.isEmpty
+                        ? null
+                        : (String? newValue) {
+                            setState(() {
+                              selectedEncuestaId = newValue;
+                            });
+                            if (newValue != null) {
+                              cargarInspecciones(newValue);
+                            }
+                          },
+                    dropdownBuilder: (context, selectedItem) {
+                      final encuesta = dataEncuestas.firstWhere(
+                          (e) => e['id'].toString() == selectedItem,
+                          orElse: () => {'nombre': '', 'frecuencia': ''});
+                      return Text(
+                        encuesta['nombre'] != ''
+                            ? "${encuesta['nombre']} - ${encuesta['frecuencia']}"
+                            : "Seleccionar Encuesta",
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: selectedItem == null
+                                ? Colors.grey
+                                : Colors.black),
+                      );
+                    },
+                    decoratorProps: DropDownDecoratorProps(
+                      decoration: InputDecoration(
+                        labelText: "Seleccionar Encuesta",
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                    ),
+                    popupProps: PopupProps.menu(
+                      showSearchBox: true,
+                      fit: FlexFit.loose,
+                      constraints: BoxConstraints(maxHeight: 300),
+                    ),
                   ),
                 ),
                 Expanded(

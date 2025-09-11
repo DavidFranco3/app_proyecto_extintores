@@ -25,12 +25,19 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class EncuestaPage extends StatefulWidget {
   const EncuestaPage({super.key}); // <-- super parameter
   @override
   EncuestaPageState createState() => EncuestaPageState();
 }
+
+final GlobalKey<DropdownSearchState<String>> clienteKey = GlobalKey();
+final GlobalKey<DropdownSearchState<String>> ramaKey = GlobalKey();
+final GlobalKey<DropdownSearchState<String>> clasificacionKey = GlobalKey();
+final GlobalKey<DropdownSearchState<String>> frecuenciaKey = GlobalKey();
+final GlobalKey<DropdownSearchState<String>> encuestaKey = GlobalKey();
 
 class EncuestaPageState extends State<EncuestaPage> {
   List<Pregunta> preguntas = [];
@@ -1203,16 +1210,41 @@ class EncuestaPageState extends State<EncuestaPage> {
                             // Primera fila: 2 dropdowns
                             Row(
                               children: [
+                                // Dropdown para Cliente
                                 Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: selectedClienteId,
-                                    hint: const Text('Selecciona un Cliente'),
-                                    isExpanded: true,
+                                  child: DropdownSearch<String>(
+                                    key: clienteKey,
+                                    items: (filter, _) {
+                                      return dataClientes
+                                          .where((c) => c['nombre']
+                                              .toString()
+                                              .toLowerCase()
+                                              .contains(filter.toLowerCase()))
+                                          .map((c) => c['nombre'].toString())
+                                          .toList();
+                                    },
+                                    selectedItem: selectedClienteId != null
+                                        ? dataClientes.firstWhere((c) =>
+                                                c['id'] ==
+                                                selectedClienteId)['nombre']
+                                            as String
+                                        : null,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        selectedClienteId = newValue;
+                                        if (newValue != null) {
+                                          selectedClienteId =
+                                              dataClientes.firstWhere((c) =>
+                                                  c['nombre'] ==
+                                                  newValue)['id'];
+                                        } else {
+                                          selectedClienteId = null;
+                                        }
                                       });
-                                      if (newValue != null) {
+
+                                      if (selectedClienteId != null &&
+                                          selectedRamaId != null &&
+                                          selectedFrecuenciaId != null &&
+                                          selectedIdClasificacion != null) {
                                         getEncuestas(
                                           selectedRamaId!,
                                           selectedFrecuenciaId!,
@@ -1221,25 +1253,60 @@ class EncuestaPageState extends State<EncuestaPage> {
                                         );
                                       }
                                     },
-                                    items: dataClientes.map((rama) {
-                                      return DropdownMenuItem<String>(
-                                        value: rama['id'],
-                                        child: Text(rama['nombre']!),
-                                      );
-                                    }).toList(),
+                                    dropdownBuilder: (context, selectedItem) =>
+                                        Text(
+                                      selectedItem ?? "",
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    decoratorProps: DropDownDecoratorProps(
+                                      decoration: InputDecoration(
+                                        labelText: "Selecciona un Cliente",
+                                        border: UnderlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                      ),
+                                    ),
+                                    popupProps:
+                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
+                                SizedBox(width: 10),
+                                // Dropdown para Tipo de Sistema
                                 Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: selectedRamaId,
-                                    hint: const Text(
-                                        'Selecciona un Tipo de Sistema'),
-                                    isExpanded: true,
+                                  child: DropdownSearch<String>(
+                                    key: ramaKey,
+                                    items: (filter, _) {
+                                      return dataRamas
+                                          .where((r) => r['nombre']
+                                              .toString()
+                                              .toLowerCase()
+                                              .contains(filter.toLowerCase()))
+                                          .map((r) => r['nombre'].toString())
+                                          .toList();
+                                    },
+                                    selectedItem: selectedRamaId != null
+                                        ? dataRamas.firstWhere((r) =>
+                                            r['id'] ==
+                                            selectedRamaId)['nombre'] as String
+                                        : null,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        selectedRamaId = newValue;
+                                        if (newValue != null) {
+                                          selectedRamaId = dataRamas.firstWhere(
+                                              (r) =>
+                                                  r['nombre'] ==
+                                                  newValue)['id'];
+                                        } else {
+                                          selectedRamaId = null;
+                                        }
                                       });
-                                      if (newValue != null) {
+
+                                      if (selectedClienteId != null &&
+                                          selectedRamaId != null &&
+                                          selectedFrecuenciaId != null &&
+                                          selectedIdClasificacion != null) {
                                         getEncuestas(
                                           selectedRamaId!,
                                           selectedFrecuenciaId!,
@@ -1248,30 +1315,69 @@ class EncuestaPageState extends State<EncuestaPage> {
                                         );
                                       }
                                     },
-                                    items: dataRamas.map((rama) {
-                                      return DropdownMenuItem<String>(
-                                        value: rama['id'],
-                                        child: Text(rama['nombre']!),
-                                      );
-                                    }).toList(),
+                                    dropdownBuilder: (context, selectedItem) =>
+                                        Text(
+                                      selectedItem ?? "",
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    decoratorProps: DropDownDecoratorProps(
+                                      decoration: InputDecoration(
+                                        labelText:
+                                            "Selecciona un Tipo de Sistema",
+                                        border: UnderlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                      ),
+                                    ),
+                                    popupProps:
+                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
                               ],
                             ),
-                            // Segunda fila: 2 dropdowns
+
+// segunda fila: Clasificación y Frecuencia
                             Row(
                               children: [
+                                // Dropdown para Clasificación
                                 Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: selectedIdClasificacion,
-                                    hint: const Text(
-                                        'Selecciona una clasificación'),
-                                    isExpanded: true,
+                                  child: DropdownSearch<String>(
+                                    key: clasificacionKey,
+                                    items: (filter, _) {
+                                      return dataClasificaciones
+                                          .where((c) => c['nombre']
+                                              .toString()
+                                              .toLowerCase()
+                                              .contains(filter.toLowerCase()))
+                                          .map((c) => c['nombre'].toString())
+                                          .toList();
+                                    },
+                                    selectedItem: selectedIdClasificacion !=
+                                            null
+                                        ? dataClasificaciones.firstWhere((c) =>
+                                                c['id'] ==
+                                                selectedIdClasificacion)[
+                                            'nombre'] as String
+                                        : null,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        selectedIdClasificacion = newValue;
+                                        if (newValue != null) {
+                                          selectedIdClasificacion =
+                                              dataClasificaciones.firstWhere(
+                                                  (c) =>
+                                                      c['nombre'] ==
+                                                      newValue)['id'];
+                                        } else {
+                                          selectedIdClasificacion = null;
+                                        }
                                       });
-                                      if (newValue != null) {
+
+                                      if (selectedRamaId != null &&
+                                          selectedFrecuenciaId != null &&
+                                          selectedIdClasificacion != null &&
+                                          selectedClienteId != null) {
                                         getEncuestas(
                                           selectedRamaId!,
                                           selectedFrecuenciaId!,
@@ -1280,24 +1386,62 @@ class EncuestaPageState extends State<EncuestaPage> {
                                         );
                                       }
                                     },
-                                    items: dataClasificaciones.map((rama) {
-                                      return DropdownMenuItem<String>(
-                                        value: rama['id'],
-                                        child: Text(rama['nombre']!),
-                                      );
-                                    }).toList(),
+                                    dropdownBuilder: (context, selectedItem) =>
+                                        Text(
+                                      selectedItem ?? "",
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    decoratorProps: DropDownDecoratorProps(
+                                      decoration: InputDecoration(
+                                        labelText:
+                                            "Selecciona una clasificación",
+                                        border: UnderlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                      ),
+                                    ),
+                                    popupProps:
+                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
+                                SizedBox(width: 10),
+                                // Dropdown para Frecuencia
                                 Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: selectedFrecuenciaId,
-                                    hint: const Text('Selecciona un periodo'),
-                                    isExpanded: true,
+                                  child: DropdownSearch<String>(
+                                    key: frecuenciaKey,
+                                    items: (filter, _) {
+                                      return dataFrecuencias
+                                          .where((f) => f['nombre']
+                                              .toString()
+                                              .toLowerCase()
+                                              .contains(filter.toLowerCase()))
+                                          .map((f) => f['nombre'].toString())
+                                          .toList();
+                                    },
+                                    selectedItem: selectedFrecuenciaId != null
+                                        ? dataFrecuencias.firstWhere((f) =>
+                                                f['id'] ==
+                                                selectedFrecuenciaId)['nombre']
+                                            as String
+                                        : null,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        selectedFrecuenciaId = newValue;
+                                        if (newValue != null) {
+                                          selectedFrecuenciaId =
+                                              dataFrecuencias.firstWhere((f) =>
+                                                  f['nombre'] ==
+                                                  newValue)['id'];
+                                        } else {
+                                          selectedFrecuenciaId = null;
+                                        }
                                       });
-                                      if (newValue != null) {
+
+                                      if (selectedRamaId != null &&
+                                          selectedFrecuenciaId != null &&
+                                          selectedIdClasificacion != null &&
+                                          selectedClienteId != null) {
                                         getEncuestas(
                                           selectedRamaId!,
                                           selectedFrecuenciaId!,
@@ -1306,42 +1450,76 @@ class EncuestaPageState extends State<EncuestaPage> {
                                         );
                                       }
                                     },
-                                    items: dataFrecuencias.map((rama) {
-                                      return DropdownMenuItem<String>(
-                                        value: rama['id'],
-                                        child: Text(rama['nombre']!),
-                                      );
-                                    }).toList(),
+                                    dropdownBuilder: (context, selectedItem) =>
+                                        Text(
+                                      selectedItem ?? "",
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    decoratorProps: DropDownDecoratorProps(
+                                      decoration: InputDecoration(
+                                        labelText: "Selecciona un periodo",
+                                        border: UnderlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                      ),
+                                    ),
+                                    popupProps:
+                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
                               ],
                             ),
-                            // Última fila: 1 dropdown
-                            DropdownButtonFormField<String>(
-                              initialValue: selectedEncuestaId,
-                              hint: const Text('Selecciona una actividad'),
-                              isExpanded: true,
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  selectedEncuestaId = newValue;
-                                  currentPage = 0;
-                                  final encuestaSeleccionada =
-                                      dataEncuestas.firstWhere(
-                                    (encuesta) => encuesta['id'] == newValue,
-                                  );
-                                  selectedIdFrecuencia =
-                                      encuestaSeleccionada['idFrecuencia'];
-                                });
-                                if (newValue != null) {
-                                  actualizarPreguntas(newValue);
-                                }
+
+                            SizedBox(height: 10),
+
+// Dropdown para Encuesta
+                            DropdownSearch<String>(
+                              key: encuestaKey,
+                              enabled: dataEncuestas.isNotEmpty,
+                              items: (filter, _) {
+                                return dataEncuestas
+                                    .where((e) => e['nombre']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(filter.toLowerCase()))
+                                    .map((e) => e['nombre'].toString())
+                                    .toList();
                               },
-                              items: dataEncuestas.map((encuesta) {
-                                return DropdownMenuItem<String>(
-                                  value: encuesta['id'],
-                                  child: Text(encuesta['nombre']!),
-                                );
-                              }).toList(),
+                              selectedItem: selectedEncuestaId != null
+                                  ? dataEncuestas.firstWhere((e) =>
+                                      e['id'] ==
+                                      selectedEncuestaId)['nombre'] as String
+                                  : null,
+                              onChanged: (String? newValue) {
+                                if (newValue == null) return;
+                                setState(() {
+                                  selectedEncuestaId = dataEncuestas.firstWhere(
+                                      (e) => e['nombre'] == newValue)['id'];
+                                  currentPage = 0;
+                                  selectedIdFrecuencia =
+                                      dataEncuestas.firstWhere((e) =>
+                                          e['nombre'] ==
+                                          newValue)['idFrecuencia'];
+                                });
+                                actualizarPreguntas(selectedEncuestaId!);
+                              },
+                              dropdownBuilder: (context, selectedItem) => Text(
+                                selectedItem ?? "",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: InputDecoration(
+                                  labelText: "Selecciona una actividad",
+                                  border: UnderlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                ),
+                              ),
+                              popupProps: PopupProps.menu(showSearchBox: true),
                             ),
                           ],
                         ),
@@ -1601,27 +1779,58 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 8),
-                                        DropdownButtonFormField<String>(
-                                          initialValue: calificacionSeleccionada,
-                                          items: [
-                                            "Crítico",
-                                            "No crítico",
-                                            "Desactivación",
-                                            "Solucionado"
-                                          ]
-                                              .map((opcion) => DropdownMenuItem(
-                                                    value: opcion,
-                                                    child: Text(opcion),
-                                                  ))
-                                              .toList(),
-                                          onChanged: (valor) {
+                                        DropdownSearch<String>(
+                                          key: Key('calificacionDropdown'),
+                                          enabled:
+                                              true, // Siempre habilitado, ya que siempre hay opciones
+                                          items: (filter, _) {
+                                            final opciones = [
+                                              "Crítico",
+                                              "No crítico",
+                                              "Desactivación",
+                                              "Solucionado"
+                                            ];
+                                            return opciones
+                                                .where((o) => o
+                                                    .toLowerCase()
+                                                    .contains(
+                                                        filter.toLowerCase()))
+                                                .toList();
+                                          },
+                                          selectedItem:
+                                              calificacionSeleccionada,
+                                          onChanged: (String? valor) {
                                             setState(() {
                                               calificacionSeleccionada = valor;
                                             });
                                           },
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
-                                            hintText: "Selecciona una opción",
+                                          dropdownBuilder:
+                                              (context, selectedItem) => Text(
+                                            selectedItem ?? "",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color: selectedItem == null
+                                                    ? Colors.grey
+                                                    : Colors.black),
+                                          ),
+                                          decoratorProps:
+                                              DropDownDecoratorProps(
+                                            decoration: InputDecoration(
+                                              labelText: "Calificación",
+                                              border: OutlineInputBorder(),
+                                              isDense: true,
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
+                                            ),
+                                          ),
+                                          popupProps: PopupProps.menu(
+                                            showSearchBox: true,
+                                            fit: FlexFit.loose,
+                                            constraints:
+                                                BoxConstraints(maxHeight: 300),
                                           ),
                                         ),
                                         const SizedBox(height: 16),
@@ -1726,6 +1935,50 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                 child: const Text(
                                                     "Limpiar formulario"),
                                               ),
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    const NeverScrollableScrollPhysics(),
+                                                itemCount:
+                                                    registrosEficiencia.length,
+                                                itemBuilder: (context, index) {
+                                                  final registro =
+                                                      registrosEficiencia[
+                                                          index];
+                                                  return Card(
+                                                    margin: const EdgeInsets
+                                                        .symmetric(vertical: 8),
+                                                    child: ListTile(
+                                                      leading: Image.file(
+                                                        File(registro["imagen"]
+                                                            .path),
+                                                        width: 50,
+                                                        height: 50,
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                      title: Text(
+                                                        '${registro["comentarios"]} - ${registro["calificacion"]}',
+                                                        style: const TextStyle(
+                                                            fontSize: 14),
+                                                      ),
+                                                      subtitle: Text(registro[
+                                                          "descripcion"]),
+                                                      trailing: IconButton(
+                                                        icon: const Icon(
+                                                            Icons.delete,
+                                                            color: Colors.red),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            registrosEficiencia
+                                                                .removeAt(
+                                                                    index);
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              )
                                             ],
                                           ),
                                         ),

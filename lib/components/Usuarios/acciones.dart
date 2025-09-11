@@ -16,6 +16,7 @@ import '../Load/load.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -744,40 +745,82 @@ class _AccionesState extends State<Acciones> {
                             return null;
                           },
                         ),
-                        DropdownButtonFormField<String>(
-                          value: _rolController.text.isEmpty
+                        DropdownSearch<String>(
+                          key: Key('rolDropdown'),
+                          enabled: !isEliminar &&
+                              !_isLoading, // Deshabilitado si corresponde
+                          items: (filter, _) {
+                            // Lista de roles filtrada por búsqueda
+                            final roles = [
+                              {'value': '', 'label': 'Selecciona una opción'},
+                              {
+                                'value': 'administrador',
+                                'label': 'Administrador'
+                              },
+                              {'value': 'inspector', 'label': 'Tecnico'},
+                            ];
+
+                            return roles
+                                .where((r) => r['label']!
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()))
+                                .map((r) => r['value']!)
+                                .toList();
+                          },
+                          selectedItem: _rolController.text.isEmpty
                               ? null
-                              : _rolController.text, // Permitir valor nulo
-                          onChanged: (isEliminar || _isLoading)
-                              ? null
-                              : (String? newValue) {
+                              : _rolController.text,
+                          onChanged: !isEliminar && !_isLoading
+                              ? (String? newValue) {
                                   setState(() {
-                                    _rolController.text = newValue ??
-                                        ''; // Asegurar que no sea nulo
+                                    _rolController.text = newValue ?? '';
                                   });
-                                },
-                          decoration: InputDecoration(labelText: 'Rol'),
-                          items: [
-                            DropdownMenuItem<String>(
-                              value: "",
-                              child: Text("Selecciona una opción",
-                                  style: TextStyle(color: Colors.grey)),
+                                }
+                              : null,
+                          dropdownBuilder: (context, selectedItem) {
+                            final roles = [
+                              {'value': '', 'label': 'Selecciona una opción'},
+                              {
+                                'value': 'administrador',
+                                'label': 'Administrador'
+                              },
+                              {'value': 'inspector', 'label': 'Tecnico'},
+                            ];
+
+                            final rol = roles.firstWhere(
+                                (r) => r['value'] == selectedItem,
+                                orElse: () => {'label': ''});
+                            return Text(
+                              rol['label'] ?? '',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: selectedItem == ''
+                                      ? Colors.grey
+                                      : Colors.black),
+                            );
+                          },
+                          decoratorProps: DropDownDecoratorProps(
+                            decoration: InputDecoration(
+                              labelText: 'Rol',
+                              border: UnderlineInputBorder(),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                             ),
-                            DropdownMenuItem<String>(
-                              value: "administrador",
-                              child: Text("Administrador"),
-                            ),
-                            DropdownMenuItem<String>(
-                              value: "inspector",
-                              child: Text("Tecnico"),
-                            ),
-                          ],
-                          validator: isEliminar
-                              ? null
-                              : (value) => (value == null || value.isEmpty)
+                          ),
+                          popupProps: PopupProps.menu(
+                            showSearchBox: true,
+                            fit: FlexFit.loose,
+                            constraints: BoxConstraints(maxHeight: 300),
+                          ),
+                          validator: !isEliminar && !_isLoading
+                              ? (value) => value == null || value.isEmpty
                                   ? 'Por favor selecciona un rol'
-                                  : null,
+                                  : null
+                              : null,
                         ),
+
                         SizedBox(height: 16),
 
                         /// **Sección de Firma**

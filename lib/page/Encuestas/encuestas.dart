@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Encuestas/list_encuestas.dart';
 import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
@@ -105,7 +105,8 @@ class _EncuestasPageState extends State<EncuestasPage> {
       if (guardadas != null) {
         setState(() {
           dataEncuestas = guardadas
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();
           filteredEncuestas = dataEncuestas;
@@ -174,7 +175,8 @@ class _EncuestasPageState extends State<EncuestasPage> {
       if (guardadas != null) {
         setState(() {
           dataClasificaciones = guardadas
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
               .toList();
         });
       } else {
@@ -238,7 +240,8 @@ class _EncuestasPageState extends State<EncuestasPage> {
       if (guardadas != null) {
         setState(() {
           dataFrecuencias = guardadas
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
               .toList();
         });
       } else {
@@ -315,25 +318,29 @@ class _EncuestasPageState extends State<EncuestasPage> {
   }
 
   List<Map<String, dynamic>> formatModelFrecuencias(List<dynamic> data) {
-    return data.map((item) => {
-          'id': item['_id'],
-          'nombre': item['nombre'],
-          'cantidadDias': item['cantidadDias'],
-          'estado': item['estado'],
-          'createdAt': item['createdAt'],
-          'updatedAt': item['updatedAt'],
-        }).toList();
+    return data
+        .map((item) => {
+              'id': item['_id'],
+              'nombre': item['nombre'],
+              'cantidadDias': item['cantidadDias'],
+              'estado': item['estado'],
+              'createdAt': item['createdAt'],
+              'updatedAt': item['updatedAt'],
+            })
+        .toList();
   }
 
   List<Map<String, dynamic>> formatModelClasificaciones(List<dynamic> data) {
-    return data.map((item) => {
-          'id': item['_id'],
-          'nombre': item['nombre'],
-          'descripcion': item['descripcion'],
-          'estado': item['estado'],
-          'createdAt': item['createdAt'],
-          'updatedAt': item['updatedAt'],
-        }).toList();
+    return data
+        .map((item) => {
+              'id': item['_id'],
+              'nombre': item['nombre'],
+              'descripcion': item['descripcion'],
+              'estado': item['estado'],
+              'createdAt': item['createdAt'],
+              'updatedAt': item['updatedAt'],
+            })
+        .toList();
   }
 
   @override
@@ -371,43 +378,95 @@ class _EncuestasPageState extends State<EncuestasPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Column(
                     children: [
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        value: selectedFrecuencia,
-                        decoration: InputDecoration(
-                          labelText: "Filtrar por frecuencia",
-                          border: OutlineInputBorder(),
-                        ),
-                        items: dataFrecuencias.map((value) {
-                          return DropdownMenuItem<String>(
-                            value: value['nombre'],
-                            child: Text(value['nombre']),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          selectedFrecuencia = value;
-                          filterEncuestas();
+                      // Dropdown para Filtrar por Frecuencia
+                      DropdownSearch<String>(
+                        key: Key('frecuenciaDropdown'),
+                        enabled: dataFrecuencias.isNotEmpty,
+                        items: (filter, _) {
+                          return dataFrecuencias
+                              .where((f) => f['nombre']
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(filter.toLowerCase()))
+                              .map((f) => f['nombre'].toString())
+                              .toList();
                         },
+                        selectedItem: selectedFrecuencia,
+                        onChanged: dataFrecuencias.isEmpty
+                            ? null
+                            : (String? value) {
+                                setState(() {
+                                  selectedFrecuencia = value;
+                                  filterEncuestas();
+                                });
+                              },
+                        dropdownBuilder: (context, selectedItem) => Text(
+                          selectedItem ?? "",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: selectedItem == null
+                                  ? Colors.grey
+                                  : Colors.black),
+                        ),
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                            labelText: "Filtrar por frecuencia",
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                          ),
+                        ),
+                        popupProps: PopupProps.menu(showSearchBox: true),
                       ),
+
+// SizedBox para separación
                       SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        value: selectedClasificacion,
-                        decoration: InputDecoration(
-                          labelText: "Filtrar por clasificación",
-                          border: OutlineInputBorder(),
-                        ),
-                        items: dataClasificaciones.map((value) {
-                          return DropdownMenuItem<String>(
-                            value: value['nombre'],
-                            child: Text(value['nombre']),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          selectedClasificacion = value;
-                          filterEncuestas();
+
+// Dropdown para Filtrar por Clasificación
+                      DropdownSearch<String>(
+                        key: Key('clasificacionDropdown'),
+                        enabled: dataClasificaciones.isNotEmpty,
+                        items: (filter, _) {
+                          return dataClasificaciones
+                              .where((c) => c['nombre']
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(filter.toLowerCase()))
+                              .map((c) => c['nombre'].toString())
+                              .toList();
                         },
+                        selectedItem: selectedClasificacion,
+                        onChanged: dataClasificaciones.isEmpty
+                            ? null
+                            : (String? value) {
+                                setState(() {
+                                  selectedClasificacion = value;
+                                  filterEncuestas();
+                                });
+                              },
+                        dropdownBuilder: (context, selectedItem) => Text(
+                          selectedItem ?? "",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: selectedItem == null
+                                  ? Colors.grey
+                                  : Colors.black),
+                        ),
+                        decoratorProps: DropDownDecoratorProps(
+                          decoration: InputDecoration(
+                            labelText: "Filtrar por clasificación",
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                          ),
+                        ),
+                        popupProps: PopupProps.menu(showSearchBox: true),
                       ),
+
                       SizedBox(height: 8),
                     ],
                   ),
