@@ -7,7 +7,7 @@ plugins {
 }
 dependencies {
   // Import the Firebase BoM
-  implementation platform('com.google.firebase:firebase-bom:34.4.0')
+  implementation platform('com.google.firebase:firebase-bom:34.5.0')
   coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
 
 
@@ -32,13 +32,13 @@ android {
     ndkVersion = "27.0.12077973"//flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 
     defaultConfig {
@@ -83,7 +83,7 @@ tasks.withType(JavaCompile).configureEach {
 // 🔧 Aplicar compatibilidad global a Java 17
 allprojects {
     tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
