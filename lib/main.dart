@@ -21,7 +21,8 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 // 📌 Manejo de notificaciones en segundo plano
 Future<void> _onBackgroundMessage(RemoteMessage message) async {
-  print("📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
+  print(
+      "📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
 }
 
 // 📌 Configuración de notificaciones locales
@@ -29,12 +30,13 @@ Future<void> configurarNotificacionesLocales() async {
   const AndroidInitializationSettings androidSettings =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
+  const DarwinInitializationSettings iosSettings =
+      DarwinInitializationSettings();
 
   const InitializationSettings settings =
       InitializationSettings(android: androidSettings, iOS: iosSettings);
 
-  await flutterLocalNotificationsPlugin.initialize(settings);
+  await flutterLocalNotificationsPlugin.initialize(settings: settings);
 }
 
 // 📌 Mostrar notificación local
@@ -50,7 +52,8 @@ Future<void> mostrarNotificacionLocal(String title, String body) async {
   const NotificationDetails platformDetails =
       NotificationDetails(android: androidDetails);
 
-  await flutterLocalNotificationsPlugin.show(0, title, body, platformDetails);
+  await flutterLocalNotificationsPlugin.show(
+      id: 0, title: title, body: body, notificationDetails: platformDetails);
 }
 
 // 📌 Mostrar alerta dentro de la app
@@ -127,7 +130,8 @@ Future<void> main() async {
 
   // 📌 Inicializar SharedPreferences
   final prefs = await SharedPreferences.getInstance();
-  if (!prefs.containsKey('isLoggedIn')) await prefs.setBool('isLoggedIn', false);
+  if (!prefs.containsKey('isLoggedIn'))
+    await prefs.setBool('isLoggedIn', false);
   final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   // 📌 Inicializar FCM
@@ -135,7 +139,8 @@ Future<void> main() async {
 
   // 📌 Escuchar notificaciones en primer plano
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
+    print(
+        "📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
     mostrarNotificacionLocal(
       message.notification?.title ?? "Sin título",
       message.notification?.body ?? "Sin mensaje",
@@ -155,16 +160,34 @@ Future<void> main() async {
   // 📦 Inicializar Hive
   await Hive.initFlutter();
   final boxes = [
-    'clientesBox', 'reporteFinalBox', 'clasificacionesBox', 'encuestasBox',
-    'extintoresBox', 'frecuenciasBox', 'inspeccionesBox', 'inspeccionAnualBox',
-    'inspeccionesProximasBox', 'inspeccionesInspectorBox', 'logsBox', 'tokensBox',
-    'ramasBox', 'tiposExtintoresBox', 'usuariosBox',
-    'operacionesOfflineClasificaciones', 'operacionesOfflineExtintores',
-    'operacionesOfflineEncuestas', 'operacionesOfflineFrecuencias',
-    'operacionesOfflineRamas', 'operacionesOfflineTiposExtintores',
-    'operacionesOfflineInspecciones', 'operacionesOfflineInspeccionAnual',
-    'operacionesOfflineClientes', 'operacionesOfflineUsuarios',
-    'operacionesOfflineReportes', 'encuestasPendientes', 'operacionesOfflinePreguntas'
+    'clientesBox',
+    'reporteFinalBox',
+    'clasificacionesBox',
+    'encuestasBox',
+    'extintoresBox',
+    'frecuenciasBox',
+    'inspeccionesBox',
+    'inspeccionAnualBox',
+    'inspeccionesProximasBox',
+    'inspeccionesInspectorBox',
+    'logsBox',
+    'tokensBox',
+    'ramasBox',
+    'tiposExtintoresBox',
+    'usuariosBox',
+    'operacionesOfflineClasificaciones',
+    'operacionesOfflineExtintores',
+    'operacionesOfflineEncuestas',
+    'operacionesOfflineFrecuencias',
+    'operacionesOfflineRamas',
+    'operacionesOfflineTiposExtintores',
+    'operacionesOfflineInspecciones',
+    'operacionesOfflineInspeccionAnual',
+    'operacionesOfflineClientes',
+    'operacionesOfflineUsuarios',
+    'operacionesOfflineReportes',
+    'encuestasPendientes',
+    'operacionesOfflinePreguntas'
   ];
 
   for (var box in boxes) {
