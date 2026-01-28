@@ -1,0 +1,3 @@
+Changing current working directory to: C:\Users\al180\Documents\apps_flutter\prueba
+Running Gradle task 'assembleRelease'...                           57.2s
+√ Built build\app\outputs\flutter-apk\app-release.apk (73.2MB)

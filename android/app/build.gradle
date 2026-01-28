@@ -1,20 +1,17 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
     id 'com.google.gms.google-services'
 }
+
 dependencies {
   // Import the Firebase BoM
-  implementation platform('com.google.firebase:firebase-bom:34.7.0')
+  implementation platform('com.google.firebase:firebase-bom:34.8.0')
   coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
-
 
   // TODO: Add the dependencies for Firebase products you want to use
   // When using the BoM, don't specify versions in Firebase dependencies
   implementation 'com.google.firebase:firebase-analytics'
-
 
   // Add the dependencies for any other desired Firebase products
   // https://firebase.google.com/docs/android/setup#available-libraries
@@ -29,7 +26,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.isotech.aggo"
     compileSdk = 36//flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"//flutter.ndkVersion
+    ndkVersion = "28.2.13676358"//flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -37,9 +34,7 @@ android {
         coreLibraryDesugaringEnabled true
     }
 
-    kotlinOptions {
-        jvmTarget = "21"
-    }
+
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -78,6 +73,12 @@ flutter {
 // 🔧 Suprimir advertencias de opciones obsoletas
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += "-Xlint:-options"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = "21"
+    }
 }
 
 // 🔧 Aplicar compatibilidad global a Java 17
