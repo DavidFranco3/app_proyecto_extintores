@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -12,8 +12,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
 class ExtintoresPage extends StatefulWidget {
+  const ExtintoresPage({super.key});
+
   @override
-  _ExtintoresPageState createState() => _ExtintoresPageState();
+  State<ExtintoresPage> createState() => _ExtintoresPageState();
 }
 
 class _ExtintoresPageState extends State<ExtintoresPage> {
@@ -29,7 +31,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -39,7 +41,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     if (conectado) {
       await getExtintoresDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getExtintoresDesdeHive();
     }
   }
@@ -67,7 +69,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener los extintores: $e");
+      debugPrint("Error al obtener los extintores: $e");
       setState(() {
         loading = false;
       });
@@ -94,7 +96,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo Hive: $e");
+      debugPrint("Error leyendo Hive: $e");
       setState(() {
         loading = false;
       });
@@ -109,7 +111,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
         builder: (BuildContext context) {
           return Acciones(
             showModal: () {
-              Navigator.pop(context);
+              if (mounted) Navigator.pop(context);
             },
             onCompleted: getExtintores,
             accion: "registrar",
@@ -172,7 +174,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
                 Expanded(
                   child: TblExtintores(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     extintores: dataExtintores,
                     onCompleted: getExtintores,
@@ -189,3 +191,5 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     );
   }
 }
+
+

@@ -22,15 +22,14 @@ class TblInspecciones extends StatefulWidget {
   final List<Map<String, dynamic>> inspecciones;
   final Function onCompleted;
 
-  TblInspecciones(
-      {Key? key,
+  const TblInspecciones(
+      {super.key,
       required this.showModal,
       required this.inspecciones,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblInspeccionesState createState() => _TblInspeccionesState();
+  State<TblInspecciones> createState() => _TblInspeccionesState();
 }
 
 class _TblInspeccionesState extends State<TblInspecciones> {
@@ -60,7 +59,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       String filePath =
           "${appDocDir.path}/${row["cliente"]}_$fechaFormateada-IPM.pdf";
 
-      print("Descargando archivo en: $filePath");
+      debugPrint("Descargando archivo en: $filePath");
 
       // Descargar el archivo PDF
       await dio.download(fileURL, filePath);
@@ -69,12 +68,12 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       File file = File(filePath);
       if (await file.exists()) {
         OpenFile.open(filePath);
-        print("Archivo guardado correctamente en: $filePath");
+        debugPrint("Archivo guardado correctamente en: $filePath");
       } else {
         throw Exception("El archivo no se descargó correctamente.");
       }
     } catch (e) {
-      print("Error al descargar el PDF: $e");
+      debugPrint("Error al descargar el PDF: $e");
     } finally {
       setState(() => isLoading = false);
     }
@@ -86,33 +85,39 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       var response = await inspeccionesService.sendEmail(row["id"]);
 
       if (response['status'] == 200) {
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Correo enviado",
           message: "El PDF fue enviado exitosamente al correo del cliente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error al enviar el correo",
           message: "Hubo un problema al enviar el PDF por correo",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     } finally {
       isLoading = false;
     }
   }
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     // Navegar a la página de eliminación en lugar de mostrar un modal
     Navigator.push(
       context,
@@ -183,27 +188,33 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       var response = await inspeccionesService.urlDownloadZIP(row["id"], email);
 
       if (response['status'] == 200) {
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "ZIP enviado",
-          message: "Se ha enviado correctamente el zip al email ${email}",
+          message: "Se ha enviado correctamente el zip al email $email",
           backgroundColor: Colors.green,
         );
+        }
       } else {
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error al enviar el ZIP",
-          message: "Ha ocurrido un problema al enviar el ZIP al email ${email}",
+          message: "Ha ocurrido un problema al enviar el ZIP al email $email",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (e) {
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Error al enviar el ZIP",
         message: "Error: ${e.toString()}",
         backgroundColor: Colors.red,
       );
+      }
     } finally {
       isLoading = false;
     }
@@ -246,7 +257,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                   downloadAndOpenZip(row, email);
                   Navigator.of(context).pop(); // Cerrar el modal
                 } else {
-                  print("❌ Por favor ingresa un correo válido.");
+                  debugPrint("❌ Por favor ingresa un correo válido.");
                 }
               },
               child: Text("Aceptar"),
@@ -286,7 +297,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                   };
                 }).toList(),
                 columnas: columnas,
-                accionesBuilder: (row) {
+                accionesBuilder: (Map<String, dynamic> row) {
                   return PopupMenuButton<String>(
                     icon: FaIcon(
                       FontAwesomeIcons.bars,
@@ -487,3 +498,6 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 }
+
+
+

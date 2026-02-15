@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -12,8 +12,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
 class InspeccionEspecialPage extends StatefulWidget {
+  const InspeccionEspecialPage({super.key});
+
   @override
-  _InspeccionEspecialPageState createState() => _InspeccionEspecialPageState();
+  State<InspeccionEspecialPage> createState() => _InspeccionEspecialPageState();
 }
 
 class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
@@ -32,7 +34,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -46,7 +48,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
     if (conectado) {
       await getInspeccionesDesdeAPI();
     } else {
-      print("Sin conexión. Leyendo inspecciones desde Hive...");
+      debugPrint("Sin conexión. Leyendo inspecciones desde Hive...");
       await getInspeccionesDesdeHive();
     }
 
@@ -76,7 +78,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener inspecciones: $e");
+      debugPrint("Error al obtener inspecciones: $e");
       setState(() {
         dataInspecciones = [];
       });
@@ -101,7 +103,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo inspecciones desde Hive: $e");
+      debugPrint("Error leyendo inspecciones desde Hive: $e");
       setState(() {
         dataInspecciones = [];
       });
@@ -114,7 +116,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
       MaterialPageRoute(
         builder: (context) => InspeccionAnualPage(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: getInspecciones,
           accion: "registrar",
@@ -180,7 +182,7 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
                 Expanded(
                   child: TblInspeccionEspecial(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     inspeccionAnual: dataInspecciones,
                     onCompleted: getInspecciones,
@@ -197,3 +199,5 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
     );
   }
 }
+
+

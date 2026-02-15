@@ -1,177 +1,110 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:http/http.dart' as http;
-import 'package:open_file/open_file.dart';
+
+import 'package:flutter/material.dart'; // For BuildContext, Colors
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:open_file/open_file.dart';
+
 import '../../api/inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../utils/pdf_utils.dart';
+import '../../utils/pdf_theme.dart';
+import '../Common/pdf_components.dart';
 
 class GenerarPdfPage4 {
-  static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
+  static Future<Uint8List> _generatePdfBytes(Map<String, dynamic> data) async {
+    final pdf = pw.Document(theme: PdfTheme.theme);
 
-  static Future<Uint8List> loadImageFromAssets(String assetPath) async {
-    final byteData = await rootBundle.load(assetPath);
-    return Uint8List.fromList(byteData.buffer.asUint8List());
-  }
+    // --- 1. Load Assets ---
+    final logoNfpaFuture =
+        PdfUtils.loadAssetImage('lib/assets/img/logo_nfpa.png');
+    final logoAppFuture =
+        PdfUtils.loadAssetImage('lib/assets/img/logo_app.png');
+    final logoClienteFuture = PdfUtils.downloadImage(data['imagen_cliente']);
 
-  static Future<void> generarPdf(Map<String, dynamic> data) async {
-    final pdf = pw.Document();
+    final results =
+        await Future.wait([logoNfpaFuture, logoAppFuture, logoClienteFuture]);
+    final logoNfpa = results[0] ?? Uint8List(0);
+    final logoApp = results[1] ?? Uint8List(0);
+    final logoCliente = results[2] ?? Uint8List(0);
 
-    // Cargar imagen del cliente si existe
-    final imageUrlLogo = data['imagen_cliente']?.replaceAll("dl=0", "dl=1");
-    Uint8List imageBytesLogo = Uint8List(0);
-    if (imageUrlLogo != null && imageUrlLogo.isNotEmpty) {
-      final responseLogo = await http.get(Uri.parse(imageUrlLogo));
-      if (responseLogo.statusCode == 200) {
-        imageBytesLogo = responseLogo.bodyBytes;
-      }
-    }
-
-    // Cargar logos locales
-    final imageBytes00 =
-        await loadImageFromAssets('lib/assets/img/logo_nfpa.png');
-    final imageBytes000 =
-        await loadImageFromAssets('lib/assets/img/logo_app.png');
-
+    // --- 2. Process Items ---
     final List<dynamic> inspecciones = data['inspeccion_eficiencias'] ?? [];
 
-    for (var item in inspecciones) {
-      // Cargar imagen si existe en cada ítem
-      Uint8List imageBytes = Uint8List(0);
-      final imageUrl = item['imagen']?.replaceAll("dl=0", "dl=1");
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        final response = await http.get(Uri.parse(imageUrl));
-        if (response.statusCode == 200) {
-          imageBytes = response.bodyBytes;
-        }
-      }
+    // Download images for each item in parallel
+    final List<Uint8List?> itemImages = await Future.wait(
+        inspecciones.map((item) => PdfUtils.downloadImage(item['imagen'])));
 
-      pdf.addPage(
-        pw.MultiPage(
-          margin: const pw.EdgeInsets.all(20),
-          footer: (context) => pw.Container(
-            alignment: pw.Alignment.bottomCenter,
-            margin: const pw.EdgeInsets.only(top: 20),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  'Av. Universidad No. 277 A, Col. Granjas Banthi\n'
-                  'San Juan del Río, Querétaro, C.P. 76806\n'
-                  'Tel: 427 268 5050\n'
-                  'e-mail: ingenieria@aggofc.com',
-                  style: const pw.TextStyle(fontSize: 10),
-                  textAlign: pw.TextAlign.left,
-                ),
-                pw.Image(
-                  pw.MemoryImage(imageBytes000),
-                  width: 150,
-                  height: 40,
-                ),
-              ],
-            ),
-          ),
-          build: (context) => [
-            pw.Center(
-              child: pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  if (imageBytesLogo.isNotEmpty)
-                    pw.Image(pw.MemoryImage(imageBytesLogo),
-                        width: 150, height: 40),
-                  pw.Image(pw.MemoryImage(imageBytes00),
-                      width: 150, height: 40),
-                ],
-              ),
-            ),
-            pw.SizedBox(height: 20),
-            pw.Center(
-              child: pw.Text(
-                item['descripcion'] ?? '',
-                style:
-                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-                textAlign: pw.TextAlign.center,
-              ),
-            ),
-            pw.SizedBox(height: 10),
-            pw.Center(
-              child: pw.Text(
-                item['calificacion'] ?? '',
-                style:
-                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-                textAlign: pw.TextAlign.center,
-              ),
-            ),
-            pw.SizedBox(height: 10),
-            pw.Center(
-              child: pw.Text(
-                item['comentarios'] ?? '',
-                style:
-                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-                textAlign: pw.TextAlign.center,
-              ),
-            ),
-            pw.SizedBox(height: 20),
-            if (imageBytes.isNotEmpty)
-              pw.Center(
-                child: pw.Image(
-                  pw.MemoryImage(imageBytes),
-                  width: 500,
-                  height: 290,
-                  fit: pw.BoxFit.contain,
-                ),
-              ),
-          ],
-        ),
-      );
+    // --- 3. Build Pages ---
+    for (int i = 0; i < inspecciones.length; i++) {
+      final item = inspecciones[i];
+      final imageBytes = itemImages[i];
+
+      pdf.addPage(pw.Page(
+          theme: PdfTheme.theme,
+          build: (context) {
+            return pw.Column(children: [
+              PdfComponents.buildHeader(
+                  logoBytes: logoCliente, logoIsoBytes: logoNfpa),
+              pw.SizedBox(height: 20),
+              pw.Text(item['descripcion'] ?? '',
+                  style: PdfTheme.titleStyle, textAlign: pw.TextAlign.center),
+              pw.SizedBox(height: 10),
+              pw.Text(item['calificacion'] ?? '',
+                  style: PdfTheme.subtitleStyle,
+                  textAlign: pw.TextAlign.center),
+              pw.SizedBox(height: 10),
+              pw.Text(item['comentarios'] ?? '',
+                  style: PdfTheme.bodyStyle, textAlign: pw.TextAlign.center),
+              pw.SizedBox(height: 20),
+              if (imageBytes != null && imageBytes.isNotEmpty)
+                pw.Expanded(
+                    child: pw.Center(
+                        child: pw.Image(pw.MemoryImage(imageBytes),
+                            fit: pw.BoxFit.contain))),
+              pw.Spacer(),
+              PdfComponents.buildFooter(logoAppBytes: logoApp)
+            ]);
+          }));
     }
 
-    final outputDirectory = await getExternalStorageDirectory();
-    if (outputDirectory != null) {
-      final file = File(
-          "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
-      await file.writeAsBytes(await pdf.save());
-      print("PDF guardado en: ${file.path}");
-    } else {
-      print("No se pudo obtener el directorio de almacenamiento.");
-    }
+    return await pdf.save();
   }
 
   static Future<void> guardarPDF(Map<String, dynamic> data) async {
     try {
-      await generarPdf(data);
-      // Leer el archivo PDF generado como bytes
+      final bytes = await _generatePdfBytes(data);
       final outputDirectory = await getExternalStorageDirectory();
+
       if (outputDirectory != null) {
-        final file = File(
-            "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
-        // Abrir el PDF con el visor predeterminado
+        final fileName =
+            "${data["cliente"]}_${PdfUtils.formatDateShort(DateTime.now())}-Prob.pdf";
+        final file = File("${outputDirectory.path}/$fileName");
+        await file.writeAsBytes(bytes);
         await OpenFile.open(file.path);
       }
     } catch (e) {
-      print('Error al enviar el PDF: $e');
+      debugPrint('Error generating PDF: $e');
     }
   }
 
   static Future<void> enviarPdfAlBackend(
       BuildContext context, Map<String, dynamic> data) async {
     try {
-      final inspeccionesService = InspeccionesService();
-      // Llamar a la función para generar y guardar el PDF
-      await generarPdf(
-          data); // No necesitamos el retorno, solo lo generamos y guardamos
-
-      // Leer el archivo PDF generado como bytes
+      final bytes = await _generatePdfBytes(data);
       final outputDirectory = await getExternalStorageDirectory();
+
       if (outputDirectory != null) {
-        final file = File(
-            "${outputDirectory.path}/${data["cliente"]}_$fechaFormateada-Prob.pdf");
+        final fileName =
+            "${data["cliente"]}_${PdfUtils.formatDateShort(DateTime.now())}-Prob.pdf";
+        final file = File("${outputDirectory.path}/$fileName");
+        await file.writeAsBytes(bytes);
+
+        final inspeccionesService = InspeccionesService();
         var response =
             await inspeccionesService.sendEmail2(data["id"], file.path);
+
         if (response['status'] == 200) {
           showCustomFlushbar(
             context: context,
@@ -189,7 +122,13 @@ class GenerarPdfPage4 {
         }
       }
     } catch (e) {
-      print('Error al enviar el PDF: $e');
+      debugPrint('Error sending PDF: $e');
+      showCustomFlushbar(
+        context: context,
+        title: "Error",
+        message: "Error al generar o enviar el PDF: $e",
+        backgroundColor: Colors.red,
+      );
     }
   }
 }

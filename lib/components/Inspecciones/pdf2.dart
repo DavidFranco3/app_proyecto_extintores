@@ -1,194 +1,133 @@
 import 'dart:io';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
-import 'package:http/http.dart' as http;
 import 'dart:typed_data';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:intl/intl.dart';
+
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:open_file/open_file.dart';
+
+import '../../utils/pdf_utils.dart';
+import '../../utils/pdf_theme.dart';
+import '../Common/pdf_components.dart';
 
 class GenerarPdfPage {
-  static String fechaFormateada = DateFormat('dd-MM-yy').format(DateTime.now());
-
-  static Future<Uint8List> loadImageFromAssets(String assetPath) async {
-    final byteData = await rootBundle.load(assetPath);
-    return Uint8List.fromList(byteData.buffer.asUint8List());
-  }
-
   static Future<void> generarPdf(Map<String, dynamic> data) async {
-    final pdf = pw.Document();
+    final pdf = pw.Document(theme: PdfTheme.theme);
 
-    // ------- logo cliente por URL -------
-    final imageUrlLogo = data['imagen_cliente']?.replaceAll("dl=0", "dl=1");
-    Uint8List imageBytesLogo = Uint8List(0);
-    if (imageUrlLogo != null && imageUrlLogo.isNotEmpty) {
-      final responseLogo = await http.get(Uri.parse(imageUrlLogo));
-      if (responseLogo.statusCode == 200) {
-        imageBytesLogo = responseLogo.bodyBytes;
-      }
-    }
+    // --- 1. Load Assets ---
+    final logoNfpaFuture =
+        PdfUtils.loadAssetImage('lib/assets/img/logo_nfpa.png');
+    final logoAppFuture =
+        PdfUtils.loadAssetImage('lib/assets/img/logo_app.png');
+    final logoClienteFuture = PdfUtils.downloadImage(data['imagen_cliente']);
 
-    // ------- funcion descarga imagen -------
-    Future<Uint8List?> descargarImagen(String imageUrl) async {
-      final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode == 200) {
-        return response.bodyBytes;
-      } else {
+    final results =
+        await Future.wait([logoNfpaFuture, logoAppFuture, logoClienteFuture]);
+    final logoNfpa = results[0] ?? Uint8List(0);
+    final logoApp = results[1] ?? Uint8List(0);
+    final logoCliente = results[2] ?? Uint8List(0);
+
+    // --- 2. Download Images & Prepare Data ---
+    final List<Map<String, dynamic>> processedImages = [];
+
+    if (data['imagenes'] != null) {
+      // Download all images in parallel
+      final futures = (data['imagenes'] as List).map((img) async {
+        final bytes = await PdfUtils.downloadImage(img['sharedLink']);
+        if (bytes != null) {
+          return {
+            'bytes': bytes,
+            'comentario': img['comentario'] ?? '',
+            'originalIndex': (data['imagenes'] as List).indexOf(img)
+          };
+        }
         return null;
-      }
+      });
+
+      final downloaded = await Future.wait(futures);
+      processedImages.addAll(downloaded.whereType<Map<String, dynamic>>());
     }
 
-    // ------- logos locales -------
-    final imageBytes00 = await loadImageFromAssets('lib/assets/img/logo_nfpa.png');
-    final imageBytes000 = await loadImageFromAssets('lib/assets/img/logo_app.png');
+    // --- 3. Group by Comment (Preserving Legacy Logic) ---
+    // The legacy logic groups by comment and then chunks into pairs [i, i+1]
+    // It's a bit specific, we will replicate "group by comment" then "chunk by 2"
 
-    // ------- carga de imagenes de data['imagenes'] -------
-    List<pw.ImageProvider> imageList = [];
-    for (var imagen in data['imagenes']) {
-      final imageUrl = imagen['sharedLink']?.replaceAll("dl=0", "dl=1");
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        final imageBytes = await descargarImagen(imageUrl);
-        if (imageBytes != null) {
-          imageList.add(pw.MemoryImage(imageBytes));
-        }
-      }
+    // Grouping
+    Map<String, List<Map<String, dynamic>>> grouped = {};
+    for (var img in processedImages) {
+      final comment = img['comentario'] as String;
+      grouped.putIfAbsent(comment, () => []).add(img);
     }
 
-    // ===============================================
-    // AGRUPAR POR COMENTARIO y crear filas de 2 en 2
-    // ===============================================
-    Map<String, List<int>> comentarioAgrupado = {};
-    for (int i = 0; i < data['imagenes'].length; i++) {
-      String comentario = data['imagenes'][i]['comentario'] ?? '';
-      comentarioAgrupado.putIfAbsent(comentario, () => []);
-      comentarioAgrupado[comentario]!.add(i);
-    }
-
-    List<List<int>> filasAgrupadas = [];
-    comentarioAgrupado.forEach((comentario, indices) {
-      for (int i = 0; i < indices.length; i += 2) {
-        int primero = indices[i];
-        int? segundo = (i + 1 < indices.length) ? indices[i + 1] : null;
-        if (segundo != null) {
-          filasAgrupadas.add([primero, segundo]);
-        } else {
-          filasAgrupadas.add([primero]);
-        }
+    // Creating rows (pairs)
+    List<List<Map<String, dynamic>>> rows = [];
+    grouped.forEach((key, list) {
+      for (int i = 0; i < list.length; i += 2) {
+        rows.add(list.sublist(i, i + 2 > list.length ? list.length : i + 2));
       }
     });
 
-    // ===============================================
-    // PAGINADOR AUTOMÁTICO
-    // ===============================================
-    List<List<List<int>>> paginas = [];
-    List<List<int>> paginaActual = [];
-    double alturaUsada = 0;
-    const double alturaMaxima = 700;
+    // --- 4. Pagination ---
+    // Legacy had manual height calculation. We can trust pw.MultiPage to handle this better,
+    // but if we want strictly "Table based" layout per page as before, we can use MultiPage with a specific Header/Footer.
 
-    for (var fila in filasAgrupadas) {
-      double alturaFila = (fila.length > 1) ? 130 : 100;
-      if (alturaUsada + alturaFila > alturaMaxima) {
-        paginas.add(paginaActual);
-        paginaActual = [];
-        alturaUsada = 0;
-      }
-      paginaActual.add(fila);
-      alturaUsada += alturaFila;
-    }
-    if (paginaActual.isNotEmpty) {
-      paginas.add(paginaActual);
-    }
+    pdf.addPage(pw.MultiPage(
+        theme: PdfTheme.theme,
+        header: (context) => PdfComponents.buildHeader(
+            logoBytes: logoCliente, logoIsoBytes: logoNfpa),
+        footer: (context) => PdfComponents.buildFooter(
+            logoAppBytes: logoApp,
+            pageNumber: context.pageNumber,
+            totalPages: context.pagesCount),
+        build: (context) {
+          return [
+            pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.black, width: 1),
+                children: rows.map((row) {
+                  final img1 = row[0];
+                  final img2 = row.length > 1 ? row[1] : null;
 
-    // ===============================================
-    // GENERAR PÁGINAS DEL PDF
-    // ===============================================
-    for (int pageIndex = 0; pageIndex < paginas.length; pageIndex++) {
-      pdf.addPage(
-        pw.Page(
-          build: (context) {
-            return pw.Column(
-              children: [
-                pw.Header(
-                  level: 0,
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Image(pw.MemoryImage(imageBytesLogo), width: 150, height: 40),
-                      pw.Image(pw.MemoryImage(imageBytes00), width: 150, height: 40),
-                    ],
-                  ),
-                ),
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  children: [
-                    for (var fila in paginas[pageIndex])
-                      pw.TableRow(
-                        children: [
-                          pw.Padding(
-                            padding: pw.EdgeInsets.all(4),
-                            child: pw.Text('${fila[0] + 1}'),
-                          ),
-                          pw.Padding(
-                            padding: pw.EdgeInsets.all(4),
-                            child: pw.Row(
-                              mainAxisAlignment: pw.MainAxisAlignment.center,
-                              children: [
-                                if (imageList.length > fila[0])
-                                  pw.Image(imageList[fila[0]], width: 120, height: 90),
-                                if (fila.length > 1 && imageList.length > fila[1])
-                                  pw.SizedBox(width: 10),
-                                if (fila.length > 1 && imageList.length > fila[1])
-                                  pw.Image(imageList[fila[1]], width: 120, height: 90),
-                              ],
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: pw.EdgeInsets.all(4),
-                            child: pw.Text(data['imagenes'][fila[0]]['comentario'] ?? ''),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-                pw.Spacer(),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Align(
-                      alignment: pw.Alignment.bottomLeft,
-                      child: pw.Text(
-                        'Av. Universidad No. 277 A, Col. Granjas Banthi\n'
-                            'San Juan del Río, Querétaro, C.P. 76806\n'
-                            'Tel: 427 268 5050\n'
-                            'e-mail: ingenieria@aggofc.com',
-                        style: pw.TextStyle(fontSize: 10),
-                      ),
+                  return pw.TableRow(children: [
+                    // Index
+                    pw.Padding(
+                      padding: pw.EdgeInsets.all(4),
+                      child: pw.Text('${(img1['originalIndex'] as int) + 1}',
+                          style: PdfTheme.bodyStyle),
                     ),
-                    pw.Align(
-                      alignment: pw.Alignment.bottomCenter,
-                      child: pw.Text(
-                        'Página ${pageIndex + 1} de ${paginas.length}',
-                        style: pw.TextStyle(fontSize: 10),
-                      ),
+                    // Images
+                    pw.Padding(
+                        padding: pw.EdgeInsets.all(4),
+                        child: pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.center,
+                            children: [
+                              pw.Image(pw.MemoryImage(img1['bytes']),
+                                  width: 120,
+                                  height: 90,
+                                  fit: pw.BoxFit.contain),
+                              if (img2 != null) ...[
+                                pw.SizedBox(width: 10),
+                                pw.Image(pw.MemoryImage(img2['bytes']),
+                                    width: 120,
+                                    height: 90,
+                                    fit: pw.BoxFit.contain),
+                              ]
+                            ])),
+                    // Comment
+                    pw.Padding(
+                      padding: pw.EdgeInsets.all(4),
+                      child: pw.Text(img1['comentario'],
+                          style: PdfTheme.bodyStyle),
                     ),
-                    pw.Align(
-                      alignment: pw.Alignment.bottomRight,
-                      child: pw.Image(pw.MemoryImage(imageBytes000), width: 150, height: 40),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
-      );
-    }
+                  ]);
+                }).toList())
+          ];
+        }));
 
-    // ===============================================
-    // GUARDAR Y ABRIR
-    // ===============================================
+    // --- 5. Save & Open ---
     final output = await getTemporaryDirectory();
-    final filePath = "${output.path}/${data["cliente"]}_$fechaFormateada-Prub.pdf";
+    final fileName =
+        "${data["cliente"]}_${PdfUtils.formatDateShort(DateTime.now())}-Prub.pdf";
+    final filePath = "${output.path}/$fileName";
     final file = File(filePath);
     await file.writeAsBytes(await pdf.save());
     await OpenFile.open(filePath);

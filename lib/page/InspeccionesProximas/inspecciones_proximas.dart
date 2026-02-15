@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/inspecciones_proximas.dart';
 import '../../components/InspeccionesProximas/list_inspecciones_proximas.dart';
 import '../../components/Load/load.dart';
@@ -9,8 +9,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class InspeccionesProximasPage extends StatefulWidget {
+  const InspeccionesProximasPage({super.key});
+
   @override
-  _InspeccionesProximasPageState createState() =>
+  State<InspeccionesProximasPage> createState() =>
       _InspeccionesProximasPageState();
 }
 
@@ -26,7 +28,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -34,14 +36,14 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
     try {
       final conectado = await verificarConexion();
       if (conectado) {
-        print("Conectado a internet");
+        debugPrint("Conectado a internet");
         await getInspeccionesProximasDesdeAPI();
       } else {
-        print("Sin conexión, cargando inspecciones próximas desde Hive...");
+        debugPrint("Sin conexión, cargando inspecciones próximas desde Hive...");
         await getInspeccionesProximasDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar inspecciones próximas: $e");
+      debugPrint("Error general al cargar inspecciones próximas: $e");
       setState(() {
         dataInspeccionesProximas = [];
       });
@@ -136,7 +138,7 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
                 Expanded(
                   child: TblInspeccionesProximas(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     inspeccionesProximas: dataInspeccionesProximas,
                     onCompleted: cargarInspeccionesProximas,
@@ -147,3 +149,5 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
     );
   }
 }
+
+

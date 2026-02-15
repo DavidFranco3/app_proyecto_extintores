@@ -17,7 +17,7 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones({
+  const Acciones({super.key, 
     required this.showModal,
     required this.onCompleted,
     required this.accion,
@@ -25,7 +25,7 @@ class Acciones extends StatefulWidget {
   });
 
   @override
-  _AccionesState createState() => _AccionesState();
+  State<Acciones> createState() => _AccionesState();
 }
 
 class _AccionesState extends State<Acciones> {
@@ -54,8 +54,10 @@ class _AccionesState extends State<Acciones> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -71,7 +73,7 @@ class _AccionesState extends State<Acciones> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -106,19 +108,19 @@ class _AccionesState extends State<Acciones> {
         }
         // Aquí puedes añadir más acciones como "registrar" o "editar" si lo necesitas después
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error sincronizando operación: $e');
       }
     }
 
     if (operacionesExitosas.length == operaciones.length) {
       await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+      debugPrint("✔ Todas las operaciones sincronizadas. Limpieza completa.");
     } else {
       final nuevas = operaciones
           .where((op) => !operacionesExitosas.contains(op['operacionId']))
           .toList();
       await box.put('operaciones', nuevas);
-      print("❗ Algunas operaciones no se sincronizaron. Se conservarán.");
+      debugPrint("❗ Algunas operaciones no se sincronizaron. Se conservarán.");
     }
   }
 
@@ -144,39 +146,48 @@ class _AccionesState extends State<Acciones> {
 
       setState(() => _isLoading = false);
       closeRegistroModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Encuesta marcada para eliminación. Se sincronizará cuando haya internet.",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
     try {
       final servicio = EncuestaInspeccionService();
-      final response = await servicio.deshabilitarEncuestaInspeccion(id, dataTemp);
+      final response =
+          await servicio.deshabilitarEncuestaInspeccion(id, dataTemp);
 
       if (response['status'] == 200) {
         setState(() => _isLoading = false);
         closeRegistroModal();
-        LogsInformativos("Se eliminó la encuesta ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        logsInformativos(
+            "Se eliminó la encuesta ${data['nombre']} correctamente", {});
+        if (!mounted) return;
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Eliminación exitosa",
           message: "Los datos de la encuesta fueron eliminados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() => _isLoading = false);
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -224,7 +235,8 @@ class _AccionesState extends State<Acciones> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         '${capitalize(widget.accion)} encuesta',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -238,8 +250,9 @@ class _AccionesState extends State<Acciones> {
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null
-                              : (value) =>
-                                  value?.isEmpty ?? true ? 'El nombre es obligatorio' : null,
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'El nombre es obligatorio'
+                                  : null,
                         ),
                         TextFormField(
                           controller: _frecuenciaController,
@@ -247,12 +260,14 @@ class _AccionesState extends State<Acciones> {
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null
-                              : (value) =>
-                                  value?.isEmpty ?? true ? 'La frecuencia es obligatoria' : null,
+                              : (value) => value?.isEmpty ?? true
+                                  ? 'La frecuencia es obligatoria'
+                                  : null,
                         ),
                         TextFormField(
                           controller: _clasificacionController,
-                          decoration: InputDecoration(labelText: 'Clasificación'),
+                          decoration:
+                              InputDecoration(labelText: 'Clasificación'),
                           enabled: !isEliminar,
                           validator: isEliminar
                               ? null
@@ -271,7 +286,8 @@ class _AccionesState extends State<Acciones> {
                             ElevatedButton(
                               onPressed: _isLoading ? null : _onSubmit,
                               child: _isLoading
-                                  ? SpinKitFadingCircle(color: Colors.white, size: 24)
+                                  ? SpinKitFadingCircle(
+                                      color: Colors.white, size: 24)
                                   : Text(buttonLabel),
                             ),
                           ],
@@ -285,3 +301,5 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
+
+

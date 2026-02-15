@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
@@ -13,7 +14,7 @@ class InspeccionAnualService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCION_ANUAL),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -27,25 +28,25 @@ class InspeccionAnualService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspecciones anuales: $e");
+      debugPrint("Error al obtener las inspecciones anuales: $e");
       return [];
     }
   }
 
   // Listar inspeccion anual
-  Future<List<dynamic>> listarInspeccionAnualId(id) async {
+  Future<List<dynamic>> listarInspeccionAnualId(String id) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCION_ANUAL_ID + '/$id'),
+        Uri.parse('$apiHost$endpointListarInspeccionAnualId/$id'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -59,15 +60,15 @@ class InspeccionAnualService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspeccion anual: $e");
+      debugPrint("Error al obtener las inspeccion anual: $e");
       return [];
     }
   }
@@ -77,7 +78,7 @@ class InspeccionAnualService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRAR_INSPECCION_ANUAL),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -96,7 +97,7 @@ class InspeccionAnualService {
   Future<Map<String, dynamic>> obtenerInspeccionAnual(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_INSPECCION_ANUAL + '/$id'),
+      Uri.parse('$apiHost$endpointObtenerInspeccionAnual/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -116,7 +117,7 @@ class InspeccionAnualService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_INSPECCION_ANUAL + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarInspeccionAnual/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -135,7 +136,7 @@ class InspeccionAnualService {
   Future<Map<String, dynamic>> eliminarInspeccionAnual(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_INSPECCION_ANUAL + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarInspeccionAnual/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ class InspeccionAnualService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_INSPECCION_ANUAL + '/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarInspeccionAnual/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -172,8 +173,7 @@ class InspeccionAnualService {
 
   Future<Map<String, dynamic>> sendEmail(String id, String pdfFilePath) async {
     final token = await authService.getTokenApi();
-    final String apiUrl =
-        API_HOST + ENDPOINT_ENVIAR_PDF_INSPECCION_ANUAL + '/$id';
+    final String apiUrl = '$apiHost$endpointEnviarPdfInspeccionAnual/$id';
 
     try {
       // Leer el archivo PDF como bytes desde el sistema de archivos
@@ -214,3 +214,4 @@ class InspeccionAnualService {
     }
   }
 }
+

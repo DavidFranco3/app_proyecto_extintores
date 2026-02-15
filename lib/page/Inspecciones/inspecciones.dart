@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -16,14 +16,14 @@ class InspeccionesPage extends StatefulWidget {
   final dynamic data;
   final dynamic data2;
 
-  InspeccionesPage({
+  const InspeccionesPage({super.key, 
     required this.showModal,
     required this.data,
     required this.data2,
   });
 
   @override
-  _InspeccionesPageState createState() => _InspeccionesPageState();
+  State<InspeccionesPage> createState() => _InspeccionesPageState();
 }
 
 class _InspeccionesPageState extends State<InspeccionesPage> {
@@ -40,7 +40,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -78,7 +78,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener inspecciones: $e");
+      debugPrint("Error al obtener inspecciones: $e");
       setState(() {
         loading = false;
       });
@@ -154,7 +154,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
       MaterialPageRoute(
         builder: (context) => InspeccionesPantalla2Page(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           data: widget.data2,
         ),
@@ -209,7 +209,7 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
                 Expanded(
                   child: TblInspecciones(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     inspecciones: dataInspecciones,
                     onCompleted: cargarInspecciones,
@@ -220,3 +220,5 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     );
   }
 }
+
+

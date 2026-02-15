@@ -9,10 +9,13 @@ import '../../components/Generales/flushbar_helper.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../utils/offline_sync_util.dart';
 
 class EncuestasJerarquicasWidget extends StatefulWidget {
+  const EncuestasJerarquicasWidget({super.key});
+
   @override
-  _EncuestasJerarquicasPageState createState() =>
+  State<EncuestasJerarquicasWidget> createState() =>
       _EncuestasJerarquicasPageState();
 }
 
@@ -35,8 +38,10 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
     sincronizarOperacionesPendientesInspecciones();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientesInspecciones();
       }
     });
@@ -65,11 +70,9 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
         if (encontrada.isNotEmpty) {
           final encuestaId = encontrada['id'];
-          final frecuenciaId =
-              encontrada['idFrecuencia'] + '-' + encontrada['frecuencia'];
-          final clasificacionId =
-              encontrada['idClasificacion'] + '-' + encontrada['clasificacion'];
-          final ramaId = encontrada['idRama'] + '-' + encontrada['rama'];
+          final frecuenciaId = encontrada['idFrecuencia'];
+          final clasificacionId = encontrada['idClasificacion'];
+          final ramaId = encontrada['idRama'];
 
           // Marcar encuesta + preguntas
           seleccionPrevia.add(encuestaId);
@@ -90,13 +93,13 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
           ..addAll(seleccionPrevia);
       });
     } catch (e) {
-      print("Error al precargar encuestas del cliente: $e");
+      debugPrint("Error al precargar encuestas del cliente: $e");
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -108,7 +111,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     if (conectado) {
       await getEncuestasDesdeAPI();
     } else {
-      print("Sin conexión, cargando encuestas desde Hive...");
+      debugPrint("Sin conexión, cargando encuestas desde Hive...");
       await getEncuestasDesdeHive();
     }
   }
@@ -137,7 +140,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
         });
       }
     } catch (e) {
-      print("Error al obtener encuestas desde API: $e");
+      debugPrint("Error al obtener encuestas desde API: $e");
       setState(() {
         loading = false;
       });
@@ -165,7 +168,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
         });
       }
     } catch (e) {
-      print("Error leyendo encuestas desde Hive: $e");
+      debugPrint("Error leyendo encuestas desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -194,10 +197,10 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
   Future<void> getClientes() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClientesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClientesDesdeHive();
     }
   }
@@ -228,7 +231,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
         }
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -263,7 +266,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
   }
 
   Future<void> sincronizarOperacionesPendientesInspecciones() async {
-    final conectado = await verificarConexion();
+    final conectado = await OfflineSyncUtil().verificarConexion();
     if (!conectado) return;
 
     final box = Hive.box('operacionesOfflinePreguntas');
@@ -273,36 +276,38 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
         .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
         .toList();
 
-    final encuestaService = EncuestaInspeccionClienteService();
-    final List<String> operacionesExitosas = [];
+    if (operaciones.isEmpty) return;
 
-    for (var operacion in List.from(operaciones)) {
+    final encuestaService = EncuestaInspeccionClienteService();
+    final List<String> operacionesEliminar = [];
+
+    for (var operacion in operaciones) {
+      operacion['intentos'] = (operacion['intentos'] ?? 0) + 1;
       try {
         final response = await encuestaService
             .registraEncuestaInspeccionCliente(operacion['data']);
 
-        if (response['status'] == 200 && response['data'] != null) {
-          operacionesExitosas
-              .add(operacion['idTemporal'] ?? ''); // Identifica operación
-
-          // Aquí podrías actualizar alguna caja local si quieres guardar los datos sincronizados
+        final status = response['status'];
+        if (status == 200 ||
+            (status >= 400 && status < 500) ||
+            operacion['intentos'] >= 5) {
+          operacionesEliminar.add(operacion['idTemporal'] ?? '');
         }
       } catch (e) {
-        print('Error sincronizando encuesta: $e');
+        debugPrint('Error sincronizando encuesta: $e');
+        if (operacion['intentos'] >= 5) {
+          operacionesEliminar.add(operacion['idTemporal'] ?? '');
+        }
       }
     }
 
-    // Limpiar solo las operaciones sincronizadas correctamente
-    if (operacionesExitosas.length == operaciones.length) {
-      await box.put('operaciones', []);
-      print("✔ Todas las encuestas sincronizadas. Limpieza completa.");
-    } else {
-      final nuevasOperaciones = operaciones
-          .where((op) => !operacionesExitosas.contains(op['idTemporal']))
-          .toList();
-      await box.put('operaciones', nuevasOperaciones);
-      print(
-          "❗ Algunas encuestas no se sincronizaron, se conservarán localmente.");
+    final nuevasOperaciones = operaciones
+        .where((op) => !operacionesEliminar.contains(op['idTemporal']))
+        .toList();
+    await box.put('operaciones', nuevasOperaciones);
+
+    if (operacionesEliminar.isNotEmpty) {
+      debugPrint("✔ Sincronización de encuestas finalizada.");
     }
   }
 
@@ -366,8 +371,8 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     required bool seleccionar,
   }) {
     setState(() {
-      print("hijos");
-      print(hijos);
+      debugPrint("hijos");
+      debugPrint(hijos.toString());
       if (seleccionar) {
         seleccionados.addAll(hijos);
       } else {
@@ -455,28 +460,34 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     if (conectado) {
       try {
         await Future.wait(tareas);
-        showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "Todas las encuestas se han guardado correctamente.",
-          backgroundColor: Colors.green,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Registro exitoso",
+            message: "Todas las encuestas se han guardado correctamente.",
+            backgroundColor: Colors.green,
+          );
+        }
       } catch (e) {
-        showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message: "Ocurrió un error guardando las encuestas: $e",
-          backgroundColor: Colors.red,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Error",
+            message: "Ocurrió un error guardando las encuestas: $e",
+            backgroundColor: Colors.red,
+          );
+        }
       }
     } else {
-      showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Las encuestas se guardaron localmente y se sincronizarán cuando haya internet.",
-        backgroundColor: Colors.orange,
-      );
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Las encuestas se guardaron localmente y se sincronizarán cuando haya internet.",
+          backgroundColor: Colors.orange,
+        );
+      }
     }
 
     setState(() {
@@ -533,8 +544,8 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                             clienteController,
                           );
 
-                          print("data a guardar");
-                          print(dataAGuardar);
+                          debugPrint("data a guardar");
+                          debugPrint(dataAGuardar.toString());
 
                           setState(() {
                             _guardando = false;
@@ -574,7 +585,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                 DropdownButtonFormField<String>(
                   key: ValueKey(
                       clienteController.text), // 👈 esto obliga a reconstruir
-                  value: clienteController.text.isEmpty
+                  initialValue: clienteController.text.isEmpty
                       ? null
                       : clienteController.text,
                   decoration: InputDecoration(labelText: 'Cliente'),
@@ -606,12 +617,12 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                     todosHijosRama.add(clasificacion);
                     freqs.forEach((frecuencia, encuestasList) {
                       todosHijosRama.add(frecuencia);
-                      encuestasList.forEach((encuesta) {
+                      for (var encuesta in encuestasList) {
                         todosHijosRama.add(encuesta['id']);
                         encuesta['preguntas'].asMap().forEach((i, pregunta) {
                           todosHijosRama.add('${encuesta['id']}_$i');
                         });
-                      });
+                      }
                     });
                   });
 
@@ -636,12 +647,12 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                       clasificacionEntry.value
                           .forEach((frecuencia, encuestasList) {
                         hijosClasificacion.add(frecuencia);
-                        encuestasList.forEach((encuesta) {
+                        for (var encuesta in encuestasList) {
                           hijosClasificacion.add(encuesta['id']);
                           encuesta['preguntas'].asMap().forEach((i, pregunta) {
                             hijosClasificacion.add('${encuesta['id']}_$i');
                           });
-                        });
+                        }
                       });
 
                       return ExpansionTile(
@@ -664,14 +675,14 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                           final encuestasLista = frecuenciaEntry.value;
                           final hijosFrecuencia = <String>[];
 
-                          encuestasLista.forEach((encuesta) {
+                          for (var encuesta in encuestasLista) {
                             hijosFrecuencia.add(encuesta['id']);
                             encuesta['preguntas']
                                 .asMap()
                                 .forEach((i, pregunta) {
                               hijosFrecuencia.add('${encuesta['id']}_$i');
                             });
-                          });
+                          }
 
                           return ExpansionTile(
                             title: CheckboxListTile(
@@ -752,7 +763,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                       );
                     }).toList(),
                   );
-                }).toList(),
+                }),
               ],
             ),
     );

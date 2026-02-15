@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
@@ -12,7 +13,7 @@ class ClientesService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_CLIENTES),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -26,15 +27,15 @@ class ClientesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       return [];
     }
   }
@@ -44,7 +45,7 @@ class ClientesService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRAR_CLIENTES),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ class ClientesService {
   Future<Map<String, dynamic>> obtenerClientes(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_CLIENTES + '/$id'),
+      Uri.parse('$apiHost$endpointObtenerClientes/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -83,7 +84,7 @@ class ClientesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_CLIENTES + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarClientes/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ class ClientesService {
   Future<Map<String, dynamic>> eliminarClientes(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_CLIENTES + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarClientes/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -122,7 +123,7 @@ class ClientesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_CLIENTES + '/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarClientes/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -137,3 +138,6 @@ class ClientesService {
     };
   }
 }
+
+
+

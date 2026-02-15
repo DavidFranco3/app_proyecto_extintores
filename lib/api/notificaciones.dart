@@ -1,7 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../utils/constants.dart';
-import 'endpoints.dart';
 import 'auth.dart';
 
 final authService = AuthService();
@@ -11,7 +9,7 @@ class NotificacionesService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_ENVIAR_NOTIFICACION),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -25,3 +23,5 @@ class NotificacionesService {
     };
   }
 }
+
+

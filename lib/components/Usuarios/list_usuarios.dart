@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -9,15 +9,14 @@ class TblUsuarios extends StatefulWidget {
   final List<Map<String, dynamic>> usuarios;
   final Function onCompleted;
 
-  TblUsuarios(
-      {Key? key,
+  const TblUsuarios(
+      {super.key,
       required this.showModal,
       required this.usuarios,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblUsuariosState createState() => _TblUsuariosState();
+  State<TblUsuarios> createState() => _TblUsuariosState();
 }
 
 class _TblUsuariosState extends State<TblUsuarios> {
@@ -25,14 +24,14 @@ class _TblUsuariosState extends State<TblUsuarios> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEditarModal(row) {
+  void openEditarModal(Map<String, dynamic> row) {
     // Navegar a la página de edición en lugar de mostrar un modal
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context); // Cierra la pantalla
+            if (mounted) Navigator.pop(context); // Cierra la pantalla
           },
           onCompleted: widget.onCompleted,
           accion: "editar",
@@ -42,14 +41,14 @@ class _TblUsuariosState extends State<TblUsuarios> {
     );
   }
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     // Navegar a la página de eliminación en lugar de mostrar un modal
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context); // Cierra la pantalla
+            if (mounted) Navigator.pop(context); // Cierra la pantalla
           },
           onCompleted: widget.onCompleted,
           accion: "eliminar",
@@ -93,7 +92,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40,
@@ -139,3 +138,6 @@ class _TblUsuariosState extends State<TblUsuarios> {
     );
   }
 }
+
+
+

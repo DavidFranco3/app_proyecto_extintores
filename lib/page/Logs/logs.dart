@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/logs.dart';
 import '../../components/Logs/list_logs.dart';
 import '../../components/Load/load.dart';
@@ -9,8 +9,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LogsPage extends StatefulWidget {
+  const LogsPage({super.key});
+
   @override
-  _LogsPageState createState() => _LogsPageState();
+  State<LogsPage> createState() => _LogsPageState();
 }
 
 class _LogsPageState extends State<LogsPage> {
@@ -27,14 +29,14 @@ class _LogsPageState extends State<LogsPage> {
     try {
       final conectado = await verificarConexion();
       if (conectado) {
-        print("Conectado a internet");
+        debugPrint("Conectado a internet");
         await getLogsDesdeAPI();
       } else {
-        print("Sin conexión, cargando logs desde Hive...");
+        debugPrint("Sin conexión, cargando logs desde Hive...");
         await getLogsDesdeHive();
       }
     } catch (e) {
-      print("Error al cargar logs: $e");
+      debugPrint("Error al cargar logs: $e");
       setState(() {
         dataLogs = [];
       });
@@ -47,7 +49,7 @@ class _LogsPageState extends State<LogsPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -131,7 +133,7 @@ class _LogsPageState extends State<LogsPage> {
                 Expanded(
                   child: TblLogs(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     logs: dataLogs,
                     onCompleted: cargarLogs,
@@ -142,3 +144,5 @@ class _LogsPageState extends State<LogsPage> {
     );
   }
 }
+
+

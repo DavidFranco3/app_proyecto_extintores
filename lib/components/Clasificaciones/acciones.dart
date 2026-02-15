@@ -17,14 +17,15 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones(
-      {required this.showModal,
+  const Acciones(
+      {super.key,
+      required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data});
 
   @override
-  _AccionesState createState() => _AccionesState();
+  State<Acciones> createState() => _AccionesState();
 }
 
 class _AccionesState extends State<Acciones> {
@@ -52,8 +53,10 @@ class _AccionesState extends State<Acciones> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -68,7 +71,7 @@ class _AccionesState extends State<Acciones> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -179,21 +182,21 @@ class _AccionesState extends State<Acciones> {
           operacionesExitosas.add(operacion['operacionId']);
         }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error sincronizando operación: $e');
       }
     }
 
     // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
     if (operacionesExitosas.length == operaciones.length) {
       await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+      debugPrint("✔ Todas las operaciones sincronizadas. Limpieza completa.");
     } else {
       // 🔄 Si alguna falló, conserva solo las pendientes
       final nuevasOperaciones = operaciones
           .where((op) => !operacionesExitosas.contains(op['operacionId']))
           .toList();
       await box.put('operaciones', nuevasOperaciones);
-      print(
+      debugPrint(
           "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
     }
 
@@ -216,7 +219,7 @@ class _AccionesState extends State<Acciones> {
       final clasificacionesBox = Hive.box('clasificacionesBox');
       await clasificacionesBox.put('clasificaciones', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos después de sincronización: $e');
     }
   }
 
@@ -264,13 +267,16 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Clasificación guardada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+      if (!mounted) return;
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Clasificación guardada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
+      }
       return;
     }
 
@@ -285,36 +291,44 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha registrado la clasificacion ${data['nombre']} correctamente",
             {});
-        showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "La clasificación fue agregada correctamente",
-          backgroundColor: Colors.green,
-        );
+        if (!mounted) return;
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Registro exitoso",
+            message: "La clasificación fue agregada correctamente",
+            backgroundColor: Colors.green,
+          );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
-        showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message: "No se pudo guardar la clasificación",
-          backgroundColor: Colors.red,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Error",
+            message: "No se pudo guardar la clasificación",
+            backgroundColor: Colors.red,
+          );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+      if (!mounted) return;
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
+      }
     }
   }
 
@@ -365,13 +379,16 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Clasificación actualizada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+      if (!mounted) return;
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Clasificación actualizada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
+      }
       return;
     }
 
@@ -386,27 +403,33 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha actualizado la clasificacion ${data['nombre']} correctamente",
             {});
-        showCustomFlushbar(
-          context: context,
-          title: "Actualización exitosa",
-          message:
-              "Los datos de la clasificación fueron actualizados correctamente",
-          backgroundColor: Colors.green,
-        );
+        if (!mounted) return;
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Actualización exitosa",
+            message:
+                "Los datos de la clasificación fueron actualizados correctamente",
+            backgroundColor: Colors.green,
+          );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+      if (!mounted) return;
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
+      }
     }
   }
 
@@ -453,13 +476,16 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Clasificación eliminada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+      if (!mounted) return;
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Clasificación eliminada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
+      }
       return;
     }
 
@@ -474,26 +500,31 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha eliminado la clasificacion ${data['id']} correctamente", {});
-        showCustomFlushbar(
-          context: context,
-          title: "Eliminación exitosa",
-          message:
-              "Se han eliminado correctamente los datos de la clasificación",
-          backgroundColor: Colors.green,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Eliminación exitosa",
+            message:
+                "Se han eliminado correctamente los datos de la clasificación",
+            backgroundColor: Colors.green,
+          );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+      if (!mounted) return;
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
+      }
     }
   }
 

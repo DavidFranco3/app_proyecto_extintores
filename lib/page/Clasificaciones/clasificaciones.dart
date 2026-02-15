@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/clasificaciones.dart';
 import '../../components/Clasificaciones/list_clasificaciones.dart';
@@ -11,8 +11,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class ClasificacionesPage extends StatefulWidget {
+  const ClasificacionesPage({super.key});
+
   @override
-  _ClasificacionesPageState createState() => _ClasificacionesPageState();
+  State<ClasificacionesPage> createState() => _ClasificacionesPageState();
 }
 
 class _ClasificacionesPageState extends State<ClasificacionesPage> {
@@ -28,17 +30,17 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
   Future<void> cargarClasificaciones() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClasificacionesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClasificacionesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -66,7 +68,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      debugPrint("Error al obtener las clasificaciones: $e");
       setState(() {
         loading = false;
       });
@@ -104,7 +106,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
       MaterialPageRoute(
         builder: (BuildContext context) => Acciones(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: cargarClasificaciones,
           accion: "registrar",
@@ -170,7 +172,7 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
                 Expanded(
                   child: TblClasificaciones(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     clasificaciones: dataClasificaciones,
                     onCompleted: cargarClasificaciones,
@@ -187,3 +189,5 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
     );
   }
 }
+
+

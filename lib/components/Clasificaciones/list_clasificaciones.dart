@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import './acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -9,15 +9,14 @@ class TblClasificaciones extends StatefulWidget {
   final List<Map<String, dynamic>> clasificaciones;
   final Function onCompleted;
 
-  TblClasificaciones(
-      {Key? key,
+  const TblClasificaciones(
+      {super.key,
       required this.showModal,
       required this.clasificaciones,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblClasificacionesState createState() => _TblClasificacionesState();
+  State<TblClasificaciones> createState() => _TblClasificacionesState();
 }
 
 class _TblClasificacionesState extends State<TblClasificaciones> {
@@ -25,7 +24,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -43,7 +42,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
     );
   }
 
-  void openEditarModal(row) {
+  void openEditarModal(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -90,7 +89,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40, 223)),
@@ -135,3 +134,5 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import '../Generales/formato_fecha.dart';
 
@@ -7,15 +7,14 @@ class TblLogs extends StatefulWidget {
   final List<Map<String, dynamic>> logs;
   final Function onCompleted;
 
-  TblLogs(
-      {Key? key,
+  const TblLogs(
+      {super.key,
       required this.showModal,
       required this.logs,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblLogsState createState() => _TblLogsState();
+  State<TblLogs> createState() => _TblLogsState();
 }
 
 class _TblLogsState extends State<TblLogs> {
@@ -63,3 +62,4 @@ class _TblLogsState extends State<TblLogs> {
     );
   }
 }
+

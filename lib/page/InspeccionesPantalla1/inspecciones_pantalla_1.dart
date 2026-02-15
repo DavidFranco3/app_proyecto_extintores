@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/clientes.dart';
 import '../../components/InspeccionesPantalla1/list_inspecciones_pantalla_1.dart';
 import '../../components/Load/load.dart';
@@ -9,8 +9,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class InspeccionesPantalla1Page extends StatefulWidget {
+  const InspeccionesPantalla1Page({super.key});
+
   @override
-  _InspeccionesPantalla1PageState createState() =>
+  State<InspeccionesPantalla1Page> createState() =>
       _InspeccionesPantalla1PageState();
 }
 
@@ -29,17 +31,17 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
   Future<void> getClientes() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClientesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClientesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -69,7 +71,7 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
         }
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -202,3 +204,4 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
     );
   }
 }
+

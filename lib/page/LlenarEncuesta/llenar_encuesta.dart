@@ -139,7 +139,7 @@ class EncuestaPageState extends State<EncuestaPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -165,8 +165,10 @@ class EncuestaPageState extends State<EncuestaPage> {
 
     sincronizarEncuestasPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarEncuestasPendientes();
       }
     });
@@ -189,32 +191,66 @@ class EncuestaPageState extends State<EncuestaPage> {
         .map((item) => Map<String, dynamic>.from(item))
         .toList();
 
+    if (pendientes.isEmpty) return;
+
     final inspeccionesService = InspeccionesService();
     final List<int> exitosas = [];
+    final List<int> eliminarPorError = [];
 
     for (int i = 0; i < pendientes.length; i++) {
       final operacion = pendientes[i];
+
+      // Inicializar contador de intentos si no existe
+      operacion['intentos'] = (operacion['intentos'] ?? 0) + 1;
+
       try {
         if (operacion['accion'] == 'registrar') {
           final response =
               await inspeccionesService.registraInspecciones(operacion['data']);
+
           if (response['status'] == 200) {
-            exitosas.add(i); // índice de la operación exitosa
+            exitosas.add(i);
+          } else if (response['status'] >= 400 && response['status'] < 500) {
+            // Error de validación o cliente: no reintentar
+            debugPrint(
+                "Error no reintentable (4xx) en sincronización: ${response['status']}");
+            eliminarPorError.add(i);
+          } else {
+            // Error de servidor (5xx): reintentar hasta límite
+            debugPrint(
+                "Error de servidor (5xx) en sincronización: ${response['status']}");
+            if (operacion['intentos'] >= 5) {
+              debugPrint("Límite de reintentos alcanzado para operación $i");
+              eliminarPorError.add(i);
+            }
           }
         }
       } catch (e) {
-        print("Error sincronizando encuesta: $e");
+        debugPrint("Error de red sincronizando encuesta: $e");
+        if (operacion['intentos'] >= 5) {
+          debugPrint(
+              "Límite de reintentos alcanzado por errores de red para operación $i");
+          eliminarPorError.add(i);
+        }
       }
     }
 
-    // 🔄 Limpiar las encuestas que se sincronizaron
+    // 🔄 Actualizar el box de Hive
     final nuevasPendientes = pendientes
         .asMap()
         .entries
-        .where((entry) => !exitosas.contains(entry.key))
+        .where((entry) =>
+            !exitosas.contains(entry.key) &&
+            !eliminarPorError.contains(entry.key))
         .map((e) => e.value)
         .toList();
+
     await box.put('encuestas', nuevasPendientes);
+
+    if (exitosas.isNotEmpty) {
+      debugPrint(
+          "Sincronización completada: ${exitosas.length} encuestas enviadas.");
+    }
   }
 
   void agregarRegistro() {
@@ -239,7 +275,7 @@ class EncuestaPageState extends State<EncuestaPage> {
     imagenSeleccionada = null;
 
     setState(() {}); // Para que se actualice visualmente
-    print(registrosEficiencia);
+    debugPrint(registrosEficiencia.toString());
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Registro agregado correctamente")),
@@ -251,12 +287,12 @@ class EncuestaPageState extends State<EncuestaPage> {
       final authService = AuthService();
 
       // Obtener el id del usuario
-      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
-      print('ID Usuario obtenido: $idUsuario');
+      final idUsuario = authService.obtenerIdUsuarioLogueado(token);
+      debugPrint('ID Usuario obtenido: $idUsuario');
 
       return {'idUsuario': idUsuario};
     } catch (e) {
-      print('Error al obtener datos comunes: $e');
+      debugPrint('Error al obtener datos comunes: $e');
       rethrow; // Lanza el error para que lo maneje la función que lo llamó
     }
   }
@@ -264,10 +300,10 @@ class EncuestaPageState extends State<EncuestaPage> {
   Future<void> getClientes() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClientesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClientesDesdeHive();
     }
   }
@@ -298,7 +334,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         }
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -341,7 +377,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar ramas: $e");
+      debugPrint("Error general al cargar ramas: $e");
       setState(() {
         dataRamas = [];
       });
@@ -404,7 +440,7 @@ class EncuestaPageState extends State<EncuestaPage> {
     if (conectado) {
       await getFrecuenciasDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getFrecuenciasDesdeHive();
     }
   }
@@ -433,7 +469,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      debugPrint("Error al obtener las frecuencias: $e");
       setState(() {
         loading = false;
       });
@@ -461,7 +497,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo desde Hive: $e");
+      debugPrint("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -487,10 +523,10 @@ class EncuestaPageState extends State<EncuestaPage> {
   Future<void> getClasificaciones() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClasificacionesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClasificacionesDesdeHive();
     }
   }
@@ -519,7 +555,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      debugPrint("Error al obtener las clasificaciones: $e");
       setState(() {
         loading = false;
       });
@@ -592,13 +628,13 @@ class EncuestaPageState extends State<EncuestaPage> {
 
       if (pngBytes != null) {
         await file.writeAsBytes(pngBytes.buffer.asUint8List());
-        print('Imagen guardada en: $filePath');
+        debugPrint('Imagen guardada en: $filePath');
       }
 
       // Retornar la ruta del archivo
       return filePath;
     } catch (e) {
-      print('Error guardando la imagen: $e');
+      debugPrint('Error guardando la imagen: $e');
       return ''; // Valor vacío en caso de error
     }
   }
@@ -636,11 +672,11 @@ class EncuestaPageState extends State<EncuestaPage> {
       String idClasificacion, String idCliente) async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet, obteniendo encuestas desde API...");
+      debugPrint("Conectado a internet, obteniendo encuestas desde API...");
       await getEncuestasDesdeAPI(
           idRama, idFrecuencia, idClasificacion, idCliente);
     } else {
-      print("Sin conexión, cargando encuestas desde Hive...");
+      debugPrint("Sin conexión, cargando encuestas desde Hive...");
       await getEncuestasDesdeHive(
           idRama, idFrecuencia, idClasificacion, idCliente);
     }
@@ -672,7 +708,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
+      debugPrint("Error al obtener las encuestas: $e");
       setState(() {
         loading = false;
       });
@@ -765,13 +801,15 @@ class EncuestaPageState extends State<EncuestaPage> {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Campos incompletos",
         message:
             "Por favor, completa todos los campos obligatorios antes de continuar.",
         backgroundColor: Colors.red,
       );
+      }
       return;
     }
 
@@ -811,29 +849,33 @@ class EncuestaPageState extends State<EncuestaPage> {
           limpiarCampos();
         });
 
-        LogsInformativos(
+        logsInformativos(
           "Se ha registrado la inspección ${data['idCliente']} correctamente",
           dataFrecuencia,
         );
 
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "Los datos de la encuesta fueron llenados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
 
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error",
           message:
               "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
@@ -851,13 +893,15 @@ class EncuestaPageState extends State<EncuestaPage> {
       await box.put('encuestas', pendientes);
 
       setState(() => _isLoading = false);
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "La encuesta se guardó localmente y se enviará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
     }
   }
 
@@ -908,41 +952,47 @@ class EncuestaPageState extends State<EncuestaPage> {
           limpiarCampos();
         });
 
-        LogsInformativos(
+        logsInformativos(
           "Se ha registrado la inspección ${data['idCliente']} correctamente",
           dataFrecuencia,
         );
 
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "Los datos de la encuesta fueron llenados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
 
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error",
           message:
               "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
 
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: "Error inesperado: ${error.toString()}",
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -950,7 +1000,7 @@ class EncuestaPageState extends State<EncuestaPage> {
     // ✅ Agregar async a la función
 
     final String? token = await AuthService().getTokenApi();
-    print('Token obtenido para logout: $token');
+    debugPrint('Token obtenido para logout: $token');
 
     // Forzar que el token no sea null
     if (token == null) {
@@ -959,7 +1009,7 @@ class EncuestaPageState extends State<EncuestaPage> {
 
     // Obtener los datos comunes utilizando el token
     final datosComunes = await obtenerDatosComunes(token);
-    print('Datos comunes obtenidos para logout: $datosComunes');
+    debugPrint('Datos comunes obtenidos para logout: $datosComunes');
 
     final dropboxService = DropboxService();
     final cloudinaryService = CloudinaryService();
@@ -971,7 +1021,8 @@ class EncuestaPageState extends State<EncuestaPage> {
 
 // Obtener la imagen de la firma
     final Uint8List? signatureImage = await _controller.toPngBytes();
-    print("Firma imagen generada con tamaño: ${signatureImage?.length} bytes");
+    debugPrint(
+        "Firma imagen generada con tamaño: ${signatureImage?.length} bytes");
 
     String imagenFile2 = "";
     if (imagenSeleccionada != null) {
@@ -992,10 +1043,10 @@ class EncuestaPageState extends State<EncuestaPage> {
               sharedLink2; // Guardar el enlace de la firma
         }
       } else {
-        print('No se pudo guardar el logo del cliente de forma correcta');
+        debugPrint('No se pudo guardar el logo del cliente de forma correcta');
       }
     } else {
-      print('El logo del cliente es nulo');
+      debugPrint('El logo del cliente es nulo');
     }
 
     if (signatureImage != null) {
@@ -1010,17 +1061,17 @@ class EncuestaPageState extends State<EncuestaPage> {
             imagenFile, "inspecciones");
         if (sharedLink != null) {
           linkFirma = sharedLink; // Guardar el enlace de la firma
-          print("Enlace de la firma: $linkFirma");
+          debugPrint("Enlace de la firma: $linkFirma");
         }
         if (sharedLink2 != null) {
           linkFirmaCloudinary = sharedLink2; // Guardar el enlace de la firma
-          print("Enlace de la firma: $linkFirmaCloudinary");
+          debugPrint("Enlace de la firma: $linkFirmaCloudinary");
         }
       } else {
-        print('No se pudo guardar la imagen de la firma correctamente');
+        debugPrint('No se pudo guardar la imagen de la firma correctamente');
       }
     } else {
-      print('La imagen de firma es nula');
+      debugPrint('La imagen de firma es nula');
     }
 
 // Subir imágenes adicionales si hay imágenes seleccionadas
@@ -1145,7 +1196,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         "valor": valor ?? "",
       });
     });
-    print(imagePaths);
+    debugPrint(imagePaths.toString());
   }
 
   @override
@@ -2099,3 +2150,4 @@ class Pregunta {
     this.imagen,
   }) : controllerValor = controllerValor ?? TextEditingController();
 }
+

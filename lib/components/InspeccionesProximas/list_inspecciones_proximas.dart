@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import '../Generales/formato_fecha.dart';
 
@@ -7,15 +7,14 @@ class TblInspeccionesProximas extends StatefulWidget {
   final List<Map<String, dynamic>> inspeccionesProximas;
   final Function onCompleted;
 
-  TblInspeccionesProximas(
-      {Key? key,
+  const TblInspeccionesProximas(
+      {super.key,
       required this.showModal,
       required this.inspeccionesProximas,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblInspeccionesProximasState createState() => _TblInspeccionesProximasState();
+  State<TblInspeccionesProximas> createState() => _TblInspeccionesProximasState();
 }
 
 class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
@@ -67,3 +66,4 @@ class _TblInspeccionesProximasState extends State<TblInspeccionesProximas> {
     );
   }
 }
+

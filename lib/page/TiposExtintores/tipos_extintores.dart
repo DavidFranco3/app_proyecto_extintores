@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -12,8 +12,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
 class TiposExtintoresPage extends StatefulWidget {
+  const TiposExtintoresPage({super.key});
+
   @override
-  _TiposExtintoresPageState createState() => _TiposExtintoresPageState();
+  State<TiposExtintoresPage> createState() => _TiposExtintoresPageState();
 }
 
 class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
@@ -30,17 +32,17 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
   Future<void> cargarTiposExtintores() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getTiposExtintoresDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getTiposExtintoresDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -71,7 +73,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
         }
       }
     } catch (e) {
-      print("Error al obtener los tipos de extintores: $e");
+      debugPrint("Error al obtener los tipos de extintores: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -111,7 +113,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: cargarTiposExtintores,
           accion: "registrar",
@@ -176,7 +178,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
                           child:
                               Text("No hay tipos de extintores disponibles."))
                       : TblTiposExtintores(
-                          showModal: () => Navigator.pop(context),
+                          showModal: () { if (mounted) Navigator.pop(context); },
                           tiposExtintores: dataTiposExtintores,
                           onCompleted: cargarTiposExtintores,
                         ),
@@ -192,3 +194,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     );
   }
 }
+
+
+
+

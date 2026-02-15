@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
@@ -11,7 +11,7 @@ class PreguntasVisualPage extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  PreguntasVisualPage({
+  const PreguntasVisualPage({super.key, 
     required this.showModal,
     required this.onCompleted,
     required this.accion,
@@ -19,7 +19,7 @@ class PreguntasVisualPage extends StatefulWidget {
   });
 
   @override
-  _PreguntasVisualPageState createState() => _PreguntasVisualPageState();
+  State<PreguntasVisualPage> createState() => _PreguntasVisualPageState();
 }
 
 class _PreguntasVisualPageState extends State<PreguntasVisualPage> {
@@ -135,10 +135,11 @@ class _PreguntasVisualPageState extends State<PreguntasVisualPage> {
                         );
                       }).toList(),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
     );
   }
 }
+

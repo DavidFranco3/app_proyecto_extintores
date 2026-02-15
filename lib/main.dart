@@ -11,6 +11,7 @@ import 'components/Home/home.dart';
 import 'components/Generales/flushbar_helper.dart';
 import 'api/auth.dart';
 import 'api/tokens.dart';
+import 'utils/offline_sync_util.dart';
 
 // 🌎 Navigator global para diálogos y flushbar
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -21,7 +22,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 // 📌 Manejo de notificaciones en segundo plano
 Future<void> _onBackgroundMessage(RemoteMessage message) async {
-  print(
+  debugPrint(
       "📌 [BACKGROUND] Notificación recibida: ${message.notification?.title}");
 }
 
@@ -59,12 +60,14 @@ Future<void> mostrarNotificacionLocal(String title, String body) async {
 // 📌 Mostrar alerta dentro de la app
 void mostrarAlertaNotificacion(String title, String body) {
   if (navigatorKey.currentContext != null) {
-    showCustomFlushbar(
-      context: navigatorKey.currentContext!,
-      title: title,
-      message: body,
-      backgroundColor: Colors.green,
-    );
+    if (navigatorKey.currentContext!.mounted) {
+      showCustomFlushbar(
+        context: navigatorKey.currentContext!,
+        title: title,
+        message: body,
+        backgroundColor: Colors.green,
+      );
+    }
   }
 }
 
@@ -72,11 +75,11 @@ void mostrarAlertaNotificacion(String title, String body) {
 Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
   try {
     final authService = AuthService();
-    final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
-    print('ID Usuario obtenido: $idUsuario');
+    final idUsuario = authService.obtenerIdUsuarioLogueado(token);
+    debugPrint('ID Usuario obtenido: $idUsuario');
     return {'idUsuario': idUsuario};
   } catch (e) {
-    print('Error al obtener datos comunes: $e');
+    debugPrint('Error al obtener datos comunes: $e');
     rethrow;
   }
 }
@@ -85,7 +88,7 @@ Future<Map<String, dynamic>> obtenerDatosComunes(String token) async {
 Future<void> obtenerTokenFCM() async {
   try {
     final String? tokenn = await AuthService().getTokenApi();
-    print('Token obtenido para logout: $tokenn');
+    debugPrint('Token obtenido para logout: $tokenn');
 
     if (tokenn == null) throw Exception("Token de autenticación es nulo");
 
@@ -104,13 +107,13 @@ Future<void> obtenerTokenFCM() async {
     if (token != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fcm_token', token);
-      print("📌 Token FCM obtenido y guardado: $token");
+      debugPrint("📌 Token FCM obtenido y guardado: $token");
       tokensService.registraTokens(formData);
     } else {
-      print("❌ No se pudo obtener el token de FCM.");
+      debugPrint("❌ No se pudo obtener el token de FCM.");
     }
   } catch (e) {
-    print("❌ Error al obtener el token de FCM: $e");
+    debugPrint("❌ Error al obtener el token de FCM: $e");
   }
 }
 
@@ -130,8 +133,9 @@ Future<void> main() async {
 
   // 📌 Inicializar SharedPreferences
   final prefs = await SharedPreferences.getInstance();
-  if (!prefs.containsKey('isLoggedIn'))
+  if (!prefs.containsKey('isLoggedIn')) {
     await prefs.setBool('isLoggedIn', false);
+  }
   final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   // 📌 Inicializar FCM
@@ -139,7 +143,7 @@ Future<void> main() async {
 
   // 📌 Escuchar notificaciones en primer plano
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print(
+    debugPrint(
         "📩 [FOREGROUND] Notificación recibida: ${message.notification?.title}");
     mostrarNotificacionLocal(
       message.notification?.title ?? "Sin título",
@@ -153,7 +157,7 @@ Future<void> main() async {
 
   // 📌 Notificación al abrir la app desde segundo plano
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print(
+    debugPrint(
         "📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
   });
 
@@ -194,14 +198,44 @@ Future<void> main() async {
     await Hive.openBox(box);
   }
 
+  // 🛠 Inicializar Util de Sincronización Offline
+  OfflineSyncUtil().init();
+
   // 🚀 Ejecutar app
   runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final bool isLoggedIn;
 
-  const MyApp({Key? key, required this.isLoggedIn}) : super(key: key);
+  const MyApp({super.key, required this.isLoggedIn});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Sincronizar al iniciar si hay internet
+    OfflineSyncUtil().sincronizarTodo();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint("📱 App resumida - Iniciando Sincronización Proactiva");
+      OfflineSyncUtil().sincronizarTodo();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +249,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       locale: const Locale('es', 'ES'),
-      home: isLoggedIn ? HomePage() : LoginPage(),
+      home: widget.isLoggedIn ? HomePage() : LoginPage(),
     );
   }
 }

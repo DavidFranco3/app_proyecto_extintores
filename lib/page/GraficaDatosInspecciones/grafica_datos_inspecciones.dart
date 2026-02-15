@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:prueba/components/Generales/grafico_lineas.dart';
 import '../../api/inspeccion_anual.dart';
 import '../../components/Load/load.dart';
@@ -12,10 +12,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 class GraficaDatosInspeccionesPage extends StatefulWidget {
   final String idInspeccion;
 
-  GraficaDatosInspeccionesPage({required this.idInspeccion});
+  const GraficaDatosInspeccionesPage({super.key, required this.idInspeccion});
 
   @override
-  _GraficaDatosInspeccionesPageState createState() =>
+  State<GraficaDatosInspeccionesPage> createState() =>
       _GraficaDatosInspeccionesPageState();
 }
 
@@ -35,7 +35,7 @@ class _GraficaDatosInspeccionesPageState
   /// Verifica conexión a internet
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -49,7 +49,7 @@ class _GraficaDatosInspeccionesPageState
         await getEncuestasDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar inspección anual: $e");
+      debugPrint("Error general al cargar inspección anual: $e");
       setState(() {
         dataEncuestas = [];
       });
@@ -148,3 +148,4 @@ class _GraficaDatosInspeccionesPageState
     );
   }
 }
+

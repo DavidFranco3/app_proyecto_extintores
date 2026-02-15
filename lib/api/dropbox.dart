@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -23,11 +24,11 @@ class DropboxService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final accessToken = data['access_token'];
-      print('Nuevo access token: $accessToken');
+      debugPrint('Nuevo access token: $accessToken');
       return accessToken;
     } else {
-      print('Error al obtener el token de acceso: ${response.statusCode}');
-      print('Respuesta: ${response.body}');
+      debugPrint('Error al obtener el token de acceso: ${response.statusCode}');
+      debugPrint('Respuesta: ${response.body}');
       throw Exception('Error al obtener el access token');
     }
   }
@@ -41,7 +42,7 @@ class DropboxService {
     final fileName = file.uri.pathSegments.last;
     final dropboxFolderPath = '/AGOO/$path/$fileName';
     final response = await http.post(
-      Uri.parse(API_DROPBOX),
+      Uri.parse(apiDropbox),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/octet-stream',
@@ -56,17 +57,17 @@ class DropboxService {
     );
 
     if (response.statusCode == 200) {
-      print('Imagen subida con éxito a Dropbox');
+      debugPrint('Imagen subida con éxito a Dropbox');
       final responseData = json.decode(response.body);
 
       // Obtener el enlace compartido de la imagen
       final sharedLink =
           await _getSharedLink(accessToken, responseData['path_display']);
-      print('Enlace compartido de la imagen: $sharedLink');
+      debugPrint('Enlace compartido de la imagen: $sharedLink');
       return sharedLink;
     } else {
-      print('Error al subir la imagen: ${response.statusCode}');
-      print('Respuesta: ${response.body}');
+      debugPrint('Error al subir la imagen: ${response.statusCode}');
+      debugPrint('Respuesta: ${response.body}');
       return null;
     }
   }
@@ -74,7 +75,7 @@ class DropboxService {
   /// Obtiene un enlace compartido público de Dropbox.
   Future<String?> _getSharedLink(String accessToken, String filePath) async {
     final response = await http.post(
-      Uri.parse(API_DROPBOX_ENLACE),
+      Uri.parse(apiDropboxEnlace),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
@@ -91,9 +92,11 @@ class DropboxService {
       final responseData = json.decode(response.body);
       return responseData['url'];
     } else {
-      print('Error al obtener el enlace compartido: ${response.statusCode}');
-      print('Respuesta: ${response.body}');
+      debugPrint('Error al obtener el enlace compartido: ${response.statusCode}');
+      debugPrint('Respuesta: ${response.body}');
       return null;
     }
   }
 }
+
+

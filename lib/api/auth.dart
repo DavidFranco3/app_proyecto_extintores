@@ -2,14 +2,13 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart'; // Reemplazamos jwt_decode por jwt_decoder
-import 'endpoints.dart'; 
 import '../utils/constants.dart'; 
 
 class AuthService {
   // Validar inicio de sesión
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async {
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_LOGIN_ADMINISTRADOR),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -30,19 +29,19 @@ class AuthService {
   // Guardar el token en almacenamiento local
   Future<void> setTokenApi(String token) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(TOKEN, token);
+    await prefs.setString(tokenKey, token);
   }
 
   // Obtener el token
   Future<String?> getTokenApi() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(TOKEN);
+    return prefs.getString(tokenKey);
   }
 
   // Cerrar sesión
   Future<void> logoutApi() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(TOKEN);
+    await prefs.remove(tokenKey);
   }
 
   // Obtener los datos del usuario logueado
@@ -67,3 +66,5 @@ class AuthService {
     return decodedToken['_'];
   }
 }
+
+

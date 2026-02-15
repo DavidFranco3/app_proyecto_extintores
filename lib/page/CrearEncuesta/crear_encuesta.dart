@@ -29,7 +29,8 @@ class CrearEncuestaScreen extends StatefulWidget {
   final dynamic frecuencia;
 
   @override
-  CrearEncuestaScreen({
+  const CrearEncuestaScreen({
+    super.key,
     required this.showModal,
     required this.accion,
     required this.data,
@@ -41,7 +42,8 @@ class CrearEncuestaScreen extends StatefulWidget {
     required this.frecuencia,
   });
 
-  _CrearEncuestaScreenState createState() => _CrearEncuestaScreenState();
+  @override
+  State<CrearEncuestaScreen> createState() => _CrearEncuestaScreenState();
 }
 
 class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
@@ -71,8 +73,10 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -89,110 +93,116 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
         .toList();
 
+    if (operaciones.isEmpty) return;
+
     final encuestasService = EncuestaInspeccionService();
-    final List<String> operacionesExitosas = [];
+    final List<String> operacionesEliminar = [];
 
-    for (var operacion in List.from(operaciones)) {
+    for (var operacion in operaciones) {
+      // Inicializar / Incrementar intentos
+      operacion['intentos'] = (operacion['intentos'] ?? 0) + 1;
+
       try {
+        Map<String, dynamic>? response;
         if (operacion['accion'] == 'registrar') {
-          final response = await encuestasService
+          response = await encuestasService
               .registraEncuestaInspeccion(operacion['data']);
-
-          if (response['status'] == 200 && response['data'] != null) {
-            final encuestasBox = Hive.box('encuestasBox');
-            final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
-
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            actuales.removeWhere((element) => element['id'] == operacion['id']);
-
-            actuales.add({
-              'id': response['data']['_id'],
-              'nombre': response['data']['nombre'],
-              'descripcion': response['data']['descripcion'],
-              'estado': response['data']['estado'],
-              'createdAt': response['data']['createdAt'],
-              'updatedAt': response['data']['updatedAt'],
-            });
-
-            await encuestasBox.put('encuestas', actuales);
-          }
-
-          operacionesExitosas.add(operacion['operacionId']);
         } else if (operacion['accion'] == 'editar') {
-          final response = await encuestasService.actualizarEncuestaInspeccion(
+          response = await encuestasService.actualizarEncuestaInspeccion(
               operacion['id'], operacion['data']);
-
-          if (response['status'] == 200) {
-            final encuestasBox = Hive.box('encuestasBox');
-            final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
-
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
-            if (index != -1) {
-              actuales[index] = {
-                ...actuales[index],
-                ...operacion['data'],
-                'updatedAt': DateTime.now().toString(),
-              };
-              await encuestasBox.put('encuestas', actuales);
-            }
-          }
-
-          operacionesExitosas.add(operacion['operacionId']);
         } else if (operacion['accion'] == 'eliminar') {
-          final response = await encuestasService
-              .deshabilitarEncuestaInspeccion(
-                  operacion['id'], {'estado': 'false'});
+          response = await encuestasService.deshabilitarEncuestaInspeccion(
+              operacion['id'], {'estado': 'false'});
+        }
 
-          if (response['status'] == 200) {
-            final encuestasBox = Hive.box('encuestasBox');
-            final actualesRaw = encuestasBox.get('encuestas', defaultValue: []);
+        if (response != null) {
+          final status = response['status'];
+          if (status == 200) {
+            // Éxito: Actualizar Hive local si es necesario (ya tiene lógica para registrar/editar/eliminar)
+            if (operacion['accion'] == 'registrar' &&
+                response['data'] != null) {
+              final encuestasBox = Hive.box('encuestasBox');
+              final actualesRaw =
+                  encuestasBox.get('encuestas', defaultValue: []);
+              final actuales = (actualesRaw as List)
+                  .map<Map<String, dynamic>>(
+                      (item) => Map<String, dynamic>.from(item))
+                  .toList();
 
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
-            if (index != -1) {
-              actuales[index] = {
-                ...actuales[index],
-                'estado': 'false',
-                'updatedAt': DateTime.now().toString(),
-              };
+              actuales
+                  .removeWhere((element) => element['id'] == operacion['id']);
+              actuales.add({
+                'id': response['data']['_id'],
+                'nombre': response['data']['nombre'],
+                'descripcion': response['data']['descripcion'],
+                'estado': response['data']['estado'],
+                'createdAt': response['data']['createdAt'],
+                'updatedAt': response['data']['updatedAt'],
+              });
               await encuestasBox.put('encuestas', actuales);
+            } else if (operacion['accion'] == 'editar' ||
+                operacion['accion'] == 'eliminar') {
+              // Lógica similar para actualizar cache local si es necesario
+              // Pero la lógica actual ya lo hacía... simplificando:
+              final encuestasBox = Hive.box('encuestasBox');
+              final actualesRaw =
+                  encuestasBox.get('encuestas', defaultValue: []);
+              final actuales = (actualesRaw as List)
+                  .map<Map<String, dynamic>>(
+                      (item) => Map<String, dynamic>.from(item))
+                  .toList();
+              final index = actuales
+                  .indexWhere((element) => element['id'] == operacion['id']);
+              if (index != -1) {
+                if (operacion['accion'] == 'editar') {
+                  actuales[index] = {
+                    ...actuales[index],
+                    ...operacion['data'],
+                    'updatedAt': DateTime.now().toString()
+                  };
+                } else {
+                  actuales[index] = {
+                    ...actuales[index],
+                    'estado': 'false',
+                    'updatedAt': DateTime.now().toString()
+                  };
+                }
+                await encuestasBox.put('encuestas', actuales);
+              }
+            }
+            operacionesEliminar.add(operacion['operacionId'] ?? "");
+          } else if (status >= 400 && status < 500) {
+            debugPrint(
+                "Error no reintentable (4xx) en sincronización: $status");
+            operacionesEliminar.add(operacion['operacionId'] ?? "");
+          } else {
+            debugPrint("Error de servidor (5xx) en sincronización: $status");
+            if (operacion['intentos'] >= 5) {
+              debugPrint("Límite de reintentos alcanzado para operación");
+              operacionesEliminar.add(operacion['operacionId'] ?? "");
             }
           }
-
-          operacionesExitosas.add(operacion['operacionId']);
         }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error de red sincronizando operación: $e');
+        if (operacion['intentos'] >= 5) {
+          debugPrint("Límite de reintentos alcanzado por red");
+          operacionesEliminar.add(operacion['operacionId'] ?? "");
+        }
       }
     }
 
-    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
-    if (operacionesExitosas.length == operaciones.length) {
-      await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+    // Actualizar el box de Hive eliminando las exitosas o fallidas permanentes
+    final nuevasOperaciones = operaciones
+        .where((op) => !operacionesEliminar.contains(op['operacionId']))
+        .toList();
+    await box.put('operaciones', nuevasOperaciones);
+
+    if (operacionesEliminar.length == operaciones.length) {
+      debugPrint("✔ Sincronización finalizada.");
     } else {
-      // 🔄 Si alguna falló, conserva solo las pendientes
-      final nuevasOperaciones = operaciones
-          .where((op) => !operacionesExitosas.contains(op['operacionId']))
-          .toList();
-      await box.put('operaciones', nuevasOperaciones);
-      print(
-          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+      debugPrint(
+          "❗ Quedan ${operaciones.length - operacionesEliminar.length} operaciones pendientes.");
     }
 
     // ✅ Actualizar lista completa desde API
@@ -220,24 +230,24 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       final encuestasBox = Hive.box('encuestasBox');
       await encuestasBox.put('encuestas', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos después de sincronización: $e');
     }
   }
 
   Future<void> cargarClasificaciones() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClasificacionesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClasificacionesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -265,7 +275,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      debugPrint("Error al obtener las clasificaciones: $e");
       setState(() {
         loading = false;
       });
@@ -317,7 +327,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     if (conectado) {
       await getFrecuenciasDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getFrecuenciasDesdeHive();
     }
   }
@@ -346,7 +356,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      debugPrint("Error al obtener las frecuencias: $e");
       setState(() {
         loading = false;
       });
@@ -374,7 +384,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         });
       }
     } catch (e) {
-      print("Error leyendo desde Hive: $e");
+      debugPrint("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -406,7 +416,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar ramas: $e");
+      debugPrint("Error general al cargar ramas: $e");
       setState(() {
         dataRamas = [];
       });
@@ -557,13 +567,15 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       widget.onCompleted();
       widget.showModal();
 
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Encuesta guardada localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
 
       return;
     }
@@ -571,7 +583,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     // Si hay conexión, hacer llamada al servicio normalmente
     try {
       final encuestaInspeccionService = EncuestaInspeccionService();
-      var response;
+      Map<String, dynamic> response = {};
       if (widget.accion == "registrar") {
         response = await encuestaInspeccionService
             .registraEncuestaInspeccion(dataTemp);
@@ -585,36 +597,42 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
           _isLoading = false;
           returnPrincipalPage();
         });
-        LogsInformativos(
+        logsInformativos(
             "Se ha registrado la encuesta ${data['nombre']} correctamente",
             dataTemp);
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "La encuesta fue agregada correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Hubo un problema",
           message: "Hubo un error al agregar la encuesta",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -843,3 +861,5 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     );
   }
 }
+
+

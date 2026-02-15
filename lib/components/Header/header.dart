@@ -6,14 +6,17 @@ import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
 import '../../api/usuarios.dart';
 
+import '../../utils/offline_sync_util.dart';
+
 class Header extends StatelessWidget implements PreferredSizeWidget {
-  const Header({Key? key}) : super(key: key);
+  const Header({super.key});
 
   Future<void> _cerrarSesion(BuildContext context) async {
+    // ... logic remains same
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
-      LogsInformativos("Sesion cerrada correctamente", {});
+      logsInformativos("Sesion cerrada correctamente", {});
       AuthService authService = AuthService();
       authService.logoutApi();
       Navigator.pushAndRemoveUntil(
@@ -28,36 +31,81 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
-    Future<Map<String, dynamic>> obtenerDatosComunes() async {
+  Future<Map<String, dynamic>> obtenerDatosComunes() async {
     try {
       final authService = AuthService();
       final usuarioService = UsuariosService();
       final String? token = await authService.getTokenApi();
 
-      // Verificar si el token es nulo
       if (token == null) {
         throw Exception("Token de usuario no disponible");
       }
 
-      // Obtener el ID del usuario
-      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
-      Map<String, dynamic>? user = await usuarioService.obtenerUsuario2(idUsuario);
+      final idUsuario = authService.obtenerIdUsuarioLogueado(token);
+      Map<String, dynamic>? user =
+          await usuarioService.obtenerUsuario2(idUsuario);
 
-      // Devolver los datos comunes en un mapa
       return {'usuario': user?["nombre"]};
     } catch (e) {
-      print("❌ Error al obtener los datos comunes: $e");
-      rethrow; // Propaga el error a la función que lo llamó
+      debugPrint("❌ Error al obtener los datos comunes: $e");
+      rethrow;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: const Color.fromARGB(255, 112, 114, 113), // Color del header
+      backgroundColor: const Color.fromARGB(255, 112, 114, 113),
       title: Row(
         children: [
-          Spacer(), // Empuja los elementos a la derecha
+          Spacer(),
+          // 🔄 Indicador de sincronización offline
+          ValueListenableBuilder<int>(
+            valueListenable: OfflineSyncUtil().pendingCount,
+            builder: (context, count, child) {
+              if (count == 0) return SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(right: 15),
+                child: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    IconButton(
+                      icon: FaIcon(FontAwesomeIcons.cloudArrowUp,
+                          color: Colors.white),
+                      onPressed: () {
+                        OfflineSyncUtil().sincronizarTodo();
+                      },
+                      tooltip: 'Sincronizar pendientes ($count)',
+                    ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$count',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               icon: FaIcon(FontAwesomeIcons.circleUser, color: Colors.white),

@@ -5,7 +5,7 @@ class DataTableCustom extends StatelessWidget {
   final List<Map<String, dynamic>> columnas;
   final Widget Function(Map<String, dynamic>)? accionesBuilder;
 
-  DataTableCustom({
+  DataTableCustom({super.key, 
     required this.datos,
     required this.columnas,
     this.accionesBuilder,
@@ -70,7 +70,7 @@ class DataTableCustom extends StatelessWidget {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                   if (accionesBuilder != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),

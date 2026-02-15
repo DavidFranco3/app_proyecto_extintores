@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -11,15 +11,15 @@ class TblEncuestas extends StatefulWidget {
   final List<Map<String, dynamic>> encuestas;
   final Function onCompleted;
 
-  TblEncuestas({
-    Key? key,
+  const TblEncuestas({
+    super.key,
     required this.showModal,
     required this.encuestas,
     required this.onCompleted,
-  }) : super(key: key);
+  });
 
   @override
-  _TblEncuestasState createState() => _TblEncuestasState();
+  State<TblEncuestas> createState() => _TblEncuestasState();
 }
 
 class _TblEncuestasState extends State<TblEncuestas> {
@@ -37,7 +37,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
       MaterialPageRoute(
         builder: (context) => CrearEncuestaPantalla1Screen(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: widget.onCompleted,
           accion: "editar",
@@ -52,7 +52,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
     });
   }
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -60,7 +60,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
           return Scaffold(
             body: Acciones(
               showModal: () {
-                Navigator.pop(context); // Cierra la página actual
+                if (mounted) Navigator.pop(context); // Cierra la página actual
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",
@@ -80,7 +80,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
           return Scaffold(
             body: PreguntasVisualPage(
               showModal: () {
-                Navigator.pop(context); // Eliminar la lógica de cerrar el modal
+                if (mounted) Navigator.pop(context); // Eliminar la lógica de cerrar el modal
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",
@@ -126,7 +126,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40, 223)),
@@ -184,3 +184,6 @@ class _TblEncuestasState extends State<TblEncuestas> {
     );
   }
 }
+
+
+

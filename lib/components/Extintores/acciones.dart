@@ -18,14 +18,14 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones(
-      {required this.showModal,
+  const Acciones(
+      {super.key, required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data});
 
   @override
-  _AccionesState createState() => _AccionesState();
+  State<Acciones> createState() => _AccionesState();
 }
 
 class _AccionesState extends State<Acciones> {
@@ -62,8 +62,10 @@ class _AccionesState extends State<Acciones> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -72,17 +74,17 @@ class _AccionesState extends State<Acciones> {
   Future<void> cargarTiposExtintores() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getTiposExtintoresDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getTiposExtintoresDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -113,7 +115,7 @@ class _AccionesState extends State<Acciones> {
         }
       }
     } catch (e) {
-      print("Error al obtener los tipos de extintores: $e");
+      debugPrint("Error al obtener los tipos de extintores: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -281,14 +283,14 @@ class _AccionesState extends State<Acciones> {
           operacionesExitosas.add(operacion['operacionId']);
         }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error sincronizando operación: $e');
       }
     }
 
     // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
     if (operacionesExitosas.length == operaciones.length) {
       await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+      debugPrint("✔ Todas las operaciones sincronizadas. Limpieza completa.");
     } else {
       // 🔄 Si alguna falló, conserva solo las pendientes
       final nuevasOperaciones = operaciones
@@ -318,7 +320,7 @@ class _AccionesState extends State<Acciones> {
       final extintoresBox = Hive.box('extintoresBox');
       await extintoresBox.put('extintores', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos después de sincronización: $e');
     }
   }
 
@@ -367,13 +369,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Extintor guardado localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -387,35 +391,41 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha registrado el extintor ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "El extintor fue agregado correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error",
           message: "No se pudo guardar el extintor",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -467,13 +477,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Extintor actualizado localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -487,26 +499,30 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha actualizado el extintor ${data['nombre']} correctamente",
             {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Actualización exitosa",
           message: "Los datos de el extintor fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -552,13 +568,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Extintor eliminado localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -573,25 +591,29 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha eliminado el extintor ${data['id']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Eliminación exitosa",
           message: "Se han eliminado correctamente los datos del extintor",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -792,3 +814,5 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
+
+

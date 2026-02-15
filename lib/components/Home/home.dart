@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../Menu/menu_lateral.dart';
 import '../Header/header.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -15,8 +15,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -36,7 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<bool> verificarConexion() async {
   final tipoConexion = await Connectivity().checkConnectivity();
-  if (tipoConexion == ConnectivityResult.none) return false;
+  if (tipoConexion.contains(ConnectivityResult.none)) return false;
   return await InternetConnection().hasInternetAccess;
 }
 
@@ -69,7 +71,7 @@ Future<void> getTokensDesdeAPI() async {
       loading = false;
     });
   } catch (e) {
-    print("Error al obtener los tokens: $e");
+    debugPrint("Error al obtener los tokens: $e");
     setState(() => loading = false);
   }
 }
@@ -93,7 +95,7 @@ Future<void> getTokensDesdeHive() async {
       });
     }
   } catch (e) {
-    print("Error leyendo tokens desde Hive: $e");
+    debugPrint("Error leyendo tokens desde Hive: $e");
     setState(() => loading = false);
   }
 }
@@ -123,7 +125,7 @@ Future<void> getInspeccionesDesdeAPI() async {
       loading = false;
     });
   } catch (e) {
-    print("Error al obtener inspecciones: $e");
+    debugPrint("Error al obtener inspecciones: $e");
     setState(() => loading = false);
   }
 }
@@ -147,7 +149,7 @@ Future<void> getInspeccionesDesdeHive() async {
       });
     }
   } catch (e) {
-    print("Error leyendo inspecciones desde Hive: $e");
+    debugPrint("Error leyendo inspecciones desde Hive: $e");
     setState(() => loading = false);
   }
 }
@@ -188,7 +190,7 @@ Future<void> getInspeccionesProximasDesdeAPI() async {
       loading = false;
     });
   } catch (e) {
-    print("Error al obtener inspecciones próximas: $e");
+    debugPrint("Error al obtener inspecciones próximas: $e");
     setState(() => loading = false);
   }
 }
@@ -221,7 +223,7 @@ Future<void> getInspeccionesProximasDesdeHive() async {
       });
     }
   } catch (e) {
-    print("Error leyendo inspecciones próximas desde Hive: $e");
+    debugPrint("Error leyendo inspecciones próximas desde Hive: $e");
     setState(() => loading = false);
   }
 }
@@ -312,7 +314,7 @@ Future<void> getInspeccionesProximasDesdeHive() async {
     try {
       await Future.wait(requests); // Ejecutar todas las solicitudes en paralelo
     } catch (e) {
-      print("Error al enviar notificaciones: $e");
+      debugPrint("Error al enviar notificaciones: $e");
     }
   }
 
@@ -464,3 +466,4 @@ Future<void> getInspeccionesProximasDesdeHive() async {
     );
   }
 }
+

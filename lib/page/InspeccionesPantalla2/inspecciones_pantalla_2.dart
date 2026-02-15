@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/inspecciones.dart';
 import '../../components/Load/load.dart';
@@ -15,9 +15,9 @@ class InspeccionesPantalla2Page extends StatefulWidget {
   final VoidCallback showModal;
   final dynamic data;
 
-  InspeccionesPantalla2Page({required this.showModal, required this.data});
+  const InspeccionesPantalla2Page({super.key, required this.showModal, required this.data});
   @override
-  _InspeccionesPantalla2PageState createState() =>
+  State<InspeccionesPantalla2Page> createState() =>
       _InspeccionesPantalla2PageState();
 }
 
@@ -53,17 +53,17 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
   Future<void> getInspecciones() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getInspeccionesDesdeAPI(widget.data["id"]);
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getInspeccionesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -88,7 +88,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
         });
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
     } finally {
       setState(() => loading = false);
     }
@@ -167,7 +167,7 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
       MaterialPageRoute(
           builder: (context) => InspeccionesPage(
               showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
+                if (mounted) Navigator.pop(context); // Esto cierra el modal
               },
               data: row,
               data2: widget.data)),
@@ -306,3 +306,5 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
     );
   }
 }
+
+

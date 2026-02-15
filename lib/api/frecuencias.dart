@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
@@ -11,7 +12,7 @@ class FrecuenciasService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_FRECUENCIAS),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -25,15 +26,15 @@ class FrecuenciasService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      debugPrint("Error al obtener las frecuencias: $e");
       return [];
     }
   }
@@ -42,7 +43,7 @@ class FrecuenciasService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRAR_FRECUENCIAS),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ class FrecuenciasService {
   Future<http.Response> obtenerFrecuencias(String params) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_FRECUENCIAS + '/$params'),
+      Uri.parse('$apiHost$endpointObtenerFrecuencias/$params'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -73,7 +74,7 @@ class FrecuenciasService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_FRECUENCIAS + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarFrecuencias/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ class FrecuenciasService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_FRECUENCIAS + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarFrecuencias/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ class FrecuenciasService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_FRECUENCIAS + '/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarFrecuencias/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -120,3 +121,6 @@ class FrecuenciasService {
     };
   }
 }
+
+
+

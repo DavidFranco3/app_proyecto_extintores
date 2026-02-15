@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -12,8 +12,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
 class UsuariosPage extends StatefulWidget {
+  const UsuariosPage({super.key});
+
   @override
-  _UsuariosPageState createState() => _UsuariosPageState();
+  State<UsuariosPage> createState() => _UsuariosPageState();
 }
 
 class _UsuariosPageState extends State<UsuariosPage> {
@@ -30,17 +32,17 @@ class _UsuariosPageState extends State<UsuariosPage> {
   Future<void> cargarUsuarios() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getUsuariosDesdeAPI();
     } else {
-      print("Sin conexión, cargando usuarios desde Hive...");
+      debugPrint("Sin conexión, cargando usuarios desde Hive...");
       await getUsuariosDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -70,7 +72,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
         }
       }
     } catch (e) {
-      print("Error al obtener los usuarios: $e");
+      debugPrint("Error al obtener los usuarios: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -110,7 +112,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: cargarUsuarios,
           accion: "registrar",
@@ -174,7 +176,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
                   child: dataUsuarios.isEmpty
                       ? Center(child: Text("No hay usuarios disponibles."))
                       : TblUsuarios(
-                          showModal: () => Navigator.pop(context),
+                          showModal: () { if (mounted) Navigator.pop(context); },
                           usuarios: dataUsuarios,
                           onCompleted: cargarUsuarios,
                         ),
@@ -190,3 +192,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
     );
   }
 }
+
+
+
+

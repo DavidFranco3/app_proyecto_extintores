@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -11,8 +11,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class GraficaInspeccionesPage extends StatefulWidget {
+  const GraficaInspeccionesPage({super.key});
+
   @override
-  _GraficaInspeccionesPageState createState() =>
+  State<GraficaInspeccionesPage> createState() =>
       _GraficaInspeccionesPageState();
 }
 
@@ -36,7 +38,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
   /// Verifica si hay conexión a internet
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -50,7 +52,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
         await getEncuestasDesdeHive();
       }
     } catch (e) {
-      print("Error al cargar encuestas: $e");
+      debugPrint("Error al cargar encuestas: $e");
       setState(() {
         dataEncuestas = [];
       });
@@ -106,7 +108,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
         await getInspeccionesDesdeHive(encuestaId);
       }
     } catch (e) {
-      print("Error al cargar inspecciones: $e");
+      debugPrint("Error al cargar inspecciones: $e");
       setState(() {
         dataInspecciones = [];
       });
@@ -263,3 +265,4 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
     );
   }
 }
+

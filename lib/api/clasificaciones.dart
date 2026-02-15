@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
@@ -12,7 +13,7 @@ class ClasificacionesService {
     final token = await authService.getTokenApi();
     try {
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_CLASIFICACIONES),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -26,15 +27,15 @@ class ClasificacionesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      debugPrint("Error al obtener las clasificaciones: $e");
       return [];
     }
   }
@@ -44,7 +45,7 @@ class ClasificacionesService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRAR_CLASIFICACIONES),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ class ClasificacionesService {
   Future<Map<String, dynamic>> obtenerClasificaciones(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_CLASIFICACIONES + '/$id'),
+      Uri.parse('$apiHost$endpointObtenerClasificaciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -83,7 +84,7 @@ class ClasificacionesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_CLASIFICACIONES + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarClasificaciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ class ClasificacionesService {
   Future<Map<String, dynamic>> eliminarClasificaciones(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_CLASIFICACIONES + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarClasificaciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -121,7 +122,7 @@ class ClasificacionesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_CLASIFICACIONES + '/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarClasificaciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -136,3 +137,6 @@ class ClasificacionesService {
     };
   }
 }
+
+
+

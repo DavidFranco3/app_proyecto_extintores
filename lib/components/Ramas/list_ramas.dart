@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -9,15 +9,14 @@ class TblRamas extends StatefulWidget {
   final List<Map<String, dynamic>> ramas;
   final Function onCompleted;
 
-  TblRamas(
-      {Key? key,
+  const TblRamas(
+      {super.key,
       required this.showModal,
       required this.ramas,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblRamasState createState() => _TblRamasState();
+  State<TblRamas> createState() => _TblRamasState();
 }
 
 class _TblRamasState extends State<TblRamas> {
@@ -25,7 +24,7 @@ class _TblRamasState extends State<TblRamas> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     // Navegar a la página de eliminación en lugar de mostrar un modal
     Navigator.push(
       context,
@@ -40,7 +39,7 @@ class _TblRamasState extends State<TblRamas> {
     );
   }
 
-  void openEditarModal(row) {
+  void openEditarModal(Map<String, dynamic> row) {
     // Navegar a la página de edición en lugar de mostrar un modal
     Navigator.push(
       context,
@@ -82,7 +81,7 @@ class _TblRamasState extends State<TblRamas> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40,
@@ -128,3 +127,5 @@ class _TblRamasState extends State<TblRamas> {
     );
   }
 }
+
+

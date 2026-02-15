@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class Load extends StatefulWidget {
+  const Load({super.key});
+
   @override
-  _LoadState createState() => _LoadState();
+  State<Load> createState() => _LoadState();
 }
 
 class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
@@ -36,7 +38,7 @@ class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
         children: [
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
             ),
           ),
           Center(
@@ -47,7 +49,8 @@ class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(3, (index) {
                     return Transform.translate(
-                      offset: Offset(0, index.isEven ? -_animation.value : _animation.value),
+                      offset: Offset(0,
+                          index.isEven ? -_animation.value : _animation.value),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: Container(
@@ -70,3 +73,4 @@ class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
     );
   }
 }
+

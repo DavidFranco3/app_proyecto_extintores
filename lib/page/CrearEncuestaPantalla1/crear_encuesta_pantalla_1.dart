@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/frecuencias.dart';
 import '../../api/clasificaciones.dart';
 import '../../api/ramas.dart';
@@ -25,8 +25,8 @@ class CrearEncuestaPantalla1Screen extends StatefulWidget {
   final TextEditingController ramaController;
 
   @override
-  CrearEncuestaPantalla1Screen(
-      {required this.showModal,
+  const CrearEncuestaPantalla1Screen(
+      {super.key, required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data,
@@ -34,7 +34,8 @@ class CrearEncuestaPantalla1Screen extends StatefulWidget {
       required this.clasificacionController,
       required this.ramaController});
 
-  _CrearEncuestaPantalla1ScreenState createState() =>
+  @override
+  State<CrearEncuestaPantalla1Screen> createState() =>
       _CrearEncuestaPantalla1ScreenState();
 }
 
@@ -48,7 +49,7 @@ class _CrearEncuestaPantalla1ScreenState
   List<Map<String, dynamic>> dataClasificaciones = [];
   List<Map<String, dynamic>> dataRamas = [];
   bool loading = true;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   final List<Map<String, String>> secciones = [];
 
   @override
@@ -64,7 +65,7 @@ class _CrearEncuestaPantalla1ScreenState
           widget.data['idClasificacion'] ?? '';
       widget.ramaController.text = widget.data['idRama'] ?? '';
       frecuenciaController.text = widget.data['idFrecuencia'] ?? '';
-      print(widget.data['preguntas']);
+      debugPrint(widget.data['preguntas']);
       preguntas = (widget.data["preguntas"] as List<dynamic>?)?.map((item) {
             final map = item as Map<String, dynamic>;
             return Pregunta(
@@ -80,17 +81,17 @@ class _CrearEncuestaPantalla1ScreenState
   Future<void> cargarClasificaciones() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClasificacionesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClasificacionesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -118,7 +119,7 @@ class _CrearEncuestaPantalla1ScreenState
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      debugPrint("Error al obtener las clasificaciones: $e");
       setState(() {
         loading = false;
       });
@@ -170,7 +171,7 @@ class _CrearEncuestaPantalla1ScreenState
     if (conectado) {
       await getFrecuenciasDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getFrecuenciasDesdeHive();
     }
   }
@@ -199,7 +200,7 @@ class _CrearEncuestaPantalla1ScreenState
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      debugPrint("Error al obtener las frecuencias: $e");
       setState(() {
         loading = false;
       });
@@ -227,7 +228,7 @@ class _CrearEncuestaPantalla1ScreenState
         });
       }
     } catch (e) {
-      print("Error leyendo desde Hive: $e");
+      debugPrint("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -259,7 +260,7 @@ class _CrearEncuestaPantalla1ScreenState
         await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar ramas: $e");
+      debugPrint("Error general al cargar ramas: $e");
       setState(() {
         dataRamas = [];
       });
@@ -335,7 +336,7 @@ class _CrearEncuestaPantalla1ScreenState
         MaterialPageRoute(
           builder: (context) => CrearEncuestaScreen(
               showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
+                if (mounted) Navigator.pop(context); // Esto cierra el modal
               },
               accion: widget.accion,
               data: widget.data,
@@ -581,3 +582,5 @@ class _CrearEncuestaPantalla1ScreenState
     );
   }
 }
+
+

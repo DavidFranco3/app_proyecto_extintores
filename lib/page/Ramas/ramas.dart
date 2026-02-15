@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/ramas.dart';
 import '../../components/Ramas/list_ramas.dart';
@@ -12,8 +12,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class RamasPage extends StatefulWidget {
+  const RamasPage({super.key});
+
   @override
-  _RamasPageState createState() => _RamasPageState();
+  State<RamasPage> createState() => _RamasPageState();
 }
 
 class _RamasPageState extends State<RamasPage> {
@@ -35,7 +37,7 @@ class _RamasPageState extends State<RamasPage> {
         await getRamasDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar ramas: $e");
+      debugPrint("Error general al cargar ramas: $e");
       setState(() {
         dataRamas = [];
       });
@@ -48,7 +50,7 @@ class _RamasPageState extends State<RamasPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -102,7 +104,7 @@ class _RamasPageState extends State<RamasPage> {
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: cargarRamas,
           accion: "registrar",
@@ -155,7 +157,7 @@ class _RamasPageState extends State<RamasPage> {
                 Expanded(
                   child: TblRamas(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     ramas: dataRamas,
                     onCompleted: cargarRamas,
@@ -172,3 +174,5 @@ class _RamasPageState extends State<RamasPage> {
     );
   }
 }
+
+

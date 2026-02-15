@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
@@ -12,7 +13,7 @@ class InspeccionesService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -25,15 +26,15 @@ class InspeccionesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
       return [];
     }
   }
@@ -42,7 +43,7 @@ class InspeccionesService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES_ABIERTAS),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -55,15 +56,15 @@ class InspeccionesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
       return [];
     }
   }
@@ -72,7 +73,7 @@ class InspeccionesService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_INSPECCIONES_CERRADAS),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -85,25 +86,55 @@ class InspeccionesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
       return [];
     }
   }
 
-  Future<List<dynamic>> listarInspeccionesPorCliente(idCliente) async {
+  Future<List<dynamic>> listarInspeccionesPorCliente(String idCliente) async {
+    try {
+      final token = await authService.getTokenApi();
+      final response = await http.get(
+        Uri.parse('$apiHost$endpointListarInspeccionesCliente/$idCliente'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data is List) {
+          return data; // Retornar la lista directamente
+        } else {
+          debugPrint("Error: La respuesta no es una lista.");
+          return [];
+        }
+      } else {
+        debugPrint("Error: Código de estado ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      debugPrint("Error al obtener las inspecciones: $e");
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> listarInspeccionesResultados(String idEncuesta) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
         Uri.parse(
-            API_HOST + ENDPOINT_LISTAR_INSPECCIONES_CLIENTE + '/$idCliente'),
+            '$apiHost$endpointListarInspeccionesResultadosEncuestas/$idEncuesta'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -116,26 +147,24 @@ class InspeccionesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
       return [];
     }
   }
 
-  Future<List<dynamic>> listarInspeccionesResultados(idEncuesta) async {
+  Future<List<dynamic>> listarInspeccionesDatos(String id) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST +
-            ENDPOINT_LISTAR_INSPECCIONES_RESULTADOS_ENCUESTAS +
-            '/$idEncuesta'),
+        Uri.parse('$apiHost$endpointListarInspeccionesDatosEncuestas/$id'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -148,46 +177,15 @@ class InspeccionesService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
-      return [];
-    }
-  }
-
-  Future<List<dynamic>> listarInspeccionesDatos(id) async {
-    try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse(
-            API_HOST + ENDPOINT_LISTAR_INSPECCIONES_DATOS_ENCUESTAS + '/$id'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          print("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        print("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
-    } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
       return [];
     }
   }
@@ -196,7 +194,7 @@ class InspeccionesService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRAR_INSPECCIONES),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -213,7 +211,7 @@ class InspeccionesService {
   Future<http.Response> obtenerInspecciones(String params) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_INSPECCIONES + '/$params'),
+      Uri.parse('$apiHost$endpointObtenerInspecciones/$params'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -227,7 +225,7 @@ class InspeccionesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_INSPECCIONES + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarInspecciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -245,7 +243,7 @@ class InspeccionesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_IMAGENES_FINALES + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarImagenesFinales/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -263,7 +261,7 @@ class InspeccionesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_INSPECCIONES + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarInspecciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -278,7 +276,7 @@ class InspeccionesService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_INSPECCIONES + '/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarInspecciones/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -294,7 +292,7 @@ class InspeccionesService {
 
   Future<Map<String, dynamic>> sendEmail(String id) async {
     final token = await authService.getTokenApi();
-    final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF + '/$id';
+    final String apiUrl = '$apiHost$endpointEnviarPdf/$id';
 
     final response = await http.get(
       Uri.parse(apiUrl),
@@ -311,7 +309,7 @@ class InspeccionesService {
 
   Future<Map<String, dynamic>> sendEmail2(String id, String pdfFilePath) async {
     final token = await authService.getTokenApi();
-    final String apiUrl = API_HOST + ENDPOINT_ENVIAR_PDF2 + '/$id';
+    final String apiUrl = '$apiHost$endpointEnviarPdf2/$id';
 
     try {
       // Leer el archivo PDF como bytes desde el sistema de archivos
@@ -353,13 +351,12 @@ class InspeccionesService {
   }
 
   String urlDownloadPDF(String id) {
-    return API_HOST + ENDPOINT_DESCARGAR_PDF + '/$id';
+    return '$apiHost$endpointDescargarPdf/$id';
   }
 
-Future<Map<String, dynamic>>  urlDownloadZIP(String id, String email) async {
-    final String apiUrl = API_HOST + ENDPOINT_ENVIAR_ZIP + '/$id/$email';
+  Future<Map<String, dynamic>> urlDownloadZIP(String id, String email) async {
+    final String apiUrl = '$apiHost$endpointEnviarZip/$id/$email';
 
-    
     final response = await http.get(
       Uri.parse(apiUrl),
       headers: {

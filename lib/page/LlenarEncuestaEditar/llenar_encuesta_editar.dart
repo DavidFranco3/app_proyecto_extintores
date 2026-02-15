@@ -23,6 +23,8 @@ import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../utils/offline_sync_util.dart';
 
 class EncuestaEditarPage extends StatefulWidget {
   final VoidCallback showModal;
@@ -30,13 +32,14 @@ class EncuestaEditarPage extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  EncuestaEditarPage(
-      {required this.showModal,
+  const EncuestaEditarPage(
+      {super.key,
+      required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data});
   @override
-  _EncuestaEditarPageState createState() => _EncuestaEditarPageState();
+  State<EncuestaEditarPage> createState() => _EncuestaEditarPageState();
 }
 
 final GlobalKey<DropdownSearchState<String>> clienteKey = GlobalKey();
@@ -162,8 +165,8 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
     descripcionEficienciaController = TextEditingController();
     comentariosEficienciaController = TextEditingController();
-    print("preguntas aca");
-    print(widget.data["inspeccion_eficiencias"] ?? []);
+    debugPrint("preguntas aca");
+    debugPrint(widget.data["inspeccion_eficiencias"]?.toString() ?? "[]");
     selectedEncuestaId = widget.data["idEncuesta"];
     selectedRamaId = widget.data["idRama"];
     selectedClienteId = widget.data["idCliente"];
@@ -183,8 +186,8 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
     getEncuestas(widget.data["idRama"]!, widget.data["idFrecuencia"]!,
         widget.data["idClasificacion"]!, widget.data["idCliente"]!);
     setState(() {
-      print("encuestas");
-      print(dataEncuestas);
+      debugPrint("encuestas");
+      debugPrint(dataEncuestas.toString());
     });
   }
 
@@ -231,12 +234,12 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
       final authService = AuthService();
 
       // Obtener el id del usuario
-      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
-      print('ID Usuario obtenido: $idUsuario');
+      final idUsuario = authService.obtenerIdUsuarioLogueado(token);
+      debugPrint('ID Usuario obtenido: $idUsuario');
 
       return {'idUsuario': idUsuario};
     } catch (e) {
-      print('Error al obtener datos comunes: $e');
+      debugPrint('Error al obtener datos comunes: $e');
       rethrow; // Lanza el error para que lo maneje la función que lo llamó
     }
   }
@@ -248,6 +251,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        if (!mounted) return;
         setState(() {
           dataClientes = formatModelClientes(response);
           loading = false; // Desactivar el estado de carga
@@ -259,7 +263,8 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
+      if (!mounted) return;
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
@@ -273,18 +278,21 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        if (!mounted) return;
         setState(() {
           dataRamas = formatModelRamas(response);
           loading = false; // Desactivar el estado de carga
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataRamas = []; // Lista vacía
           loading = false; // Desactivar el estado de carga
         });
       }
     } catch (e) {
-      print("Error al obtener las ramas: $e");
+      debugPrint("Error al obtener las ramas: $e");
+      if (!mounted) return;
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
@@ -314,18 +322,21 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = formatModelFrecuencias(response);
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           loading = false;
           dataFrecuencias = [];
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      debugPrint("Error al obtener las frecuencias: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -356,18 +367,21 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
       // Si la respuesta tiene datos, formateamos los datos y los asignamos al estado
       if (response.isNotEmpty) {
+        if (!mounted) return;
         setState(() {
           dataClasificaciones = formatModelClasificaciones(response);
           loading = false; // Desactivar el estado de carga
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataClasificaciones = []; // Lista vacía
           loading = false; // Desactivar el estado de carga
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones: $e");
+      debugPrint("Error al obtener las clasificaciones: $e");
+      if (!mounted) return;
       setState(() {
         loading = false; // En caso de error, desactivar el estado de carga
       });
@@ -417,13 +431,13 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
       if (pngBytes != null) {
         await file.writeAsBytes(pngBytes.buffer.asUint8List());
-        print('Imagen guardada en: $filePath');
+        debugPrint('Imagen guardada en: $filePath');
       }
 
       // Retornar la ruta del archivo
       return filePath;
     } catch (e) {
-      print('Error guardando la imagen: $e');
+      debugPrint('Error guardando la imagen: $e');
       return ''; // Valor vacío en caso de error
     }
   }
@@ -465,7 +479,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
       final List<dynamic> response = await encuestaInspeccionClienteService
           .listarEncuestaInspeccionClientePorRamaPorCliente(
               idRama, idFrecuencia, idClasificacion, idCliente);
-      print(response);
+      debugPrint(response.toString());
 
       if (response.isNotEmpty) {
         setState(() {
@@ -480,7 +494,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las encuestas: $e");
+      debugPrint("Error al obtener las encuestas: $e");
       setState(() {
         loading = false;
       });
@@ -489,8 +503,8 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
   List<Map<String, dynamic>> formatModelEncuestas(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
-    print("linea 472");
-    print(selectedEncuestaId);
+    debugPrint("linea 472");
+    debugPrint(selectedEncuestaId);
     for (var item in data) {
       if (item['_id'] == selectedEncuestaId) {
         dataTemp.add({
@@ -507,7 +521,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
   // Actualiza las preguntas cuando se selecciona una encuesta
   void actualizarPreguntas(String encuestaId) {
-    print(encuestaId);
+    debugPrint(encuestaId);
     final encuesta =
         dataEncuestas.firstWhere((encuesta) => encuesta['id'] == encuestaId);
 
@@ -563,13 +577,15 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
         _isLoading = false;
       });
 
-      showCustomFlushbar(
-        context: context,
-        title: "Campos incompletos",
-        message:
-            "Por favor, completa todos los campos obligatorios antes de continuar.",
-        backgroundColor: Colors.red,
-      );
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Campos incompletos",
+          message:
+              "Por favor, completa todos los campos obligatorios antes de continuar.",
+          backgroundColor: Colors.red,
+        );
+      }
       return;
     }
 
@@ -586,6 +602,36 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
       'firmaClienteCloudinary': data['firmaClienteCloudinary'] ?? "",
       "inspeccionEficiencias": data['inspeccionEficiencias'],
     };
+
+    final conectado = await OfflineSyncUtil().verificarConexion();
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineEncuestas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'editar',
+        'id': widget.data["id"],
+        'operacionId': UniqueKey().toString(),
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Sin conexión",
+            message:
+                "Actualización guardada localmente y se sincronizará cuando haya internet",
+            backgroundColor: Colors.orange,
+          );
+        }
+      }
+      return;
+    }
 
     try {
       final inspeccionesService = InspeccionesService();
@@ -609,41 +655,47 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
           limpiarCampos();
         });
 
-        LogsInformativos(
+        logsInformativos(
           "Se ha registrado la inspección ${data['idCliente']} correctamente",
           dataFrecuencia,
         );
 
-        showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "Los datos de la encuesta fueron llenados correctamente",
-          backgroundColor: Colors.green,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Registro exitoso",
+            message: "Los datos de la encuesta fueron llenados correctamente",
+            backgroundColor: Colors.green,
+          );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
 
-        showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message:
-              "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
-          backgroundColor: Colors.red,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Error",
+            message:
+                "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
+            backgroundColor: Colors.red,
+          );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
 
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: "Error inesperado: ${error.toString()}",
-        backgroundColor: Colors.red,
-      );
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Oops...",
+          message: "Error inesperado: ${error.toString()}",
+          backgroundColor: Colors.red,
+        );
+      }
     }
   }
 
@@ -673,6 +725,35 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
       'estado': "true",
     };
 
+    final conectado = await OfflineSyncUtil().verificarConexion();
+
+    if (!conectado) {
+      final box = Hive.box('operacionesOfflineEncuestas');
+      final operaciones = box.get('operaciones', defaultValue: []);
+      operaciones.add({
+        'accion': 'registrar',
+        'operacionId': UniqueKey().toString(),
+        'data': dataTemp,
+      });
+      await box.put('operaciones', operaciones);
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Sin conexión",
+            message:
+                "Avance guardado localmente y se sincronizará cuando haya internet",
+            backgroundColor: Colors.orange,
+          );
+        }
+      }
+      return;
+    }
+
     try {
       final inspeccionesService = InspeccionesService();
       var response = await inspeccionesService.registraInspecciones(dataTemp);
@@ -694,41 +775,47 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
           limpiarCampos();
         });
 
-        LogsInformativos(
+        logsInformativos(
           "Se ha registrado la inspección ${data['idCliente']} correctamente",
           dataFrecuencia,
         );
 
-        showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "Los datos de la encuesta fueron llenados correctamente",
-          backgroundColor: Colors.green,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Registro exitoso",
+            message: "Los datos de la encuesta fueron llenados correctamente",
+            backgroundColor: Colors.green,
+          );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
 
-        showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message:
-              "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
-          backgroundColor: Colors.red,
-        );
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Error",
+            message:
+                "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
+            backgroundColor: Colors.red,
+          );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
 
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: "Error inesperado: ${error.toString()}",
-        backgroundColor: Colors.red,
-      );
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Oops...",
+          message: "Error inesperado: ${error.toString()}",
+          backgroundColor: Colors.red,
+        );
+      }
     }
   }
 
@@ -736,7 +823,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
     // ✅ Agregar async a la función
 
     final String? token = await AuthService().getTokenApi();
-    print('Token obtenido para logout: $token');
+    debugPrint('Token obtenido para logout: $token');
 
     // Forzar que el token no sea null
     if (token == null) {
@@ -745,7 +832,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
     // Obtener los datos comunes utilizando el token
     final datosComunes = await obtenerDatosComunes(token);
-    print('Datos comunes obtenidos para logout: $datosComunes');
+    debugPrint('Datos comunes obtenidos para logout: $datosComunes');
 
     final dropboxService = DropboxService();
     final cloudinaryService = CloudinaryService();
@@ -757,7 +844,8 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
 
 // Obtener la imagen de la firma
     final Uint8List? signatureImage = await _controller.toPngBytes();
-    print("Firma imagen generada con tamaño: ${signatureImage?.length} bytes");
+    debugPrint(
+        "Firma imagen generada con tamaño: ${signatureImage?.length} bytes");
 
     String imagenFile2 = "";
     if (imagenSeleccionada != null) {
@@ -778,10 +866,10 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
               sharedLink2; // Guardar el enlace de la firma
         }
       } else {
-        print('No se pudo guardar el logo del cliente de forma correcta');
+        debugPrint('No se pudo guardar el logo del cliente de forma correcta');
       }
     } else {
-      print('El logo del cliente es nulo');
+      debugPrint('El logo del cliente es nulo');
     }
 
     if (signatureImage != null) {
@@ -796,17 +884,17 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
             imagenFile, "inspecciones");
         if (sharedLink != null) {
           linkFirma = sharedLink; // Guardar el enlace de la firma
-          print("Enlace de la firma: $linkFirma");
+          debugPrint("Enlace de la firma: $linkFirma");
         }
         if (sharedLink2 != null) {
           linkFirmaCloudinary = sharedLink2; // Guardar el enlace de la firma
-          print("Enlace de la firma: $linkFirmaCloudinary");
+          debugPrint("Enlace de la firma: $linkFirmaCloudinary");
         }
       } else {
-        print('No se pudo guardar la imagen de la firma correctamente');
+        debugPrint('No se pudo guardar la imagen de la firma correctamente');
       }
     } else {
-      print('La imagen de firma es nula');
+      debugPrint('La imagen de firma es nula');
     }
 
 // Subir imágenes adicionales si hay imágenes seleccionadas
@@ -1397,40 +1485,40 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                               SizedBox(height: 5),
                                               SizedBox(
                                                 height: 120,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  physics:
-                                                      ClampingScrollPhysics(),
-                                                  itemCount:
-                                                      pregunta.opciones.length,
-                                                  itemBuilder: (context, i) {
-                                                    final opcion =
-                                                        pregunta.opciones[i];
-                                                    final esNoAplica =
-                                                        opcion.toLowerCase() ==
-                                                            "no aplica";
-
-                                                    return ListTile(
-                                                      contentPadding:
-                                                          EdgeInsets.zero,
-                                                      title: Text(opcion),
-                                                      leading: esNoAplica
-                                                          ? null // No se muestra ningún widget a la izquierda
-                                                          : Radio<String>(
-                                                              value: opcion,
-                                                              groupValue:
-                                                                  pregunta
-                                                                      .respuesta,
-                                                              onChanged:
-                                                                  (value) {
-                                                                setState(() {
-                                                                  pregunta.respuesta =
-                                                                      value!;
-                                                                });
-                                                              },
-                                                            ),
-                                                    );
+                                                child: RadioGroup<String>(
+                                                  groupValue:
+                                                      pregunta.respuesta,
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      pregunta.respuesta =
+                                                          value!;
+                                                    });
                                                   },
+                                                  child: ListView.builder(
+                                                    shrinkWrap: true,
+                                                    physics:
+                                                        ClampingScrollPhysics(),
+                                                    itemCount: pregunta
+                                                        .opciones.length,
+                                                    itemBuilder: (context, i) {
+                                                      final opcion =
+                                                          pregunta.opciones[i];
+                                                      final esNoAplica = opcion
+                                                              .toLowerCase() ==
+                                                          "no aplica";
+
+                                                      return ListTile(
+                                                        contentPadding:
+                                                            EdgeInsets.zero,
+                                                        title: Text(opcion),
+                                                        leading: esNoAplica
+                                                            ? null // No se muestra ningún widget a la izquierda
+                                                            : Radio<String>(
+                                                                value: opcion,
+                                                              ),
+                                                      );
+                                                    },
+                                                  ),
                                                 ),
                                               ),
                                               TextFormField(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import '../Generales/formato_fecha.dart';
 import '../../page/InspeccionesPantalla2/inspecciones_pantalla_2.dart';
@@ -9,15 +9,14 @@ class TblInspeccionesPantalla1 extends StatefulWidget {
   final List<Map<String, dynamic>> clientes;
   final Function onCompleted;
 
-  TblInspeccionesPantalla1(
-      {Key? key,
+  const TblInspeccionesPantalla1(
+      {super.key,
       required this.showModal,
       required this.clientes,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblInspeccionesPantalla1State createState() =>
+  State<TblInspeccionesPantalla1> createState() =>
       _TblInspeccionesPantalla1State();
 }
 
@@ -33,7 +32,7 @@ class _TblInspeccionesPantalla1State extends State<TblInspeccionesPantalla1> {
       MaterialPageRoute(
           builder: (context) => InspeccionesPantalla2Page(
               showModal: () {
-                Navigator.pop(context); // Esto cierra el modal
+                if (mounted) Navigator.pop(context); // Esto cierra el modal
               },
               data: row)),
     ).then((_) {});
@@ -76,7 +75,7 @@ class _TblInspeccionesPantalla1State extends State<TblInspeccionesPantalla1> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return Row(
                   children: [
                     IconButton(
@@ -94,3 +93,6 @@ class _TblInspeccionesPantalla1State extends State<TblInspeccionesPantalla1> {
     );
   }
 }
+
+
+

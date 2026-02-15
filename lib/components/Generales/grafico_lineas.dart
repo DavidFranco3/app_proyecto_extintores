@@ -15,16 +15,16 @@ import '../Generales/flushbar_helper.dart';
 class GraficaLineas extends StatefulWidget {
   final List<Map<String, dynamic>> encuestaAbierta;
 
-  GraficaLineas({required this.encuestaAbierta});
+  const GraficaLineas({super.key, required this.encuestaAbierta});
 
   @override
-  _GraficaLineasState createState() => _GraficaLineasState();
+  State<GraficaLineas> createState() => _GraficaLineasState();
 }
 
 class _GraficaLineasState extends State<GraficaLineas> {
   late PageController _pageController;
   int paginaActual = 0;
-  GlobalKey _chartKey =
+  final GlobalKey _chartKey =
       GlobalKey(); // Clave para capturar el gráfico como imagen
 
   @override
@@ -90,8 +90,8 @@ class _GraficaLineasState extends State<GraficaLineas> {
       final preguntas = widget.encuestaAbierta[0]["datos"];
       final Map<String, PdfColor> leyendaColores = {
         for (var pregunta in preguntas)
-          pregunta['pregunta']:
-              PdfColor.fromInt(getColorForPregunta(pregunta['pregunta']).value)
+          pregunta['pregunta']: PdfColor.fromInt(
+              getColorForPregunta(pregunta['pregunta']).toARGB32())
       };
 
       final imageBytes000 =
@@ -207,14 +207,14 @@ class _GraficaLineasState extends State<GraficaLineas> {
         final file = File(filePath);
         await file.writeAsBytes(await pdf.save());
 
-        print("PDF guardado en: $filePath");
+        debugPrint("PDF guardado en: $filePath");
 
         await OpenFile.open(filePath);
       } else {
-        print("No se pudo obtener el directorio de almacenamiento.");
+        debugPrint("No se pudo obtener el directorio de almacenamiento.");
       }
     } catch (e) {
-      print("Error al guardar y abrir el PDF: $e");
+      debugPrint("Error al guardar y abrir el PDF: $e");
     }
   }
 
@@ -234,26 +234,30 @@ class _GraficaLineasState extends State<GraficaLineas> {
         var response = await inspeccionAnualService.sendEmail(
             widget.encuestaAbierta[0]["id"], file.path);
 
-        print(response);
+        debugPrint(response.toString());
 
         if (response['status'] == 200) {
-          showCustomFlushbar(
-              context: context,
-              title: "Correo enviado",
-              message: "El PDF fue enviado exitosamente al correo del cliente",
-              backgroundColor: Colors.green,
-            );
+          if (mounted) {
+            showCustomFlushbar(
+            context: context,
+            title: "Correo enviado",
+            message: "El PDF fue enviado exitosamente al correo del cliente",
+            backgroundColor: Colors.green,
+          );
+          }
         } else {
-          showCustomFlushbar(
-              context: context,
-              title: "Error al enviar el correo",
-              message: "Hubo un problema al enviar el PDF por correo",
-              backgroundColor: Colors.red,
-            );
+          if (mounted) {
+            showCustomFlushbar(
+            context: context,
+            title: "Error al enviar el correo",
+            message: "Hubo un problema al enviar el PDF por correo",
+            backgroundColor: Colors.red,
+          );
+          }
         }
       }
     } catch (e) {
-      print('Error al enviar el PDF: $e');
+      debugPrint('Error al enviar el PDF: $e');
     }
   }
 
@@ -361,3 +365,5 @@ class _GraficaLineasState extends State<GraficaLineas> {
     return colores[index % colores.length];
   }
 }
+
+

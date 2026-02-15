@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -9,15 +9,14 @@ class TblFrecuencias extends StatefulWidget {
   final List<Map<String, dynamic>> frecuencias;
   final Function onCompleted;
 
-  TblFrecuencias(
-      {Key? key,
+  const TblFrecuencias(
+      {super.key,
       required this.showModal,
       required this.frecuencias,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblFrecuenciasState createState() => _TblFrecuenciasState();
+  State<TblFrecuencias> createState() => _TblFrecuenciasState();
 }
 
 class _TblFrecuenciasState extends State<TblFrecuencias> {
@@ -25,7 +24,7 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     // Navegar a la página de eliminación en lugar de mostrar un modal
     Navigator.push(
       context,
@@ -40,7 +39,7 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
     );
   }
 
-  void openEditarModal(row) {
+  void openEditarModal(Map<String, dynamic> row) {
     // Navegar a la página de edición en lugar de mostrar un modal
     Navigator.push(
       context,
@@ -84,7 +83,7 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40,
@@ -130,3 +129,5 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
     );
   }
 }
+
+

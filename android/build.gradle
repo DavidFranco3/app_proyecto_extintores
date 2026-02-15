@@ -1,5 +1,3 @@
-
-
 buildscript {
     ext.kotlin_version = '2.1.0'
     repositories {
@@ -24,6 +22,16 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+subprojects {
+    plugins.withType(com.android.build.gradle.api.AndroidBasePlugin) {
+        project.android {
+            if (compileSdk == null) {
+                compileSdk 35
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {

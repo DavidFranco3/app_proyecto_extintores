@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../api/ramas.dart';
 import '../Logs/logs_informativos.dart';
-import 'package:flutter/services.dart';
 import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
@@ -17,14 +16,14 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones(
-      {required this.showModal,
+  const Acciones(
+      {super.key, required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data});
 
   @override
-  _AccionesState createState() => _AccionesState();
+  State<Acciones> createState() => _AccionesState();
 }
 
 class _AccionesState extends State<Acciones> {
@@ -49,8 +48,10 @@ class _AccionesState extends State<Acciones> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -64,7 +65,7 @@ class _AccionesState extends State<Acciones> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -171,21 +172,21 @@ class _AccionesState extends State<Acciones> {
           operacionesExitosas.add(operacion['operacionId']);
         }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error sincronizando operación: $e');
       }
     }
 
     // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
     if (operacionesExitosas.length == operaciones.length) {
       await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+      debugPrint("✔ Todas las operaciones sincronizadas. Limpieza completa.");
     } else {
       // 🔄 Si alguna falló, conserva solo las pendientes
       final nuevasOperaciones = operaciones
           .where((op) => !operacionesExitosas.contains(op['operacionId']))
           .toList();
       await box.put('operaciones', nuevasOperaciones);
-      print(
+      debugPrint(
           "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
     }
 
@@ -206,7 +207,7 @@ class _AccionesState extends State<Acciones> {
       final ramasBox = Hive.box('ramasBox');
       await ramasBox.put('ramas', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos después de sincronización: $e');
     }
   }
 
@@ -252,13 +253,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Rama guardada localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -272,35 +275,41 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha registrado la rama ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "La rama fue agregada correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error",
           message: "No se pudo guardar la rama",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -349,13 +358,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Rama actualizada localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -369,25 +380,29 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha actualizado la rama ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Actualización exitosa",
           message: "Los datos de la rama fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -433,13 +448,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Rama eliminada localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -453,25 +470,29 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha eliminado la rama ${data['id']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Eliminación exitosa",
           message: "Se han eliminado correctamente los datos de la rama",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -573,3 +594,5 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
+
+

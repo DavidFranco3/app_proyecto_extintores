@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/inspecciones.dart';
 import '../../components/Inspecciones/list_inspecciones.dart';
 import '../../components/Load/load.dart';
@@ -15,14 +15,14 @@ class InspeccionesInspectorPage extends StatefulWidget {
   final dynamic data;
   final dynamic data2;
 
-  InspeccionesInspectorPage({
+  const InspeccionesInspectorPage({super.key, 
     required this.showModal,
     required this.data,
     required this.data2,
   });
 
   @override
-  _InspeccionesInspectorPageState createState() =>
+  State<InspeccionesInspectorPage> createState() =>
       _InspeccionesInspectorPageState();
 }
 
@@ -38,7 +38,7 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -46,14 +46,14 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
     try {
       final conectado = await verificarConexion();
       if (conectado) {
-        print("Conectado a internet");
+        debugPrint("Conectado a internet");
         await getInspeccionesDesdeAPI();
       } else {
-        print("Sin conexión, cargando inspecciones desde Hive...");
+        debugPrint("Sin conexión, cargando inspecciones desde Hive...");
         await getInspeccionesDesdeHive();
       }
     } catch (e) {
-      print("Error al cargar inspecciones: $e");
+      debugPrint("Error al cargar inspecciones: $e");
       setState(() {
         dataInspecciones = [];
       });
@@ -153,7 +153,7 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
       MaterialPageRoute(
         builder: (context) => InspeccionesPantalla2Page(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           data: widget.data2,
         ),
@@ -205,7 +205,7 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
                 Expanded(
                   child: TblInspecciones(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     inspecciones: dataInspecciones,
                     onCompleted: cargarInspecciones,
@@ -216,3 +216,5 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
     );
   }
 }
+
+

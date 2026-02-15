@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -12,8 +12,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
 class FrecuenciasPage extends StatefulWidget {
+  const FrecuenciasPage({super.key});
+
   @override
-  _FrecuenciasPageState createState() => _FrecuenciasPageState();
+  State<FrecuenciasPage> createState() => _FrecuenciasPageState();
 }
 
 class _FrecuenciasPageState extends State<FrecuenciasPage> {
@@ -29,7 +31,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -39,7 +41,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
     if (conectado) {
       await getFrecuenciasDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getFrecuenciasDesdeHive();
     }
   }
@@ -67,7 +69,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias: $e");
+      debugPrint("Error al obtener las frecuencias: $e");
       setState(() {
         loading = false;
       });
@@ -94,7 +96,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo desde Hive: $e");
+      debugPrint("Error leyendo desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -107,7 +109,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
       MaterialPageRoute(
         builder: (context) => Acciones(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: getFrecuencias,
           accion: "registrar",
@@ -169,7 +171,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
                 Expanded(
                   child: TblFrecuencias(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     frecuencias: dataFrecuencias,
                     onCompleted: getFrecuencias,
@@ -186,3 +188,5 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
     );
   }
 }
+
+

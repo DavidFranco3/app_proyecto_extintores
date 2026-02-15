@@ -69,6 +69,7 @@ dependencies:
   hive_flutter: ^1.1.0
   dropdown_search: ^6.0.2
 
+  http_parser: any
 flutter_icons:
   android: true
   ios: true

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -12,8 +12,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
 class ClientesPage extends StatefulWidget {
+  const ClientesPage({super.key});
+
   @override
-  _ClientesPageState createState() => _ClientesPageState();
+  State<ClientesPage> createState() => _ClientesPageState();
 }
 
 class _ClientesPageState extends State<ClientesPage> {
@@ -30,17 +32,17 @@ class _ClientesPageState extends State<ClientesPage> {
   Future<void> cargarClientes() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClientesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClientesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -70,7 +72,7 @@ class _ClientesPageState extends State<ClientesPage> {
         }
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       if (mounted) {
         setState(() {
           loading = false;
@@ -110,7 +112,7 @@ class _ClientesPageState extends State<ClientesPage> {
         builder: (BuildContext context) {
           return Scaffold(
             body: Acciones(
-              showModal: () => Navigator.pop(context),
+              showModal: () { if (mounted) Navigator.pop(context); },
               onCompleted: cargarClientes,
               accion: "registrar",
               data: null,
@@ -190,7 +192,7 @@ class _ClientesPageState extends State<ClientesPage> {
                   child: dataClientes.isEmpty
                       ? Center(child: Text("No hay clientes disponibles."))
                       : TblClientes(
-                          showModal: () => Navigator.pop(context),
+                          showModal: () { if (mounted) Navigator.pop(context); },
                           clientes: dataClientes,
                           onCompleted: cargarClientes,
                         ),
@@ -206,3 +208,7 @@ class _ClientesPageState extends State<ClientesPage> {
     );
   }
 }
+
+
+
+

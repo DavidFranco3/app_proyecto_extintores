@@ -3,19 +3,18 @@ import '../../api/reporte_final.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import '../../components/Logs/logs_informativos.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:flutter/services.dart';
 import '../ReporteFinal/reporte_final.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../utils/offline_sync_util.dart';
 
 class RegistrarReporteScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -24,14 +23,15 @@ class RegistrarReporteScreen extends StatefulWidget {
   final dynamic data;
 
   @override
-  RegistrarReporteScreen({
+  const RegistrarReporteScreen({super.key, 
     required this.showModal,
     required this.onCompleted,
     required this.accion,
     required this.data,
   });
 
-  _RegistrarReporteScreenState createState() => _RegistrarReporteScreenState();
+  @override
+  State<RegistrarReporteScreen> createState() => _RegistrarReporteScreenState();
 }
 
 class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
@@ -57,8 +57,10 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -72,12 +74,12 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
   Future<void> sincronizarOperacionesPendientes() async {
-    final conectado = await verificarConexion();
+    final conectado = await OfflineSyncUtil().verificarConexion();
     if (!conectado) return;
 
     final box = Hive.box('operacionesOfflineReportes');
@@ -87,61 +89,62 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
         .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
         .toList();
 
-    final reportesService = ReporteFinalService();
-    final List<String> operacionesExitosas = [];
+    if (operaciones.isEmpty) return;
 
-    for (var operacion in List.from(operaciones)) {
+    final reportesService = ReporteFinalService();
+    final List<String> eliminarIds = [];
+
+    for (var operacion in operaciones) {
+      operacion['intentos'] = (operacion['intentos'] ?? 0) + 1;
       try {
         final response =
             await reportesService.registrarReporteFinal(operacion['data']);
 
-        if (response['status'] == 200 && response['data'] != null) {
-          final reportesBox = Hive.box('reporteFinalBox');
-          final actualesRaw = reportesBox.get('reportes', defaultValue: []);
+        final status = response['status'];
+        if (status == 200 ||
+            (status >= 400 && status < 500) ||
+            operacion['intentos'] >= 5) {
+          eliminarIds.add(operacion['operacionId'] ?? '');
 
-          final actuales = (actualesRaw as List)
-              .map<Map<String, dynamic>>(
-                  (item) => Map<String, dynamic>.from(item))
-              .toList();
+          if (status == 200 && response['data'] != null) {
+            final reportesBox = Hive.box('reporteFinalBox');
+            final actualesRaw = reportesBox.get('reportes', defaultValue: []);
+            final actuales = (actualesRaw as List)
+                .map<Map<String, dynamic>>(
+                    (item) => Map<String, dynamic>.from(item))
+                .toList();
 
-          actuales.removeWhere((element) => element['id'] == operacion['id']);
-
-          actuales.add({
-            'id': response['data']['_id'],
-            'nombre': response['data']['nombre'],
-            'descripcion': response['data']['descripcion'],
-            'estado': response['data']['estado'],
-            'createdAt': response['data']['createdAt'],
-            'updatedAt': response['data']['updatedAt'],
-          });
-
-          await reportesBox.put('reportes', actuales);
-
-          operacionesExitosas.add(operacion['operacionId']);
+            actuales.removeWhere((element) => element['id'] == operacion['id']);
+            actuales.add({
+              'id': response['data']['_id'],
+              'descripcion': response['data']['descripcion'],
+              'estado': response['data']['estado'],
+              'createdAt': response['data']['createdAt'],
+              'updatedAt': response['data']['updatedAt'],
+            });
+            await reportesBox.put('reportes', actuales);
+          }
         }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error sincronizando operación: $e');
+        if (operacion['intentos'] >= 5) {
+          eliminarIds.add(operacion['operacionId'] ?? '');
+        }
       }
     }
 
-    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
-    if (operacionesExitosas.length == operaciones.length) {
-      await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
-    } else {
-      // 🔄 Si alguna falló, conserva solo las pendientes
-      final nuevasOperaciones = operaciones
-          .where((op) => !operacionesExitosas.contains(op['operacionId']))
-          .toList();
-      await box.put('operaciones', nuevasOperaciones);
-      print(
-          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    final nuevasOperaciones = operaciones
+        .where((op) => !eliminarIds.contains(op['operacionId']))
+        .toList();
+    await box.put('operaciones', nuevasOperaciones);
+
+    if (eliminarIds.isNotEmpty) {
+      debugPrint("✔ Sincronización de reportes finalizada.");
     }
 
     // ✅ Actualizar lista completa desde API
     try {
       final List<dynamic> dataAPI = await reportesService.listarReporteFinal();
-
       final formateadas = dataAPI
           .map<Map<String, dynamic>>((item) => {
                 'id': item['_id'],
@@ -152,11 +155,9 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
                 'updatedAt': item['updatedAt'],
               })
           .toList();
-
-      final reportesBox = Hive.box('reporteFinalBox');
-      await reportesBox.put('reportes', formateadas);
+      await Hive.box('reporteFinalBox').put('reportes', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos de reportes: $e');
     }
   }
 
@@ -165,7 +166,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
       _isLoading = true;
     });
 
-    final conectado = await verificarConexion();
+    final conectado = await OfflineSyncUtil().verificarConexion();
 
     var dataTemp = {
       'descripcion': data['descripcion'],
@@ -175,78 +176,83 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     };
 
     if (!conectado) {
-      final box = Hive.box('operacionesOfflineInspecciones');
+      final box = Hive.box(
+          'operacionesOfflineReportes'); // Corregido: RegistrarReporte usa reportes
       final operaciones = box.get('operaciones', defaultValue: []);
       operaciones.add({
-        'accion': 'editar',
-        'id': widget.data["id"],
+        'accion': 'registrar',
+        'operacionId': UniqueKey().toString(),
         'data': dataTemp,
       });
       await box.put('operaciones', operaciones);
 
-      final inspeccionesBox = Hive.box('inspeccionesBox');
-      final actualesRaw = inspeccionesBox.get('inspecciones', defaultValue: []);
-
+      // Actualización local anticipada
+      final reportesBox = Hive.box('reporteFinalBox');
+      final actualesRaw = reportesBox.get('reportes', defaultValue: []);
       final actuales = (actualesRaw as List)
-          .map<Map<String, dynamic>>(
-              (item) => Map<String, dynamic>.from(item as Map))
+          .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
           .toList();
 
-      final index =
-          actuales.indexWhere((element) => element['id'] == widget.data["id"]);
-      // Actualiza localmente el registro editado
-      if (index != -1) {
-        actuales[index] = {
-          ...actuales[index],
-          ...dataTemp,
-          'updatedAt': DateTime.now().toString(),
-        };
-        await inspeccionesBox.put('inspecciones', actuales);
-      }
-
-      setState(() {
-        _isLoading = false;
+      actuales.add({
+        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        ...dataTemp,
+        'createdAt': DateTime.now().toString(),
+        'updatedAt': DateTime.now().toString(),
       });
-      returnPrincipalPage();
-      showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Encuesta actualizada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
-      return;
-    }
+      await reportesBox.put('reportes', actuales);
 
-    try {
-      final inspeccionesService = ReporteFinalService();
-      var response = await inspeccionesService.registrarReporteFinal(dataTemp);
-
-      if (response['status'] == 200) {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
         returnPrincipalPage();
-        LogsInformativos(
-            "Se ha actualizado la encuesta ${data['nombre']} correctamente",
-            {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
-          title: "Actualización exitosa",
-          message: "Los datos de la encuesta fueron actualizados correctamente",
-          backgroundColor: Colors.green,
+          title: "Sin conexión",
+          message:
+              "Reporte guardado localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
         );
+        }
+      }
+      return;
+    }
+
+    try {
+      final reportesService = ReporteFinalService();
+      var response = await reportesService.registrarReporteFinal(dataTemp);
+
+      if (response['status'] == 200) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          returnPrincipalPage();
+          if (mounted) {
+            showCustomFlushbar(
+            context: context,
+            title: "Registro exitoso",
+            message: "El reporte se ha guardado correctamente",
+            backgroundColor: Colors.green,
+          );
+          }
+        }
       }
     } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
+        }
+      }
     }
   }
 
@@ -330,7 +336,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
 
   final ImagePicker _picker = ImagePicker();
   XFile? _image; // Imagen en vista previa
-  TextEditingController _comentarioController = TextEditingController();
+  final TextEditingController _comentarioController = TextEditingController();
 
   // Método para seleccionar imagen
   Future<void> _pickImage() async {
@@ -359,7 +365,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
         _comentarioController.clear();
       });
 
-      print("Imagen agregada: ${imagePaths.last}");
+      debugPrint("Imagen agregada: ${imagePaths.last}");
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -551,3 +557,5 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     );
   }
 }
+
+

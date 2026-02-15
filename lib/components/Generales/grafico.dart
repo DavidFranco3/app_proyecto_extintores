@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -12,16 +12,16 @@ import 'package:open_file/open_file.dart';
 class GraficaBarras extends StatefulWidget {
   final List<Map<String, dynamic>> dataInspecciones;
 
-  GraficaBarras({required this.dataInspecciones});
+  const GraficaBarras({super.key, required this.dataInspecciones});
 
   @override
-  _GraficaBarrasState createState() => _GraficaBarrasState();
+  State<GraficaBarras> createState() => _GraficaBarrasState();
 }
 
 class _GraficaBarrasState extends State<GraficaBarras> {
   late PageController _pageController;
   int paginaActual = 0;
-  GlobalKey _chartKey = GlobalKey(); // Clave para capturar el gráfico como imagen
+  final GlobalKey _chartKey = GlobalKey(); // Clave para capturar el gráfico como imagen
 
   @override
   void initState() {
@@ -90,15 +90,15 @@ Future<void> _generatePdf() async {
       final file = File(filePath);
       await file.writeAsBytes(await pdf.save());
 
-      print("PDF guardado en: $filePath");
+      debugPrint("PDF guardado en: $filePath");
 
       // Abrir el PDF con el visor predeterminado
       await OpenFile.open(filePath);
     } else {
-      print("No se pudo obtener el directorio de almacenamiento.");
+      debugPrint("No se pudo obtener el directorio de almacenamiento.");
     }
   } catch (e) {
-    print("Error al guardar y abrir el PDF: $e");
+    debugPrint("Error al guardar y abrir el PDF: $e");
   }
 }
 
@@ -228,3 +228,4 @@ Future<void> _generatePdf() async {
     );
   }
 }
+

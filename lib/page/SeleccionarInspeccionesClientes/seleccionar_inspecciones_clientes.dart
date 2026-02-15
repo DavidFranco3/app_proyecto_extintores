@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,8 +17,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 void main() => runApp(MaterialApp(home: ClienteInspeccionesApp()));
 
 class ClienteInspeccionesApp extends StatefulWidget {
+  const ClienteInspeccionesApp({super.key});
+
   @override
-  _ClienteInspeccionesAppState createState() => _ClienteInspeccionesAppState();
+  State<ClienteInspeccionesApp> createState() => _ClienteInspeccionesAppState();
 }
 
 class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
@@ -37,10 +39,10 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
   Future<void> cargarClientes() async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getClientesDesdeAPI();
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getClientesDesdeHive();
     }
   }
@@ -48,17 +50,17 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
   Future<void> cargarInspecciones(String idCliente) async {
     final conectado = await verificarConexion();
     if (conectado) {
-      print("Conectado a internet");
+      debugPrint("Conectado a internet");
       await getInspeccionesDesdeAPI(idCliente);
     } else {
-      print("Sin conexión, cargando desde Hive...");
+      debugPrint("Sin conexión, cargando desde Hive...");
       await getInspeccionesDesdeHive();
     }
   }
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -88,7 +90,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
         }
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -151,7 +153,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
         });
       }
     } catch (e) {
-      print("Error al obtener las inspecciones: $e");
+      debugPrint("Error al obtener las inspecciones: $e");
     } finally {
       setState(() => isLoading = false);
     }
@@ -268,7 +270,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
 
       OpenFile.open(finalPath);
     } catch (e) {
-      print("Error al combinar los PDF: $e");
+      debugPrint("Error al combinar los PDF: $e");
     } finally {
       setState(() => isLoading = false);
     }
@@ -359,3 +361,4 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
     );
   }
 }
+

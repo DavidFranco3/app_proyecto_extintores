@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../api/inspecciones_proximas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -11,8 +11,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class ProgramaInspeccionesPage extends StatefulWidget {
+  const ProgramaInspeccionesPage({super.key});
+
   @override
-  _ProgramaInspeccionesPageState createState() =>
+  State<ProgramaInspeccionesPage> createState() =>
       _ProgramaInspeccionesPageState();
 }
 
@@ -36,7 +38,7 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
         await getInspeccionesDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar inspecciones: $e");
+      debugPrint("Error general al cargar inspecciones: $e");
       setState(() {
         dataInspeccionesProximas = [];
       });
@@ -49,7 +51,7 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -144,3 +146,4 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -9,15 +9,14 @@ class TblClientes extends StatefulWidget {
   final List<Map<String, dynamic>> clientes;
   final Function onCompleted;
 
-  TblClientes(
-      {Key? key,
+  const TblClientes(
+      {super.key,
       required this.showModal,
       required this.clientes,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblClientesState createState() => _TblClientesState();
+  State<TblClientes> createState() => _TblClientesState();
 }
 
 class _TblClientesState extends State<TblClientes> {
@@ -25,7 +24,7 @@ class _TblClientesState extends State<TblClientes> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEditarModal(row) {
+  void openEditarModal(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -33,7 +32,7 @@ class _TblClientesState extends State<TblClientes> {
           return Scaffold(
             body: Acciones(
               showModal: () {
-                Navigator.pop(context); // Cierra la página actual
+                if (mounted) Navigator.pop(context); // Cierra la página actual
               },
               onCompleted: widget.onCompleted,
               accion: "editar",
@@ -45,7 +44,7 @@ class _TblClientesState extends State<TblClientes> {
     );
   }
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -53,7 +52,7 @@ class _TblClientesState extends State<TblClientes> {
           return Scaffold(
             body: Acciones(
               showModal: () {
-                Navigator.pop(context); // Cierra la página actual
+                if (mounted) Navigator.pop(context); // Cierra la página actual
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",
@@ -109,7 +108,7 @@ class _TblClientesState extends State<TblClientes> {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
                   icon: FaIcon(FontAwesomeIcons.bars,
                       color: Color.fromARGB(255, 27, 40,
@@ -155,3 +154,6 @@ class _TblClientesState extends State<TblClientes> {
     );
   }
 }
+
+
+

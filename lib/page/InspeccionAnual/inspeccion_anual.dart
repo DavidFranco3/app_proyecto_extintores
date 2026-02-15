@@ -19,14 +19,15 @@ class InspeccionAnualPage extends StatefulWidget {
   final Function onCompleted;
   final String accion;
   final dynamic data;
-  InspeccionAnualPage({
+  const InspeccionAnualPage({super.key, 
     required this.showModal,
     required this.onCompleted,
     required this.accion,
     required this.data,
   });
 
-  _InspeccionAnualPageState createState() => _InspeccionAnualPageState();
+  @override
+  State<InspeccionAnualPage> createState() => _InspeccionAnualPageState();
 }
 
 class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
@@ -48,7 +49,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -58,7 +59,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
     if (conectado) {
       await getClientesDesdeAPI();
     } else {
-      print("Sin conexión, cargando clientes desde Hive...");
+      debugPrint("Sin conexión, cargando clientes desde Hive...");
       await getClientesDesdeHive();
     }
   }
@@ -85,7 +86,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener los clientes: $e");
+      debugPrint("Error al obtener los clientes: $e");
       setState(() {
         loading = false;
       });
@@ -113,7 +114,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo clientes desde Hive: $e");
+      debugPrint("Error leyendo clientes desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -185,36 +186,42 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
           _isLoading = false;
           returnPrincipalPage();
         });
-        LogsInformativos(
+        logsInformativos(
             "Se ha registrado la inspección anual ${data['nombre']} correctamente",
             dataTemp);
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "La inspección anual fue agregada correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Hubo un problema",
           message: "Hubo un error al agregar la inspección anual",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -416,3 +423,5 @@ class Pregunta {
     return {"pregunta": pregunta, "valores": valores};
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -14,8 +14,10 @@ import '../../api/frecuencias.dart';
 import '../../api/clasificaciones.dart';
 
 class EncuestasPage extends StatefulWidget {
+  const EncuestasPage({super.key});
+
   @override
-  _EncuestasPageState createState() => _EncuestasPageState();
+  State<EncuestasPage> createState() => _EncuestasPageState();
 }
 
 class _EncuestasPageState extends State<EncuestasPage> {
@@ -47,7 +49,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -59,7 +61,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
     if (conectado) {
       await getEncuestasDesdeAPI();
     } else {
-      print("Sin conexión, cargando encuestas desde Hive...");
+      debugPrint("Sin conexión, cargando encuestas desde Hive...");
       await getEncuestasDesdeHive();
     }
   }
@@ -90,7 +92,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener encuestas desde API: $e");
+      debugPrint("Error al obtener encuestas desde API: $e");
       setState(() {
         loading = false;
       });
@@ -120,7 +122,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo encuestas desde Hive: $e");
+      debugPrint("Error leyendo encuestas desde Hive: $e");
       setState(() {
         loading = false;
       });
@@ -134,7 +136,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
     if (conectado) {
       await getClasificacionesDesdeAPI();
     } else {
-      print("Sin conexión, cargando clasificaciones desde Hive...");
+      debugPrint("Sin conexión, cargando clasificaciones desde Hive...");
       await getClasificacionesDesdeHive();
     }
   }
@@ -160,7 +162,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las clasificaciones desde API: $e");
+      debugPrint("Error al obtener las clasificaciones desde API: $e");
       setState(() {
         dataClasificaciones = [];
       });
@@ -185,7 +187,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo clasificaciones desde Hive: $e");
+      debugPrint("Error leyendo clasificaciones desde Hive: $e");
       setState(() {
         dataClasificaciones = [];
       });
@@ -199,7 +201,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
     if (conectado) {
       await getFrecuenciasDesdeAPI();
     } else {
-      print("Sin conexión, cargando frecuencias desde Hive...");
+      debugPrint("Sin conexión, cargando frecuencias desde Hive...");
       await getFrecuenciasDesdeHive();
     }
   }
@@ -225,7 +227,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error al obtener las frecuencias desde API: $e");
+      debugPrint("Error al obtener las frecuencias desde API: $e");
       setState(() {
         dataFrecuencias = [];
       });
@@ -250,7 +252,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         });
       }
     } catch (e) {
-      print("Error leyendo frecuencias desde Hive: $e");
+      debugPrint("Error leyendo frecuencias desde Hive: $e");
       setState(() {
         dataFrecuencias = [];
       });
@@ -283,7 +285,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
       MaterialPageRoute(
         builder: (context) => CrearEncuestaPantalla1Screen(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: getEncuestas,
           accion: "registrar",
@@ -474,7 +476,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
                 Expanded(
                   child: TblEncuestas(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     encuestas: filteredEncuestas,
                     onCompleted: getEncuestas,
@@ -485,3 +487,5 @@ class _EncuestasPageState extends State<EncuestasPage> {
     );
   }
 }
+
+

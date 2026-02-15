@@ -24,14 +24,16 @@ class Acciones extends StatefulWidget {
   final String accion;
   final dynamic data;
 
-  Acciones(
-      {required this.showModal,
-      required this.onCompleted,
-      required this.accion,
-      required this.data});
+  const Acciones({
+    super.key,
+    required this.showModal,
+    required this.onCompleted,
+    required this.accion,
+    required this.data,
+  });
 
   @override
-  _AccionesState createState() => _AccionesState();
+  State<Acciones> createState() => _AccionesState();
 }
 
 class _AccionesState extends State<Acciones> {
@@ -79,13 +81,13 @@ class _AccionesState extends State<Acciones> {
 
       if (pngBytes != null) {
         await file.writeAsBytes(pngBytes.buffer.asUint8List());
-        print('Imagen guardada en: $filePath');
+        debugPrint('Imagen guardada en: $filePath');
       }
 
       // Retornar la ruta del archivo
       return filePath;
     } catch (e) {
-      print('Error guardando la imagen: $e');
+      debugPrint('Error guardando la imagen: $e');
       return ''; // Valor vacío en caso de error
     }
   }
@@ -115,8 +117,10 @@ class _AccionesState extends State<Acciones> {
 
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -134,7 +138,7 @@ class _AccionesState extends State<Acciones> {
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -272,19 +276,19 @@ class _AccionesState extends State<Acciones> {
           operacionesExitosas.add(operacion['operacionId']);
         }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error sincronizando operación: $e');
       }
     }
 
     if (operacionesExitosas.length == operaciones.length) {
       await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
+      debugPrint("✔ Todas las operaciones sincronizadas. Limpieza completa.");
     } else {
       final nuevasOperaciones = operaciones
           .where((op) => !operacionesExitosas.contains(op['operacionId']))
           .toList();
       await box.put('operaciones', nuevasOperaciones);
-      print(
+      debugPrint(
           "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
     }
 
@@ -306,7 +310,7 @@ class _AccionesState extends State<Acciones> {
       final usuariosBox = Hive.box('usuariosBox');
       await usuariosBox.put('usuarios', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos después de sincronización: $e');
     }
   }
 
@@ -358,13 +362,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Usuario guardado localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -378,35 +384,41 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha registrado el usuario ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Registro exitoso",
           message: "El usuario fue agregado correctamente",
           backgroundColor: Colors.green,
         );
+        }
       } else {
         setState(() {
           _isLoading = false;
         });
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Error",
           message: "No se pudo guardar el usuario",
           backgroundColor: Colors.red,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -455,13 +467,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Usuario actualizado localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -475,25 +489,29 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha actualizado el usuario ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Actualización exitosa",
           message: "Los datos del usuario fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -539,13 +557,15 @@ class _AccionesState extends State<Acciones> {
       });
       widget.onCompleted();
       widget.showModal();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Usuario eliminado localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
@@ -560,25 +580,29 @@ class _AccionesState extends State<Acciones> {
         });
         widget.onCompleted();
         widget.showModal();
-        LogsInformativos(
+        logsInformativos(
             "Se ha eliminado el usuario ${data['id']} correctamente", {});
-        showCustomFlushbar(
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Eliminación exitosa",
           message: "Se han eliminado correctamente los datos del usuario",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -612,10 +636,10 @@ class _AccionesState extends State<Acciones> {
             linkFirmaCloudinary = sharedLink2; // Guardar el enlace de la firma
           }
         } else {
-          print('No se pudo guardar la imagen de la firma correctamente');
+          debugPrint('No se pudo guardar la imagen de la firma correctamente');
         }
       } else {
-        print('La imagen de firma es nula');
+        debugPrint('La imagen de firma es nula');
       }
 
       // Desactivamos la animación de carga después de que todas las imágenes se hayan subido
@@ -664,7 +688,7 @@ class _AccionesState extends State<Acciones> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(),
+      appBar: const Header(),
       drawer: MenuLateral(currentPage: "Usuarios"), // Usa el menú lateral
       body: _isLoading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
@@ -678,7 +702,7 @@ class _AccionesState extends State<Acciones> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         '${capitalize(widget.accion)} usuario',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 24, // Tamaño grande
                           fontWeight: FontWeight.bold, // Negrita
                         ),
@@ -693,7 +717,8 @@ class _AccionesState extends State<Acciones> {
                       children: [
                         TextFormField(
                           controller: _nombreController,
-                          decoration: InputDecoration(labelText: 'Nombre'),
+                          decoration:
+                              const InputDecoration(labelText: 'Nombre'),
                           enabled: !isEliminar && !_isLoading,
                           validator: isEliminar
                               ? null
@@ -703,7 +728,7 @@ class _AccionesState extends State<Acciones> {
                         ),
                         TextFormField(
                           controller: _emailController,
-                          decoration: InputDecoration(labelText: 'Email'),
+                          decoration: const InputDecoration(labelText: 'Email'),
                           enabled: !isEliminar && !_isLoading,
                           keyboardType: TextInputType.emailAddress,
                           validator: isEliminar
@@ -716,7 +741,8 @@ class _AccionesState extends State<Acciones> {
                         ),
                         TextFormField(
                           controller: _telefonoController,
-                          decoration: InputDecoration(labelText: 'Teléfono'),
+                          decoration:
+                              const InputDecoration(labelText: 'Teléfono'),
                           enabled: !isEliminar && !_isLoading,
                           keyboardType: TextInputType.number,
                           validator: isEliminar
@@ -733,7 +759,8 @@ class _AccionesState extends State<Acciones> {
                         ),
                         TextFormField(
                           controller: _passwordController,
-                          decoration: InputDecoration(labelText: 'Contraseña'),
+                          decoration:
+                              const InputDecoration(labelText: 'Contraseña'),
                           enabled: !isEliminar && !_isLoading,
                           obscureText: true,
                           validator: (value) {
@@ -746,7 +773,7 @@ class _AccionesState extends State<Acciones> {
                           },
                         ),
                         DropdownSearch<String>(
-                          key: Key('rolDropdown'),
+                          key: const Key('rolDropdown'),
                           enabled: !isEliminar &&
                               !_isLoading, // Deshabilitado si corresponde
                           items: (filter, _) {
@@ -890,3 +917,5 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
+
+

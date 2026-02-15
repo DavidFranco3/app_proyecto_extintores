@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -9,15 +9,14 @@ class TblExtintores extends StatefulWidget {
   final List<Map<String, dynamic>> extintores;
   final Function onCompleted;
 
-  TblExtintores(
-      {Key? key,
+  const TblExtintores(
+      {super.key,
       required this.showModal,
       required this.extintores,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblExtintoresState createState() => _TblExtintoresState();
+  State<TblExtintores> createState() => _TblExtintoresState();
 }
 
 class _TblExtintoresState extends State<TblExtintores> {
@@ -25,35 +24,35 @@ class _TblExtintoresState extends State<TblExtintores> {
   Widget? contentModal;
   String? titulosModal;
 
- void openEditarModal(row) {
-  // Navegar a la página de edición pasando los parámetros necesarios
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => Acciones(
-        showModal: widget.showModal,
-        onCompleted: widget.onCompleted,
-        accion: "editar",
-        data: row,
+  void openEditarModal(Map<String, dynamic> row) {
+    // Navegar a la página de edición pasando los parámetros necesarios
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Acciones(
+          showModal: widget.showModal,
+          onCompleted: widget.onCompleted,
+          accion: "editar",
+          data: row,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-void openEliminarModal(row) {
-  // Navegar a la página de eliminación pasando los parámetros necesarios
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => Acciones(
-        showModal: widget.showModal,
-        onCompleted: widget.onCompleted,
-        accion: "eliminar",
-        data: row,
+  void openEliminarModal(Map<String, dynamic> row) {
+    // Navegar a la página de eliminación pasando los parámetros necesarios
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Acciones(
+          showModal: widget.showModal,
+          onCompleted: widget.onCompleted,
+          accion: "eliminar",
+          data: row,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +65,7 @@ void openEliminarModal(row) {
       {'name': 'Creado el'},
     ];
 
-      int totalRegistros = widget.extintores.length;
-
+    int totalRegistros = widget.extintores.length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -89,10 +87,11 @@ void openEliminarModal(row) {
                 };
               }).toList(),
               columnas: columnas,
-              accionesBuilder: (row) {
+              accionesBuilder: (Map<String, dynamic> row) {
                 return PopupMenuButton<String>(
-                  icon: FaIcon(FontAwesomeIcons
-                      .bars, color: Color.fromARGB(255, 27, 40, 223)), // Este es el botón faBars que muestra el menú
+                  icon: FaIcon(FontAwesomeIcons.bars,
+                      color: Color.fromARGB(255, 27, 40,
+                          223)), // Este es el botón faBars que muestra el menú
                   onSelected: (String value) {
                     if (value == 'editar') {
                       openEditarModal(row['_originalRow']);
@@ -134,3 +133,5 @@ void openEliminarModal(row) {
     );
   }
 }
+
+

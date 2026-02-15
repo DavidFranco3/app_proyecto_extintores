@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:prueba/page/RegistrarReporte/registrar_reporte.dart';
 import '../../api/reporte_final.dart';
@@ -12,8 +12,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:hive_flutter/hive_flutter.dart';
 
 class ReporteFinalPage extends StatefulWidget {
+  const ReporteFinalPage({super.key});
+
   @override
-  _ReporteFinalPageState createState() => _ReporteFinalPageState();
+  State<ReporteFinalPage> createState() => _ReporteFinalPageState();
 }
 
 class _ReporteFinalPageState extends State<ReporteFinalPage> {
@@ -33,7 +35,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   /// Verifica si hay conexión a internet
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -47,7 +49,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
         await getReporteFinalDesdeHive();
       }
     } catch (e) {
-      print("Error general al cargar reporte final: $e");
+      debugPrint("Error general al cargar reporte final: $e");
       setState(() {
         dataReporteFinal = [];
       });
@@ -118,7 +120,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
       MaterialPageRoute(
         builder: (context) => RegistrarReporteScreen(
           showModal: () {
-            Navigator.pop(context);
+            if (mounted) Navigator.pop(context);
           },
           onCompleted: cargarReporteFinal,
           accion: "registrar",
@@ -172,7 +174,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                 Expanded(
                   child: TblReporteFinal(
                     showModal: () {
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                     },
                     reporteFinal: dataReporteFinal,
                     onCompleted: cargarReporteFinal,
@@ -189,3 +191,5 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     );
   }
 }
+
+

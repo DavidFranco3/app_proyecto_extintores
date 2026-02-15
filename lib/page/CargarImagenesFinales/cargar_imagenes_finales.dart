@@ -9,7 +9,6 @@ import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:flutter/services.dart';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
@@ -24,14 +23,15 @@ class CargarImagenesFinalesScreen extends StatefulWidget {
   final dynamic data;
 
   @override
-  CargarImagenesFinalesScreen({
+  const CargarImagenesFinalesScreen({super.key, 
     required this.showModal,
     required this.onCompleted,
     required this.accion,
     required this.data,
   });
 
-  _CargarImagenesFinalesScreenState createState() =>
+  @override
+  State<CargarImagenesFinalesScreen> createState() =>
       _CargarImagenesFinalesScreenState();
 }
 
@@ -56,8 +56,10 @@ class _CargarImagenesFinalesScreenState
     });
     sincronizarOperacionesPendientes();
 
-    Connectivity().onConnectivityChanged.listen((event) {
-      if (event != ConnectivityResult.none) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> event) {
+      if (event.any((result) => result != ConnectivityResult.none)) {
         sincronizarOperacionesPendientes();
       }
     });
@@ -70,7 +72,7 @@ class _CargarImagenesFinalesScreenState
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion == ConnectivityResult.none) return false;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
     return await InternetConnection().hasInternetAccess;
   }
 
@@ -85,55 +87,75 @@ class _CargarImagenesFinalesScreenState
         .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
         .toList();
 
+    if (operaciones.isEmpty) return;
+
     final inspeccionesService = InspeccionesService();
-    final List<String> operacionesExitosas = [];
+    final List<int> eliminarIndices = [];
 
-    for (var operacion in List.from(operaciones)) {
+    for (int i = 0; i < operaciones.length; i++) {
+      final operacion = operaciones[i];
+
+      // Inicializar / Incrementar intentos
+      operacion['intentos'] = (operacion['intentos'] ?? 0) + 1;
+
       try {
-          final response =
-              await inspeccionesService.actualizarImagenesInspecciones(
-                  operacion['id'], operacion['data']);
+        final response = await inspeccionesService
+            .actualizarImagenesInspecciones(operacion['id'], operacion['data']);
 
-          if (response['status'] == 200) {
-            final inspeccionesBox = Hive.box('inspeccionesBox');
-            final actualesRaw =
-                inspeccionesBox.get('inspecciones', defaultValue: []);
+        if (response['status'] == 200) {
+          final inspeccionesBox = Hive.box('inspeccionesBox');
+          final actualesRaw =
+              inspeccionesBox.get('inspecciones', defaultValue: []);
+          final actuales = (actualesRaw as List)
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
+              .toList();
 
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
-            if (index != -1) {
-              actuales[index] = {
-                ...actuales[index],
-                ...operacion['data'],
-                'updatedAt': DateTime.now().toString(),
-              };
-              await inspeccionesBox.put('inspecciones', actuales);
-            }
+          final index = actuales
+              .indexWhere((element) => element['id'] == operacion['id']);
+          if (index != -1) {
+            actuales[index] = {
+              ...actuales[index],
+              ...operacion['data'],
+              'updatedAt': DateTime.now().toString()
+            };
+            await inspeccionesBox.put('inspecciones', actuales);
           }
-
-          operacionesExitosas.add(operacion['operacionId']);
+          eliminarIndices.add(i);
+        } else if (response['status'] >= 400 && response['status'] < 500) {
+          debugPrint(
+              "Error no reintentable (4xx) en sincronización de imágenes: ${response['status']}");
+          eliminarIndices.add(i);
+        } else {
+          debugPrint(
+              "Error de servidor (5xx) en sincronización de imágenes: ${response['status']}");
+          if (operacion['intentos'] >= 5) {
+            debugPrint(
+                "Límite de reintentos alcanzado para sincronización de imágenes.");
+            eliminarIndices.add(i);
+          }
+        }
       } catch (e) {
-        print('Error sincronizando operación: $e');
+        debugPrint('Error de red sincronizando imágenes: $e');
+        if (operacion['intentos'] >= 5) {
+          debugPrint("Límite de reintentos alcanzado por red en imágenes.");
+          eliminarIndices.add(i);
+        }
       }
     }
 
-    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
-    if (operacionesExitosas.length == operaciones.length) {
-      await box.put('operaciones', []);
-      print("✔ Todas las operaciones sincronizadas. Limpieza completa.");
-    } else {
-      // 🔄 Si alguna falló, conserva solo las pendientes
-      final nuevasOperaciones = operaciones
-          .where((op) => !operacionesExitosas.contains(op['operacionId']))
-          .toList();
-      await box.put('operaciones', nuevasOperaciones);
-      print(
-          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
+    // Actualizar el box de Hive
+    final nuevasOperaciones = operaciones
+        .asMap()
+        .entries
+        .where((entry) => !eliminarIndices.contains(entry.key))
+        .map((e) => e.value)
+        .toList();
+
+    await box.put('operaciones', nuevasOperaciones);
+
+    if (eliminarIndices.isNotEmpty) {
+      debugPrint("✔ Sincronización de imágenes finalizada.");
     }
 
     // ✅ Actualizar lista completa desde API
@@ -183,11 +205,11 @@ class _CargarImagenesFinalesScreenState
       final inspeccionesBox = Hive.box('inspeccionesBox');
       await inspeccionesBox.put('inspecciones', formateadas);
     } catch (e) {
-      print('Error actualizando datos después de sincronización: $e');
+      debugPrint('Error actualizando datos después de sincronización: $e');
     }
   }
 
-void _guardarEncuesta(Map<String, dynamic> data) async {
+  void _guardarEncuesta(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
@@ -217,7 +239,8 @@ void _guardarEncuesta(Map<String, dynamic> data) async {
               (item) => Map<String, dynamic>.from(item as Map))
           .toList();
 
-      final index = actuales.indexWhere((element) => element['id'] == widget.data["id"]);
+      final index =
+          actuales.indexWhere((element) => element['id'] == widget.data["id"]);
       // Actualiza localmente el registro editado
       if (index != -1) {
         actuales[index] = {
@@ -232,44 +255,52 @@ void _guardarEncuesta(Map<String, dynamic> data) async {
         _isLoading = false;
       });
       returnPrincipalPage();
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Sin conexión",
         message:
             "Encuesta actualizada localmente y se sincronizará cuando haya internet",
         backgroundColor: Colors.orange,
       );
+      }
       return;
     }
 
     try {
       final inspeccionesService = InspeccionesService();
-      var response = await inspeccionesService.actualizarImagenesInspecciones(widget.data["id"], dataTemp);
+      var response = await inspeccionesService.actualizarImagenesInspecciones(
+          widget.data["id"], dataTemp);
 
       if (response['status'] == 200) {
         setState(() {
           _isLoading = false;
         });
         returnPrincipalPage();
-        LogsInformativos(
-            "Se ha actualizado la encuesta ${data['nombre']} correctamente", {});
-        showCustomFlushbar(
+        logsInformativos(
+            "Se ha actualizado la encuesta ${data['nombre']} correctamente",
+            {});
+        if (mounted) {
+          showCustomFlushbar(
           context: context,
           title: "Actualización exitosa",
           message: "Los datos de la encuesta fueron actualizados correctamente",
           backgroundColor: Colors.green,
         );
+        }
       }
     } catch (error) {
       setState(() {
         _isLoading = false;
       });
-      showCustomFlushbar(
+      if (mounted) {
+        showCustomFlushbar(
         context: context,
         title: "Oops...",
         message: error.toString(),
         backgroundColor: Colors.red,
       );
+      }
     }
   }
 
@@ -375,7 +406,7 @@ void _guardarEncuesta(Map<String, dynamic> data) async {
         _image = null;
       });
 
-      print("Imagen agregada: ${imagePaths.last}");
+      debugPrint("Imagen agregada: ${imagePaths.last}");
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -544,3 +575,5 @@ void _guardarEncuesta(Map<String, dynamic> data) async {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import './event.dart'; // Asegúrate de que este archivo exista y contenga la clase Event
 import 'package:intl/intl.dart';
@@ -6,16 +6,16 @@ import 'package:intl/intl.dart';
 class Calendario extends StatefulWidget {
   final List<Event> eventosIniciales;
 
-  Calendario({required this.eventosIniciales});
+  const Calendario({super.key, required this.eventosIniciales});
 
   @override
-  _CalendarioState createState() => _CalendarioState();
+  State<Calendario> createState() => _CalendarioState();
 }
 
 class _CalendarioState extends State<Calendario> {
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
-  CalendarFormat _calendarFormat =
+  final CalendarFormat _calendarFormat =
       CalendarFormat.month; // Inicialmente mostramos el mes
 
   String formatDate(DateTime date) {
@@ -127,3 +127,4 @@ class _CalendarioState extends State<Calendario> {
     );
   }
 }
+

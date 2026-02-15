@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../page/Clasificaciones/clasificaciones.dart';
 import '../../page/Frecuencias/frecuencias.dart';
@@ -30,10 +30,10 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 class MenuLateral extends StatefulWidget {
   final String currentPage;
 
-  MenuLateral({required this.currentPage});
+  const MenuLateral({super.key, required this.currentPage});
 
   @override
-  _MenuLateralState createState() => _MenuLateralState();
+  State<MenuLateral> createState() => _MenuLateralState();
 }
 
 class _MenuLateralState extends State<MenuLateral> {
@@ -43,7 +43,7 @@ class _MenuLateralState extends State<MenuLateral> {
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
 
-    if (tipoConexion == ConnectivityResult.none) {
+    if (tipoConexion.contains(ConnectivityResult.none)) {
       return false;
     }
 
@@ -55,63 +55,85 @@ class _MenuLateralState extends State<MenuLateral> {
   void initState() {
     super.initState();
     verificarConexion().then((conectado) {
+      if (!mounted) return;
       setState(() {
         tieneInternet = conectado;
       });
 
-      if (conectado) {
-        _obtenerTipoUsuario().then((_) {
-          verificarYLogout(context);
-        });
-      }
+      _obtenerTipoUsuario().then((_) {
+        if (!mounted) return;
+        verificarYLogout();
+      });
     });
   }
 
   Future<void> _obtenerTipoUsuario() async {
+    final authService = AuthService();
+    final usuarioService = UsuariosService();
+    final prefs = await SharedPreferences.getInstance();
+
     try {
-      final authService = AuthService();
-      final usuarioService = UsuariosService();
-      final token = await authService.getTokenApi();
+      if (tieneInternet == true) {
+        final token = await authService.getTokenApi();
 
-      if (token == null) throw Exception("Token de autenticación es nulo");
-      final idUsuario = await authService.obtenerIdUsuarioLogueado(token);
-      Map<String, dynamic>? user =
-          await usuarioService.obtenerUsuario2(idUsuario);
+        if (token != null) {
+          final idUsuario = authService.obtenerIdUsuarioLogueado(token);
+          Map<String, dynamic>? user =
+              await usuarioService.obtenerUsuario2(idUsuario);
 
-      if (user == null)
-        throw Exception("No se pudieron obtener los datos del usuario.");
-
-      setState(() {
-        tipoUsuario = user['tipo'];
-      });
+          if (user != null) {
+            if (!mounted) return;
+            setState(() {
+              tipoUsuario = user['tipo'];
+            });
+            await prefs.setString('tipoUsuario', user['tipo']);
+            return;
+          }
+        }
+      }
     } catch (e) {
-      print('Error al obtener tipo de usuario: $e');
+      debugPrint('Error al obtener tipo de usuario de API: $e');
+    }
+
+    // Si no se pudo obtener de la API o no hay internet, intentar obtener del caché
+    String? cachedTipo = prefs.getString('tipoUsuario');
+    if (mounted && cachedTipo != null) {
       setState(() {
-        tipoUsuario = null;
+        tipoUsuario = cachedTipo;
       });
+    } else {
+      if (mounted) {
+        setState(() {
+          tipoUsuario = null;
+        });
+      }
     }
   }
 
-  Future<void> verificarYLogout(BuildContext context) async {
+  Future<void> verificarYLogout() async {
     if (tipoUsuario == null) {
       // Si el token es null o vacío, se hace logout
-      _logout(context);
+      _logout();
     }
   }
 
-  Future<void> _logout(BuildContext context) async {
+  Future<void> _logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
-      LogsInformativos("Sesión cerrada correctamente", {});
+      logsInformativos("Sesión cerrada correctamente", {});
       AuthService authService = AuthService();
       await authService.logoutApi();
+
+      if (!mounted) return;
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
         (route) => false,
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cerrar sesión')),
       );
@@ -127,118 +149,7 @@ class _MenuLateralState extends State<MenuLateral> {
       );
     }
 
-    // Si no hay internet, muestra todo el menú sin filtrar, aunque tipoUsuario sea null
-    if (tieneInternet == false) {
-      return Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              height: 90,
-              color: const Color.fromARGB(255, 112, 114, 113),
-              child: Center(
-                child: Text(
-                  '',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ),
-            ),
-
-            // TODO sin filtro ni validación
-            _buildListTile(context, Icons.home, 'Inicio', HomePage()),
-            _buildListTile(context, Icons.person, 'Clientes', ClientesPage()),
-            _buildListTile(context, Icons.fact_check, 'Actividad anual',
-                InspeccionEspecialPage()),
-            _buildListTile(context, Icons.sticky_note_2,
-                'Reporte de actividades y pruebas', ReporteFinalPage()),
-            _buildListTile(context, Icons.manage_accounts,
-                'Configuración de Cliente', EncuestasJerarquicasWidget()),
-            ExpansionTile(
-              leading: Icon(Icons.check_box_outline_blank),
-              title: Text('Actividades',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
-              dense: true,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              collapsedShape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Column(
-                    children: [
-                      _buildListTile(context, Icons.poll, 'Crear actividad',
-                          EncuestasPage()),
-                      _buildListTile(context, Icons.assignment,
-                          'Aplicar actividad', EncuestaPage()),
-                      _buildListTile(
-                          context,
-                          Icons.report_problem,
-                          'Historial de actividades',
-                          InspeccionesPantalla1Page()),
-                      _buildListTile(context, Icons.report_problem,
-                          'Seleccionar actividad', ClienteInspeccionesApp()),
-                      _buildListTile(context, Icons.next_week_sharp,
-                          'Actividades próximas', InspeccionesProximasPage()),
-                      _buildListTile(
-                          context,
-                          Icons.date_range,
-                          'Programa de actividades',
-                          ProgramaInspeccionesPage()),
-                      _buildListTile(context, Icons.show_chart,
-                          'Gráfico de actividades', GraficaInspeccionesPage()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            _buildListTile(context, FontAwesomeIcons.list, 'Clasificaciones',
-                ClasificacionesPage()),
-            _buildListTile(
-                context, Icons.calendar_today, 'Periodos', FrecuenciasPage()),
-            _buildListTile(
-                context, Icons.devices, 'Tipos de sistemas', RamasPage()),
-            ExpansionTile(
-              leading: Icon(FontAwesomeIcons.fireFlameCurved),
-              title: Text('Extintores',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
-              dense: true,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              collapsedShape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Column(
-                    children: [
-                      _buildListTile(context, FontAwesomeIcons.fireExtinguisher,
-                          'Extintores', ExtintoresPage()),
-                      _buildListTile(context, FontAwesomeIcons.wrench,
-                          'Tipos de extintores', TiposExtintoresPage()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            _buildListTile(
-                context, FontAwesomeIcons.person, 'Usuarios', UsuariosPage()),
-            _buildListTile(
-                context, FontAwesomeIcons.fileLines, 'Logs', LogsPage()),
-
-            ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Cerrar sesión'),
-              onTap: () {
-                _logout(context);
-              },
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Si hay internet y tipoUsuario no está cargado, loader
+    // Si tipoUsuario no está cargado (y no se pudo recuperar del caché), muestra loader
     if (tipoUsuario == null) {
       return Drawer(
         child: Center(child: CircularProgressIndicator()),
@@ -360,7 +271,7 @@ class _MenuLateralState extends State<MenuLateral> {
             leading: Icon(Icons.logout),
             title: Text('Cerrar sesión'),
             onTap: () {
-              _logout(context);
+              _logout();
             },
           ),
         ],
@@ -385,13 +296,13 @@ class _MenuLateralState extends State<MenuLateral> {
           widget.currentPage == title ? Color.fromARGB(255, 233, 71, 66) : null,
       onTap: () {
         if (widget.currentPage != title) {
-          Navigator.pop(context);
+          if (mounted) Navigator.pop(context);
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => page),
           );
         } else {
-          Navigator.pop(context);
+          if (mounted) Navigator.pop(context);
         }
       },
     );

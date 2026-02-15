@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
 import '../Generales/formato_fecha.dart';
@@ -9,15 +9,14 @@ class TblReporteFinal extends StatefulWidget {
   final List<Map<String, dynamic>> reporteFinal;
   final Function onCompleted;
 
-  TblReporteFinal(
-      {Key? key,
+  const TblReporteFinal(
+      {super.key,
       required this.showModal,
       required this.reporteFinal,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblReporteFinalState createState() => _TblReporteFinalState();
+  State<TblReporteFinal> createState() => _TblReporteFinalState();
 }
 
 class _TblReporteFinalState extends State<TblReporteFinal> {
@@ -47,7 +46,7 @@ class _TblReporteFinalState extends State<TblReporteFinal> {
                 };
               }).toList(),
               columnas: columnas,
-                              accionesBuilder: (row) {
+                              accionesBuilder: (Map<String, dynamic> row) {
                   return PopupMenuButton<String>(
                     icon: FaIcon(
                       FontAwesomeIcons.bars,
@@ -84,3 +83,5 @@ class _TblReporteFinalState extends State<TblReporteFinal> {
     );
   }
 }
+
+

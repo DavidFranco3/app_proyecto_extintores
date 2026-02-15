@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
@@ -11,7 +12,7 @@ class LogsService {
   Future<http.Response> registraLog(Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRO_LOGS),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -26,7 +27,7 @@ class LogsService {
   Future<http.Response> obtenerLog(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_LOGS + '/$id'),
+      Uri.parse('$apiHost$endpointObtenerLogs/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -40,7 +41,7 @@ class LogsService {
   Future<Map<String, dynamic>> obtenerNumeroLog() async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_NO_LOGS),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -62,7 +63,7 @@ class LogsService {
     final token = await authService.getTokenApi();
     try {
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_LOGS),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -75,15 +76,15 @@ class LogsService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener los logs: $e");
+      debugPrint("Error al obtener los logs: $e");
       return [];
     }
   }
@@ -92,7 +93,7 @@ class LogsService {
   Future<http.Response> eliminaLogs(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_LOGS + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarLogs/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ class LogsService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_LOGS + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarLogs/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -122,7 +123,7 @@ class LogsService {
   Future<String> obtenIP() async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_IP),
+      Uri.parse(apiIp),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -137,3 +138,6 @@ class LogsService {
     }
   }
 }
+
+
+

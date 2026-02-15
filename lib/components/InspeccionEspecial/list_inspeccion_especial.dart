@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
 import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
@@ -10,15 +10,14 @@ class TblInspeccionEspecial extends StatefulWidget {
   final List<Map<String, dynamic>> inspeccionAnual;
   final Function onCompleted;
 
-  TblInspeccionEspecial(
-      {Key? key,
+  const TblInspeccionEspecial(
+      {super.key,
       required this.showModal,
       required this.inspeccionAnual,
-      required this.onCompleted})
-      : super(key: key);
+      required this.onCompleted});
 
   @override
-  _TblInspeccionEspecialState createState() => _TblInspeccionEspecialState();
+  State<TblInspeccionEspecial> createState() => _TblInspeccionEspecialState();
 }
 
 class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
@@ -39,7 +38,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
     });
   }
 
-  void openEliminarModal(row) {
+  void openEliminarModal(Map<String, dynamic> row) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -56,7 +55,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
               IconButton(
                 icon: Icon(Icons.close),
                 onPressed: () {
-                  Navigator.pop(context); // Cierra el diálogo
+                  if (mounted) Navigator.pop(context); // Cierra el diálogo
                 },
               ),
             ],
@@ -116,7 +115,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
                   };
                 }).toList(),
                 columnas: columnas,
-                accionesBuilder: (row) {
+                accionesBuilder: (Map<String, dynamic> row) {
                   return PopupMenuButton<String>(
                     icon: FaIcon(
                       FontAwesomeIcons.bars,
@@ -168,3 +167,6 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
     );
   }
 }
+
+
+

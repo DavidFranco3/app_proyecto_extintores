@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/constants.dart';
@@ -12,7 +13,7 @@ class UsuariosService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_LISTAR_USUARIO),
+        Uri.parse('12'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -26,15 +27,15 @@ class UsuariosService {
         if (data is List) {
           return data; // Retornar la lista directamente
         } else {
-          print("Error: La respuesta no es una lista.");
+          debugPrint("Error: La respuesta no es una lista.");
           return [];
         }
       } else {
-        print("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      print("Error al obtener los usuarios: $e");
+      debugPrint("Error al obtener los usuarios: $e");
       return [];
     }
   }
@@ -44,7 +45,7 @@ class UsuariosService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse(API_HOST + ENDPOINT_REGISTRAR_USUARIO),
+      Uri.parse('12'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -62,7 +63,7 @@ class UsuariosService {
   Future<http.Response> obtenerUsuario(String id) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS + '/$id'),
+      Uri.parse('$apiHost$endpointObtenerUsuarios/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ class UsuariosService {
     final token = await authService.getTokenApi();
     try {
       final response = await http.get(
-        Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS + '/$id'),
+        Uri.parse('$apiHost$endpointObtenerUsuarios/$id'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -89,11 +90,11 @@ class UsuariosService {
         return jsonDecode(
             response.body); // Esto devuelve un Map<String, dynamic>
       } else {
-        print('Error: ${response.statusCode}');
+        debugPrint('Error: ${response.statusCode}');
         return null; // En caso de error, retorna null
       }
     } catch (e) {
-      print('Error al obtener el usuario: $e');
+      debugPrint('Error al obtener el usuario: $e');
       return null; // En caso de error, retorna null
     }
   }
@@ -102,7 +103,7 @@ class UsuariosService {
   Future<http.Response> obtenerUsuarioEmail(String email) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(API_HOST + ENDPOINT_OBTENER_USUARIOS_EMAIL + '/$email'),
+      Uri.parse('$apiHost$endpointObtenerUsuariosEmail/$email'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ class UsuariosService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_ACTUALIZAR_USUARIO + '/$id'),
+      Uri.parse('$apiHost$endpointActualizarUsuario/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -136,7 +137,7 @@ class UsuariosService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(API_HOST + ENDPOINT_ELIMINAR_USUARIO + '/$id'),
+      Uri.parse('$apiHost$endpointEliminarUsuario/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ class UsuariosService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(API_HOST + ENDPOINT_DESHABILITAR_USUARIO + '/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarUsuario/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -169,3 +170,6 @@ class UsuariosService {
     };
   }
 }
+
+
+

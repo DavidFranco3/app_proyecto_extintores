@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -6,11 +7,11 @@ import '../utils/constants.dart';
 
 class CloudinaryService {
   Future<String?> subirArchivoCloudinary(String imagePath, String carpeta, {int calidad = 65}) async {
-    final uri = Uri.parse(API_CLOUDINARY);
+    final uri = Uri.parse(apiCloudinary);
     final file = File(imagePath);
 
     if (!await file.exists()) {
-      print('El archivo no existe en la ruta proporcionada.');
+      debugPrint('El archivo no existe en la ruta proporcionada.');
       return null;
     }
 
@@ -38,9 +39,11 @@ class CloudinaryService {
       final responseData = json.decode(response.body);
       return responseData['secure_url']; // Aquí ya devuelves el URL directamente
     } else {
-      print('Error al subir imagen a Cloudinary: ${response.statusCode}');
-      print('Respuesta: ${response.body}');
+      debugPrint('Error al subir imagen a Cloudinary: ${response.statusCode}');
+      debugPrint('Respuesta: ${response.body}');
       return null;
     }
   }
 }
+
+
