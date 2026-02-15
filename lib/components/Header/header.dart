@@ -12,19 +12,22 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({super.key});
 
   Future<void> _cerrarSesion(BuildContext context) async {
-    // ... logic remains same
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
       logsInformativos("Sesion cerrada correctamente", {});
       AuthService authService = AuthService();
       authService.logoutApi();
+
+      if (!context.mounted) return;
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
         (route) => false, // Elimina todas las rutas previas
       );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cerrar sesión')),
       );

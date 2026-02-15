@@ -82,7 +82,7 @@ class _CalendarioState extends State<Calendario> {
               ),
               calendarFormat:
                   _calendarFormat, // Controla la vista actual (mes, semana, 2 semanas)
-              calendarBuilders: CalendarBuilders(
+              calendarBuilders: CalendarBuilders<Event>(
                 defaultBuilder: (context, day, focusedDay) {
                   final eventsForDay = widget.eventosIniciales
                       .where((event) => isSameDay(event.date, day))
@@ -114,7 +114,7 @@ class _CalendarioState extends State<Calendario> {
               child: ListView(
                 children: widget.eventosIniciales
                     .where((event) => isSameDay(event.date, _selectedDay))
-                    .map((event) => ListTile(
+                    .map<Widget>((event) => ListTile(
                           title: Text(event.title),
                           subtitle: Text(formatDate(event.date)),
                         ))
@@ -127,4 +127,3 @@ class _CalendarioState extends State<Calendario> {
     );
   }
 }
-

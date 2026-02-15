@@ -8,7 +8,7 @@ void showCustomFlushbar({
   required String message,
   required Color backgroundColor,
 }) {
-  Flushbar(
+  Flushbar<void>(
     flushbarPosition: FlushbarPosition.TOP,
     backgroundColor: backgroundColor,
     duration: Duration(seconds: 3),

@@ -1,13 +1,12 @@
 ﻿import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:flutter/rendering.dart';  // ← ESTE IMPORT ES IMPORTANTE
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class GraficaBarras extends StatefulWidget {
   final List<Map<String, dynamic>> dataInspecciones;
@@ -19,213 +18,267 @@ class GraficaBarras extends StatefulWidget {
 }
 
 class _GraficaBarrasState extends State<GraficaBarras> {
-  late PageController _pageController;
-  int paginaActual = 0;
-  final GlobalKey _chartKey = GlobalKey(); // Clave para capturar el gráfico como imagen
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: paginaActual);
+  // Load logo for PDF
+  Future<Uint8List> loadImageFromAssets(String assetPath) async {
+    final byteData = await rootBundle.load(assetPath);
+    return byteData.buffer.asUint8List();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+  Future<void> _generatePdf() async {
+    final pdf = pw.Document();
 
-  Future<Uint8List?> _captureChart() async {
-    RenderRepaintBoundary? boundary =
-        _chartKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary != null) {
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      return byteData?.buffer.asUint8List();
+    // Load generic logo/assets if needed
+    Uint8List? logoBytes;
+    try {
+      logoBytes = await loadImageFromAssets('lib/assets/img/logo_app.png');
+    } catch (e) {
+      debugPrint("Error loading logo: $e");
     }
-    return null;
-  }
 
-Future<void> _generatePdf() async {
-  final pdf = pw.Document();
+    // Split data into chunks to avoid overflow per page (e.g., 4 charts per page)
+    const int itemsPerPage = 6;
+    for (var i = 0; i < widget.dataInspecciones.length; i += itemsPerPage) {
+      final chunk = widget.dataInspecciones.skip(i).take(itemsPerPage).toList();
 
-  for (var i = 0; i < widget.dataInspecciones.length; i++) {
-    setState(() {
-      paginaActual = i;
-    });
-
-    await Future.delayed(Duration(milliseconds: 500)); // Esperar a que se renderice el gráfico
-
-    Uint8List? chartImage = await _captureChart();
-    if (chartImage != null) {
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
           build: (pw.Context context) {
-            return pw.Center(
-              child: pw.Container(
-                width: PdfPageFormat.a4.width * 0.9, // Ajusta al 90% del ancho de la página
-                height: PdfPageFormat.a4.height * 0.7, // Ajusta el alto para ocupar más espacio
-                alignment: pw.Alignment.center,
-                child: pw.Image(
-                  pw.MemoryImage(chartImage),
-                  fit: pw.BoxFit.contain, // Ajusta la imagen sin recortar
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (logoBytes != null)
+                  pw.Container(
+                    alignment: pw.Alignment.centerRight,
+                    margin: const pw.EdgeInsets.only(bottom: 20),
+                    child: pw.Image(pw.MemoryImage(logoBytes), width: 100),
+                  ),
+                pw.Header(
+                  level: 0,
+                  child: pw.Text("Reporte de Inspecciones",
+                      style: pw.TextStyle(
+                          fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 ),
-              ),
+                pw.SizedBox(height: 20),
+                ...chunk.map((item) {
+                  final si = (item['si'] ?? 0).toDouble();
+                  final no = (item['no'] ?? 0).toDouble();
+                  final total = si + no;
+
+                  // Simple Bar representation in PDF
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 15),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(item['pregunta'],
+                            style: pw.TextStyle(
+                                fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 5),
+                        pw.Row(
+                          children: [
+                            pw.Expanded(
+                              flex: (si * 100).toInt(),
+                              child: si > 0
+                                  ? pw.Container(
+                                      height: 15,
+                                      color: PdfColors.blue,
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding:
+                                            const pw.EdgeInsets.only(left: 4),
+                                        child: pw.Text("Si: ${si.toInt()}",
+                                            style: const pw.TextStyle(
+                                                color: PdfColors.white,
+                                                fontSize: 8)),
+                                      ),
+                                    )
+                                  : pw.Container(),
+                            ),
+                            pw.Expanded(
+                              flex: (no * 100).toInt(),
+                              child: no > 0
+                                  ? pw.Container(
+                                      height: 15,
+                                      color: PdfColors.red,
+                                      alignment: pw.Alignment.centerLeft,
+                                      child: pw.Padding(
+                                        padding:
+                                            const pw.EdgeInsets.only(left: 4),
+                                        child: pw.Text("No: ${no.toInt()}",
+                                            style: const pw.TextStyle(
+                                                color: PdfColors.white,
+                                                fontSize: 8)),
+                                      ),
+                                    )
+                                  : pw.Container(),
+                            ),
+                            if (total == 0)
+                              pw.Text("Sin datos",
+                                  style: const pw.TextStyle(
+                                      fontSize: 10, color: PdfColors.grey)),
+                          ],
+                        ),
+                        pw.Divider(thickness: 0.5, color: PdfColors.grey300),
+                      ],
+                    ),
+                  );
+                }),
+              ],
             );
           },
         ),
       );
     }
-  }
 
-  try {
-    // Obtener el directorio donde guardar el archivo
-    final outputDirectory = await getExternalStorageDirectory();
-    if (outputDirectory != null) {
-      // Definir el path donde se guardará el archivo
-      final filePath = "${outputDirectory.path}/graficos.pdf";
-
-      // Guardar el archivo en el dispositivo
-      final file = File(filePath);
-      await file.writeAsBytes(await pdf.save());
-
-      debugPrint("PDF guardado en: $filePath");
-
-      // Abrir el PDF con el visor predeterminado
-      await OpenFile.open(filePath);
-    } else {
-      debugPrint("No se pudo obtener el directorio de almacenamiento.");
+    try {
+      final outputDirectory = await getExternalStorageDirectory();
+      if (outputDirectory != null) {
+        final filePath =
+            "${outputDirectory.path}/reporte_graficos_${DateTime.now().millisecondsSinceEpoch}.pdf";
+        final file = File(filePath);
+        await file.writeAsBytes(await pdf.save());
+        debugPrint("PDF guardado en: $filePath");
+        await OpenFile.open(filePath);
+      } else {
+        debugPrint("No se pudo obtener el directorio de almacenamiento.");
+      }
+    } catch (e) {
+      debugPrint("Error al guardar y abrir el PDF: $e");
     }
-  } catch (e) {
-    debugPrint("Error al guardar y abrir el PDF: $e");
   }
-}
-
-
 
   @override
   Widget build(BuildContext context) {
     if (widget.dataInspecciones.isEmpty) {
-      return Scaffold(
-        body: Center(child: Text("No hay datos disponibles", style: TextStyle(fontSize: 18))),
-      );
+      return const Center(
+          child:
+              Text("No hay datos disponibles", style: TextStyle(fontSize: 18)));
     }
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.dataInspecciones.length,
-              onPageChanged: (index) {
-                setState(() {
-                  paginaActual = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                var preguntaActual = widget.dataInspecciones[index];
-                var si = (preguntaActual['si'] ?? 0).toDouble();
-                var no = (preguntaActual['no'] ?? 0).toDouble();
-
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: RepaintBoundary(
-                    key: _chartKey, // Clave para capturar la imagen
-                    child: Column(
-                      children: [
-                        Text(
-                          preguntaActual['pregunta'],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 20),
-                        Expanded(
-                          child: BarChart(
-                            BarChartData(
-                              titlesData: FlTitlesData(
-                                leftTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: true, reservedSize: 40),
-                                ),
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 40,
-                                    getTitlesWidget: (value, meta) {
-                                      switch (value.toInt()) {
-                                        case 0:
-                                          return Text("Sí", style: TextStyle(fontSize: 14));
-                                        case 1:
-                                          return Text("No", style: TextStyle(fontSize: 14));
-                                        default:
-                                          return Container();
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
-                              barGroups: [
-                                BarChartGroupData(
-                                  x: 0,
-                                  barRods: [BarChartRodData(toY: si, color: Colors.blue)],
-                                ),
-                                BarChartGroupData(
-                                  x: 1,
-                                  barRods: [BarChartRodData(toY: no, color: Colors.red)],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, size: 30),
-                onPressed: paginaActual > 0
-                    ? () {
-                        _pageController.previousPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    : null,
-              ),
-              IconButton(
-                icon: Icon(Icons.arrow_forward, size: 30),
-                onPressed: paginaActual < widget.dataInspecciones.length - 1
-                    ? () {
-                        _pageController.nextPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    : null,
+              ElevatedButton.icon(
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text("Exportar PDF"),
+                onPressed: _generatePdf,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),
-          SizedBox(height: 20),
-          ElevatedButton.icon(
-            icon: Icon(Icons.picture_as_pdf),
-            label: Text("Generar PDF"),
-            onPressed: _generatePdf, // Generar PDF
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              textStyle: TextStyle(fontSize: 16),
-            ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: widget.dataInspecciones.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 20),
+            itemBuilder: (context, index) {
+              var preguntaActual = widget.dataInspecciones[index];
+              var si = (preguntaActual['si'] ?? 0).toDouble();
+              var no = (preguntaActual['no'] ?? 0).toDouble();
+
+              return Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        preguntaActual['pregunta'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 200,
+                        child: BarChart(
+                          BarChartData(
+                            alignment: BarChartAlignment.spaceAround,
+                            maxY: (si > no ? si : no) + 1, // Add some headroom
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 30,
+                                    getTitlesWidget: (val, meta) =>
+                                        Text(val.toInt().toString())),
+                              ),
+                              rightTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false)),
+                              topTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false)),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (value, meta) {
+                                    switch (value.toInt()) {
+                                      case 0:
+                                        return const Text("Sí",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold));
+                                      case 1:
+                                        return const Text("No",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold));
+                                      default:
+                                        return Container();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                            gridData: const FlGridData(
+                                show: true, drawVerticalLine: false),
+                            borderData: FlBorderData(show: false),
+                            barGroups: [
+                              BarChartGroupData(
+                                x: 0,
+                                barRods: [
+                                  BarChartRodData(
+                                    toY: si,
+                                    color: Colors.blue,
+                                    width: 40,
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(6)),
+                                  ),
+                                ],
+                              ),
+                              BarChartGroupData(
+                                x: 1,
+                                barRods: [
+                                  BarChartRodData(
+                                    toY: no,
+                                    color: Colors.red,
+                                    width: 40,
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(6)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-          SizedBox(height: 20),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
-
