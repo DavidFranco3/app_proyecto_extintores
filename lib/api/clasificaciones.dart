@@ -13,7 +13,7 @@ class ClasificacionesService {
     final token = await authService.getTokenApi();
     try {
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarClasificaciones'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ class ClasificacionesService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarClasificaciones'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -137,6 +137,3 @@ class ClasificacionesService {
     };
   }
 }
-
-
-

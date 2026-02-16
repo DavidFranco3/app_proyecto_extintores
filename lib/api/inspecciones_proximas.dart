@@ -12,7 +12,7 @@ class InspeccionesProximasService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarInspeccionesProximas'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ class InspeccionesProximasService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarInspeccionesProximas'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -103,8 +103,7 @@ class InspeccionesProximasService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(
-          '$apiHost$endpointDeshabilitarInspeccionesProximas/$id'),
+      Uri.parse('$apiHost$endpointDeshabilitarInspeccionesProximas/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -118,6 +117,3 @@ class InspeccionesProximasService {
     };
   }
 }
-
-
-

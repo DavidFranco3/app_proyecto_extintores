@@ -12,7 +12,7 @@ class FrecuenciasService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarFrecuencias'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ class FrecuenciasService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarFrecuencias'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -121,6 +121,3 @@ class FrecuenciasService {
     };
   }
 }
-
-
-

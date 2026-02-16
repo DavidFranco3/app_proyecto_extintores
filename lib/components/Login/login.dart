@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final authService = AuthService();
       final Map<String, dynamic> data = {
-        'correo': _emailController.text.trim(),
+        'email': _emailController.text.trim(),
         'password': _passwordController.text.trim(),
       };
 

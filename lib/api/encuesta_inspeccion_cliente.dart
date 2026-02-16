@@ -13,7 +13,7 @@ class EncuestaInspeccionClienteService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarEncuestaInspeccionCliente'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -45,7 +45,8 @@ class EncuestaInspeccionClienteService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('$apiHost$endpointListarEncuestaInspeccionRamaCliente/$idRama/$idFrecuencia/$idClasificacion'),
+        Uri.parse(
+            '$apiHost$endpointListarEncuestaInspeccionRamaCliente/$idRama/$idFrecuencia/$idClasificacion'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -80,7 +81,8 @@ class EncuestaInspeccionClienteService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('$apiHost$endpointListarEncuestaInspeccionRamaPorCliente/$idRama/$idFrecuencia/$idClasificacion/$idCliente'),
+        Uri.parse(
+            '$apiHost$endpointListarEncuestaInspeccionRamaPorCliente/$idRama/$idFrecuencia/$idClasificacion/$idCliente'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -112,7 +114,7 @@ class EncuestaInspeccionClienteService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarEncuestaInspeccionCliente'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -132,8 +134,7 @@ class EncuestaInspeccionClienteService {
       String id) async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse(
-          '$apiHost$endpointObtenerEncuestaInspeccionCliente/$id'),
+      Uri.parse('$apiHost$endpointObtenerEncuestaInspeccionCliente/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -148,33 +149,32 @@ class EncuestaInspeccionClienteService {
     }
   }
 
-  Future<List<dynamic>> obtenerEncuestaInspeccionClienteEncuestas(String idCliente) async {
-  final token = await authService.getTokenApi();
-  final response = await http.get(
-    Uri.parse(
-        '$apiHost$endpointObtenerEncuestaInspeccionClienteEncuestas/$idCliente'),
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    },
-  );
+  Future<List<dynamic>> obtenerEncuestaInspeccionClienteEncuestas(
+      String idCliente) async {
+    final token = await authService.getTokenApi();
+    final response = await http.get(
+      Uri.parse(
+          '$apiHost$endpointObtenerEncuestaInspeccionClienteEncuestas/$idCliente'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
-  if (response.statusCode == 200) {
-    return List<dynamic>.from(json.decode(response.body));
-  } else {
-    throw Exception('Failed to load encuesta de Inspección');
+    if (response.statusCode == 200) {
+      return List<dynamic>.from(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load encuesta de Inspección');
+    }
   }
-}
-
 
 // Actualizar encuesta de Inspección
   Future<Map<String, dynamic>> actualizarEncuestaInspeccionCliente(
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.put(
-      Uri.parse(
-          '$apiHost$endpointActualizarEncuestaInspeccionCliente/$id'),
+      Uri.parse('$apiHost$endpointActualizarEncuestaInspeccionCliente/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -194,8 +194,7 @@ class EncuestaInspeccionClienteService {
       String id, Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.delete(
-      Uri.parse(
-          '$apiHost$endpointEliminarEncuestaInspeccionCliente/$id'),
+      Uri.parse('$apiHost$endpointEliminarEncuestaInspeccionCliente/$id'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -231,6 +230,3 @@ class EncuestaInspeccionClienteService {
     };
   }
 }
-
-
-

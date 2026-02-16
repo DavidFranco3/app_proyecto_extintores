@@ -13,7 +13,7 @@ class RamasService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarRamas'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -41,11 +41,10 @@ class RamasService {
   }
 
   // Registrar rama
-  Future<Map<String, dynamic>> registrarRamas(
-      Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> registrarRamas(Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarRamas'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -138,6 +137,3 @@ class RamasService {
     };
   }
 }
-
-
-

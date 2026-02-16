@@ -13,7 +13,7 @@ class EncuestaInspeccionService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarEncuestaInspeccion'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -40,11 +40,13 @@ class EncuestaInspeccionService {
     }
   }
 
-  Future<List<dynamic>> listarEncuestaInspeccionPorRama(String idRama, String idFrecuencia, String idClasificacion) async {
+  Future<List<dynamic>> listarEncuestaInspeccionPorRama(
+      String idRama, String idFrecuencia, String idClasificacion) async {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('$apiHost$endpointListarEncuestaInspeccionRama/$idRama/$idFrecuencia/$idClasificacion'),
+        Uri.parse(
+            '$apiHost$endpointListarEncuestaInspeccionRama/$idRama/$idFrecuencia/$idClasificacion'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -76,7 +78,7 @@ class EncuestaInspeccionService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarEncuestaInspeccion'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -171,6 +173,3 @@ class EncuestaInspeccionService {
     };
   }
 }
-
-
-

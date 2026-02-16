@@ -138,8 +138,10 @@ Future<void> main() async {
   }
   final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-  // 📌 Inicializar FCM
-  await obtenerTokenFCM();
+  // 📌 Inicializar FCM solo si hay sesión activa
+  if (isLoggedIn) {
+    await obtenerTokenFCM();
+  }
 
   // 📌 Escuchar notificaciones en primer plano
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {

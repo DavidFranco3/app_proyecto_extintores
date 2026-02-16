@@ -12,7 +12,7 @@ class LogsService {
   Future<http.Response> registraLog(Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistroLogs'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ class LogsService {
   Future<Map<String, dynamic>> obtenerNumeroLog() async {
     final token = await authService.getTokenApi();
     final response = await http.get(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointObtenerNoLogs'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ class LogsService {
     final token = await authService.getTokenApi();
     try {
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarLogs'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -138,6 +138,3 @@ class LogsService {
     }
   }
 }
-
-
-

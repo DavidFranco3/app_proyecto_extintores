@@ -14,7 +14,7 @@ class InspeccionAnualService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarInspeccionAnual'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ class InspeccionAnualService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarInspeccionAnual'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -214,4 +214,3 @@ class InspeccionAnualService {
     }
   }
 }
-

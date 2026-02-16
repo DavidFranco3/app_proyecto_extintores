@@ -12,7 +12,7 @@ class TokensService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarTokens'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ class TokensService {
   Future<Map<String, dynamic>> registraTokens(Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarTokens'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -121,6 +121,3 @@ class TokensService {
     };
   }
 }
-
-
-

@@ -13,7 +13,7 @@ class UsuariosService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarUsuario'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ class UsuariosService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarUsuario'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -170,6 +170,3 @@ class UsuariosService {
     };
   }
 }
-
-
-

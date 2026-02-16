@@ -13,7 +13,7 @@ class TiposExtintoresService {
     try {
       final token = await authService.getTokenApi();
       final response = await http.get(
-        Uri.parse('12'),
+        Uri.parse('$apiHost$endpointListarTiposExtintores'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ class TiposExtintoresService {
       Map<String, dynamic> data) async {
     final token = await authService.getTokenApi();
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointRegistrarTiposExtintores'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -130,6 +130,3 @@ class TiposExtintoresService {
     };
   }
 }
-
-
-

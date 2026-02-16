@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart'; // Reemplazamos jwt_decode por jwt_decoder
-import '../utils/constants.dart'; 
+import '../utils/constants.dart';
+import 'endpoints.dart';
 
 class AuthService {
   // Validar inicio de sesión
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async {
     final response = await http.post(
-      Uri.parse('12'),
+      Uri.parse('$apiHost$endpointLoginAdministrador'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -57,14 +58,14 @@ class AuthService {
 
   // Verificar si el token ha expirado
   bool isTokenExpired(String token) {
-    return JwtDecoder.isExpired(token); // Usando jwt_decoder para verificar expiración
+    return JwtDecoder.isExpired(
+        token); // Usando jwt_decoder para verificar expiración
   }
 
   // Obtener el usuario logueado a partir del token
   String obtenerIdUsuarioLogueado(String token) {
-    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);  // Usando jwt_decoder
+    Map<String, dynamic> decodedToken =
+        JwtDecoder.decode(token); // Usando jwt_decoder
     return decodedToken['_'];
   }
 }
-
-
