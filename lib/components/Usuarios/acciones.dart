@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/usuarios.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
+import '../Generales/premium_button.dart';
 import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
@@ -364,12 +365,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Usuario guardado localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Usuario guardado localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -388,11 +389,11 @@ class _AccionesState extends State<Acciones> {
             "Se ha registrado el usuario ${data['nombre']} correctamente", {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "El usuario fue agregado correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "El usuario fue agregado correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -400,11 +401,11 @@ class _AccionesState extends State<Acciones> {
         });
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message: "No se pudo guardar el usuario",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error",
+            message: "No se pudo guardar el usuario",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -413,11 +414,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -469,12 +470,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Usuario actualizado localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Usuario actualizado localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -493,11 +494,11 @@ class _AccionesState extends State<Acciones> {
             "Se ha actualizado el usuario ${data['nombre']} correctamente", {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Actualización exitosa",
-          message: "Los datos del usuario fueron actualizados correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Actualización exitosa",
+            message: "Los datos del usuario fueron actualizados correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -506,11 +507,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -559,12 +560,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Usuario eliminado localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Usuario eliminado localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -584,11 +585,11 @@ class _AccionesState extends State<Acciones> {
             "Se ha eliminado el usuario ${data['id']} correctamente", {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Eliminación exitosa",
-          message: "Se han eliminado correctamente los datos del usuario",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Eliminación exitosa",
+            message: "Se han eliminado correctamente los datos del usuario",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -597,11 +598,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -881,11 +882,12 @@ class _AccionesState extends State<Acciones> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              ElevatedButton(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () => _controller.clear(),
-                                child: Text("Limpiar Firma"),
+                              PremiumActionButton(
+                                onPressed: _controller.clear,
+                                label: "Limpiar",
+                                icon: Icons.cleaning_services,
+                                style: PremiumButtonStyle.secondary,
+                                isLoading: _isLoading,
                               ),
                             ],
                           ),
@@ -895,16 +897,25 @@ class _AccionesState extends State<Acciones> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : closeRegistroModal,
-                              child: Text('Cancelar'),
+                            PremiumActionButton(
+                              onPressed: closeRegistroModal,
+                              label: 'Cancelar',
+                              icon: Icons.close,
+                              style: PremiumButtonStyle.secondary,
                             ),
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _onSubmit,
-                              child: _isLoading
-                                  ? SpinKitFadingCircle(
-                                      color: Colors.white, size: 24)
-                                  : Text(buttonLabel),
+                            const SizedBox(width: 20),
+                            PremiumActionButton(
+                              onPressed: _onSubmit,
+                              label: buttonLabel,
+                              icon: isEliminar
+                                  ? FontAwesomeIcons.trash
+                                  : (isEditar
+                                      ? FontAwesomeIcons.penToSquare
+                                      : FontAwesomeIcons.floppyDisk),
+                              isLoading: _isLoading,
+                              style: isEliminar
+                                  ? PremiumButtonStyle.danger
+                                  : PremiumButtonStyle.primary,
                             ),
                           ],
                         ),
@@ -917,5 +928,3 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
-
-

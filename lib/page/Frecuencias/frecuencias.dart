@@ -10,6 +10,7 @@ import '../../components/Frecuencias/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 
 class FrecuenciasPage extends StatefulWidget {
   const FrecuenciasPage({super.key});
@@ -49,7 +50,8 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
   Future<void> getFrecuenciasDesdeAPI() async {
     try {
       final frecuenciasService = FrecuenciasService();
-      final List<dynamic> response = await frecuenciasService.listarFrecuencias();
+      final List<dynamic> response =
+          await frecuenciasService.listarFrecuencias();
 
       if (response.isNotEmpty) {
         final formateados = formatModelFrecuencias(response);
@@ -84,7 +86,8 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
       if (guardados != null) {
         setState(() {
           dataFrecuencias = guardados
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();
           loading = false;
@@ -126,14 +129,16 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
   }
 
   List<Map<String, dynamic>> formatModelFrecuencias(List<dynamic> data) {
-    return data.map((item) => {
-      'id': item['_id'],
-      'nombre': item['nombre'],
-      'cantidadDias': item['cantidadDias'],
-      'estado': item['estado'],
-      'createdAt': item['createdAt'],
-      'updatedAt': item['updatedAt'],
-    }).toList();
+    return data
+        .map((item) => {
+              'id': item['_id'],
+              'nombre': item['nombre'],
+              'cantidadDias': item['cantidadDias'],
+              'estado': item['estado'],
+              'createdAt': item['createdAt'],
+              'updatedAt': item['updatedAt'],
+            })
+        .toList();
   }
 
   @override
@@ -144,30 +149,32 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
       body: loading
           ? Load()
           : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Periodos",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Periodos",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
                       ),
-                    ),
+                      PremiumActionButton(
+                        onPressed: openRegistroModal,
+                        label: "Registrar",
+                        icon: FontAwesomeIcons.plus,
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: openRegistroModal,
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
+                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: TblFrecuencias(
                     showModal: () {
@@ -188,5 +195,3 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
     );
   }
 }
-
-

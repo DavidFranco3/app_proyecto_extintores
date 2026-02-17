@@ -1,21 +1,6 @@
-buildscript {
-    ext.kotlin_version = '2.1.0'
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
+// Repositories managed in settings.gradle
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
+// Probablemente ya no sea necesario con AGP 9 y Gradle 9
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
@@ -37,7 +22,3 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-
-
-
-

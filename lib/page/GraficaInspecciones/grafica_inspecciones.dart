@@ -201,7 +201,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                 // Dropdown para seleccionar la encuesta
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: DropdownSearch<String>(
+                  child: DropdownSearch<Map<String, dynamic>>(
                     key: Key('encuestaDropdown'),
                     enabled: dataEncuestas.isNotEmpty,
                     items: (filter, _) {
@@ -209,27 +209,31 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                           .where((e) => "${e['nombre']} - ${e['frecuencia']}"
                               .toLowerCase()
                               .contains(filter.toLowerCase()))
-                          .map((e) => e['id'].toString())
                           .toList();
                     },
-                    selectedItem: selectedEncuestaId,
+                    itemAsString: (item) =>
+                        "${item['nombre']} - ${item['frecuencia']}",
+                    selectedItem: selectedEncuestaId != null
+                        ? dataEncuestas.firstWhere(
+                            (e) => e['id'].toString() == selectedEncuestaId,
+                            orElse: () => dataEncuestas.first)
+                        : null,
+                    compareFn: (item, selectedItem) =>
+                        item['id'] == selectedItem['id'],
                     onChanged: dataEncuestas.isEmpty
                         ? null
-                        : (String? newValue) {
-                            setState(() {
-                              selectedEncuestaId = newValue;
-                            });
+                        : (Map<String, dynamic>? newValue) {
                             if (newValue != null) {
-                              cargarInspecciones(newValue);
+                              setState(() {
+                                selectedEncuestaId = newValue['id'].toString();
+                              });
+                              cargarInspecciones(newValue['id'].toString());
                             }
                           },
                     dropdownBuilder: (context, selectedItem) {
-                      final encuesta = dataEncuestas.firstWhere(
-                          (e) => e['id'].toString() == selectedItem,
-                          orElse: () => {'nombre': '', 'frecuencia': ''});
                       return Text(
-                        encuesta['nombre'] != ''
-                            ? "${encuesta['nombre']} - ${encuesta['frecuencia']}"
+                        selectedItem != null
+                            ? "${selectedItem['nombre']} - ${selectedItem['frecuencia']}"
                             : "Seleccionar Encuesta",
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -241,7 +245,6 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                     },
                     decoratorProps: DropDownDecoratorProps(
                       decoration: InputDecoration(
-                        labelText: "Seleccionar Encuesta",
                         border: OutlineInputBorder(),
                         isDense: true,
                         contentPadding:
@@ -265,4 +268,3 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
     );
   }
 }
-

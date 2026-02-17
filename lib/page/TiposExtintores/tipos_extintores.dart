@@ -10,6 +10,7 @@ import '../../components/TiposExtintores/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 
 class TiposExtintoresPage extends StatefulWidget {
   const TiposExtintoresPage({super.key});
@@ -150,35 +151,41 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
       body: loading
           ? Load()
           : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Tipos de extintores",
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Tipos de extintores",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      PremiumActionButton(
+                        onPressed: openRegistroModal,
+                        label: "Registrar",
+                        icon: FontAwesomeIcons.plus,
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: openRegistroModal,
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
+                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: dataTiposExtintores.isEmpty
-                      ? Center(
+                      ? const Center(
                           child:
                               Text("No hay tipos de extintores disponibles."))
                       : TblTiposExtintores(
-                          showModal: () { if (mounted) Navigator.pop(context); },
+                          showModal: () {
+                            if (mounted) Navigator.pop(context);
+                          },
                           tiposExtintores: dataTiposExtintores,
                           onCompleted: cargarTiposExtintores,
                         ),
@@ -194,7 +201,3 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     );
   }
 }
-
-
-
-

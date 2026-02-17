@@ -117,7 +117,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, 4),
             blurRadius: 12,
           ),
@@ -154,7 +154,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
                 icon: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent.withOpacity(0.1),
+                    color: Colors.blueAccent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(FontAwesomeIcons.arrowDownShortWide,
@@ -207,7 +207,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             offset: const Offset(0, 4),
             blurRadius: 10,
           ),
@@ -320,7 +320,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, 4),
             blurRadius: 12,
           ),
@@ -347,7 +347,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.1),
+                  color: Colors.blueAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

@@ -479,7 +479,7 @@ class _HomePageState extends State<HomePage> {
                                   leading: CircleAvatar(
                                     backgroundColor:
                                         const Color.fromARGB(255, 114, 113, 25)
-                                            .withOpacity(0.2),
+                                            .withValues(alpha: 0.2),
                                     child: FaIcon(
                                       FontAwesomeIcons.clock,
                                       color: const Color.fromARGB(
@@ -529,7 +529,7 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.4),
+              color: color.withValues(alpha: 0.4),
               blurRadius: 8,
               offset: Offset(0, 4),
             ),
@@ -552,7 +552,7 @@ class _HomePageState extends State<HomePage> {
             Text(
               title,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 16,
               ),
             ),

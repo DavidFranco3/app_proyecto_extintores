@@ -1,5 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../page/Clasificaciones/clasificaciones.dart';
 import '../../page/Frecuencias/frecuencias.dart';
 import '../../page/TiposExtintores/tipos_extintores.dart';
@@ -38,81 +37,68 @@ class MenuLateral extends StatefulWidget {
 
 class _MenuLateralState extends State<MenuLateral> {
   String? tipoUsuario;
+  String nombreUsuario = "Usuario";
   bool? tieneInternet;
 
   Future<bool> verificarConexion() async {
     final tipoConexion = await Connectivity().checkConnectivity();
-
-    if (tipoConexion.contains(ConnectivityResult.none)) {
-      return false;
-    }
-
-    final tieneInternet = await InternetConnection().hasInternetAccess;
-    return tieneInternet;
+    if (tipoConexion.contains(ConnectivityResult.none)) return false;
+    return await InternetConnection().hasInternetAccess;
   }
 
   @override
   void initState() {
     super.initState();
-    verificarConexion().then((conectado) {
-      if (!mounted) return;
-      setState(() {
-        tieneInternet = conectado;
-      });
-
-      _obtenerTipoUsuario().then((_) {
-        if (!mounted) return;
-        verificarYLogout();
-      });
-    });
+    _cargarDatos();
   }
 
-  Future<void> _obtenerTipoUsuario() async {
+  Future<void> _cargarDatos() async {
+    tieneInternet = await verificarConexion();
+    if (mounted) setState(() {});
+
+    await _obtenerDatosUsuario();
+    verificarYLogout();
+  }
+
+  Future<void> _obtenerDatosUsuario() async {
     final authService = AuthService();
     final usuarioService = UsuariosService();
     final prefs = await SharedPreferences.getInstance();
 
+    // Cargar nombre del caché
+    if (mounted) {
+      setState(() {
+        nombreUsuario = prefs.getString('nombreUsuario') ?? "Usuario";
+        tipoUsuario = prefs.getString('tipoUsuario');
+      });
+    }
+
     try {
       if (tieneInternet == true) {
         final token = await authService.getTokenApi();
-
         if (token != null) {
           final idUsuario = authService.obtenerIdUsuarioLogueado(token);
           Map<String, dynamic>? user =
               await usuarioService.obtenerUsuario2(idUsuario);
 
-          if (user != null) {
-            if (!mounted) return;
+          if (user != null && mounted) {
             setState(() {
               tipoUsuario = user['tipo'];
+              nombreUsuario = user['nombre'] ?? nombreUsuario;
             });
             await prefs.setString('tipoUsuario', user['tipo']);
+            await prefs.setString('nombreUsuario', nombreUsuario);
             return;
           }
         }
       }
     } catch (e) {
-      debugPrint('Error al obtener tipo de usuario de API: $e');
-    }
-
-    // Si no se pudo obtener de la API o no hay internet, intentar obtener del caché
-    String? cachedTipo = prefs.getString('tipoUsuario');
-    if (mounted && cachedTipo != null) {
-      setState(() {
-        tipoUsuario = cachedTipo;
-      });
-    } else {
-      if (mounted) {
-        setState(() {
-          tipoUsuario = null;
-        });
-      }
+      debugPrint('Error al obtener datos de usuario: $e');
     }
   }
 
   Future<void> verificarYLogout() async {
-    if (tipoUsuario == null) {
-      // Si el token es null o vacío, se hace logout
+    if (tipoUsuario == null && tieneInternet == true) {
       _logout();
     }
   }
@@ -129,13 +115,13 @@ class _MenuLateralState extends State<MenuLateral> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
         (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cerrar sesión')),
+        const SnackBar(content: Text('Error al cerrar sesión')),
       );
     }
   }
@@ -143,167 +129,226 @@ class _MenuLateralState extends State<MenuLateral> {
   @override
   Widget build(BuildContext context) {
     if (tieneInternet == null) {
-      // Mientras se verifica conexión, muestra loader
-      return Drawer(
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const Drawer(child: Center(child: CircularProgressIndicator()));
     }
 
-    // Si tipoUsuario no está cargado (y no se pudo recuperar del caché), muestra loader
-    if (tipoUsuario == null) {
-      return Drawer(
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // Si hay internet y tipoUsuario cargado, muestra menú filtrado
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
         children: [
-          Container(
-            height: 90,
-            color: const Color.fromARGB(255, 112, 114, 113),
-            child: Center(
-              child: Text(
-                '',
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
+          _buildDrawerHeader(),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              children: [
+                if (tipoUsuario == 'administrador') ...[
+                  _buildListTile(context, Icons.dashboard_outlined, 'Inicio',
+                      const HomePage()),
+                  _buildListTile(context, Icons.people_outline, 'Clientes',
+                      const ClientesPage()),
+                  _buildListTile(context, Icons.fact_check_outlined,
+                      'Actividad anual', const InspeccionEspecialPage()),
+                  _buildListTile(context, Icons.description_outlined,
+                      'Reporte de actividades', const ReporteFinalPage()),
+                  _buildListTile(
+                      context,
+                      Icons.settings_suggest_outlined,
+                      'Configuración Cliente',
+                      const EncuestasJerarquicasWidget()),
+                  _buildSectionHeader('GESTIÓN'),
+                  _buildExpansionTile(
+                    context,
+                    Icons.assignment_outlined,
+                    'Actividades',
+                    [
+                      _buildSubTile(
+                          context, 'Crear actividad', const EncuestasPage()),
+                      _buildSubTile(
+                          context, 'Aplicar actividad', const EncuestaPage()),
+                      _buildSubTile(context, 'Historial',
+                          const InspeccionesPantalla1Page()),
+                      _buildSubTile(context, 'Seleccionar actividad',
+                          const ClienteInspeccionesApp()),
+                      _buildSubTile(context, 'Próximas',
+                          const InspeccionesProximasPage()),
+                      _buildSubTile(context, 'Programa',
+                          const ProgramaInspeccionesPage()),
+                      _buildSubTile(
+                          context, 'Gráficas', const GraficaInspeccionesPage()),
+                    ],
+                  ),
+                  _buildListTile(context, Icons.category_outlined,
+                      'Clasificaciones', const ClasificacionesPage()),
+                  _buildListTile(context, Icons.calendar_month_outlined,
+                      'Periodos', const FrecuenciasPage()),
+                  _buildListTile(context, Icons.account_tree_outlined,
+                      'Tipos de sistemas', const RamasPage()),
+                  _buildExpansionTile(
+                    context,
+                    Icons.fire_extinguisher,
+                    'Extintores',
+                    [
+                      _buildSubTile(context, 'Listado', const ExtintoresPage()),
+                      _buildSubTile(
+                          context, 'Tipos', const TiposExtintoresPage()),
+                    ],
+                  ),
+                  _buildListTile(context, Icons.manage_accounts_outlined,
+                      'Usuarios', const UsuariosPage()),
+                  _buildListTile(context, Icons.history_edu_outlined, 'Logs',
+                      const LogsPage()),
+                ] else if (tipoUsuario == 'inspector') ...[
+                  _buildListTile(
+                      context, Icons.home_outlined, 'Inicio', const HomePage()),
+                  _buildListTile(context, Icons.poll_outlined,
+                      'Crear actividad', const EncuestasPage()),
+                  _buildListTile(context, Icons.assignment_outlined,
+                      'Aplicar actividad', const EncuestaPage()),
+                  _buildListTile(context, Icons.history_outlined, 'Historial',
+                      const InspeccionesPantalla1Page()),
+                  _buildListTile(context, Icons.event_available_outlined,
+                      'Actividades próximas', const InspeccionesProximasPage()),
+                  _buildListTile(context, Icons.calendar_today_outlined,
+                      'Programa', const ProgramaInspeccionesPage()),
+                  _buildListTile(context, Icons.insights_outlined, 'Gráficas',
+                      const GraficaInspeccionesPage()),
+                ],
+              ],
             ),
           ),
-          if (tipoUsuario == 'administrador') ...[
-            _buildListTile(context, Icons.home, 'Inicio', HomePage()),
-            _buildListTile(context, Icons.person, 'Clientes', ClientesPage()),
-            _buildListTile(context, Icons.fact_check, 'Actividad anual',
-                InspeccionEspecialPage()),
-            _buildListTile(context, Icons.sticky_note_2,
-                'Reporte de actividades y pruebas', ReporteFinalPage()),
-            _buildListTile(context, Icons.manage_accounts,
-                'Configuración de Cliente', EncuestasJerarquicasWidget()),
-            ExpansionTile(
-              leading: Icon(Icons.check_box_outline_blank),
-              title: Text('Actividades',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
-              dense: true,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              collapsedShape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Column(
-                    children: [
-                      _buildListTile(context, Icons.poll, 'Crear actividad',
-                          EncuestasPage()),
-                      _buildListTile(context, Icons.assignment,
-                          'Aplicar actividad', EncuestaPage()),
-                      _buildListTile(
-                          context,
-                          Icons.report_problem,
-                          'Historial de actividades',
-                          InspeccionesPantalla1Page()),
-                      _buildListTile(context, Icons.report_problem,
-                          'Seleccionar actividad', ClienteInspeccionesApp()),
-                      _buildListTile(context, Icons.next_week_sharp,
-                          'Actividades próximas', InspeccionesProximasPage()),
-                      _buildListTile(
-                          context,
-                          Icons.date_range,
-                          'Programa de actividades',
-                          ProgramaInspeccionesPage()),
-                      _buildListTile(context, Icons.show_chart,
-                          'Gráfico de actividades', GraficaInspeccionesPage()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            _buildListTile(context, FontAwesomeIcons.list, 'Clasificaciones',
-                ClasificacionesPage()),
-            _buildListTile(
-                context, Icons.calendar_today, 'Periodos', FrecuenciasPage()),
-            _buildListTile(
-                context, Icons.devices, 'Tipos de sistemas', RamasPage()),
-            ExpansionTile(
-              leading: Icon(FontAwesomeIcons.fireFlameCurved),
-              title: Text('Extintores',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
-              dense: true,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              collapsedShape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Column(
-                    children: [
-                      _buildListTile(context, FontAwesomeIcons.fireExtinguisher,
-                          'Extintores', ExtintoresPage()),
-                      _buildListTile(context, FontAwesomeIcons.wrench,
-                          'Tipos de extintores', TiposExtintoresPage()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            _buildListTile(
-                context, FontAwesomeIcons.person, 'Usuarios', UsuariosPage()),
-            _buildListTile(
-                context, FontAwesomeIcons.fileLines, 'Logs', LogsPage()),
-          ] else if (tipoUsuario == 'inspector') ...[
-            _buildListTile(context, Icons.home, 'Inicio', HomePage()),
-            _buildListTile(
-                context, Icons.poll, 'Crear actividad', EncuestasPage()),
-            _buildListTile(
-                context, Icons.assignment, 'Aplicar actividad', EncuestaPage()),
-            _buildListTile(context, Icons.report_problem,
-                'Historial de actividades', InspeccionesPantalla1Page()),
-            _buildListTile(context, Icons.next_week_sharp,
-                'Actividades proximas', InspeccionesProximasPage()),
-            _buildListTile(context, Icons.date_range, 'Programa de actividades',
-                ProgramaInspeccionesPage()),
-            _buildListTile(context, Icons.show_chart, 'Gráfico de actividades',
-                GraficaInspeccionesPage()),
-          ],
+          const Divider(height: 1),
           ListTile(
-            leading: Icon(Icons.logout),
-            title: Text('Cerrar sesión'),
-            onTap: () {
-              _logout();
-            },
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            title: const Text('Cerrar sesión',
+                style: TextStyle(
+                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            onTap: _logout,
           ),
         ],
       ),
     );
   }
 
+  Widget _buildDrawerHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(top: 50, bottom: 20, left: 24, right: 24),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF2C3E50), Color(0xFF707271)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 35,
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            child: Image.asset(
+              'lib/assets/img/logo_login.png',
+              height: 45,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 15),
+          Text(
+            nombreUsuario,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            tipoUsuario?.toUpperCase() ?? "",
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 12,
+                letterSpacing: 1.2),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, top: 20, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+            color: Colors.grey[500],
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5),
+      ),
+    );
+  }
+
   Widget _buildListTile(
       BuildContext context, IconData icon, String title, Widget page) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: widget.currentPage == title ? Colors.white : null,
+    bool isSelected = widget.currentPage == title;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading:
+            Icon(icon, color: isSelected ? Colors.white : Colors.blueGrey[700]),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.blueGrey[800],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        tileColor: isSelected ? const Color(0xFFE94742) : null,
+        onTap: () {
+          if (!isSelected) {
+            Navigator.pop(context);
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => page));
+          } else {
+            Navigator.pop(context);
+          }
+        },
       ),
+    );
+  }
+
+  Widget _buildExpansionTile(BuildContext context, IconData icon, String title,
+      List<Widget> children) {
+    return ExpansionTile(
+      leading: Icon(icon, color: Colors.blueGrey[700]),
+      title: Text(title,
+          style: TextStyle(
+              color: Colors.blueGrey[800],
+              fontWeight: FontWeight.w500,
+              fontSize: 15)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      childrenPadding: const EdgeInsets.only(left: 10),
+      children: children,
+    );
+  }
+
+  Widget _buildSubTile(BuildContext context, String title, Widget page) {
+    bool isSelected = widget.currentPage == title;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       title: Text(
         title,
         style: TextStyle(
-          color: widget.currentPage == title ? Colors.white : null,
+          color: isSelected ? Colors.white : Colors.blueGrey[600],
+          fontSize: 14,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       tileColor:
-          widget.currentPage == title ? Color.fromARGB(255, 233, 71, 66) : null,
+          isSelected ? const Color(0xFFE94742).withValues(alpha: 0.8) : null,
       onTap: () {
-        if (widget.currentPage != title) {
-          if (mounted) Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => page),
-          );
-        } else {
-          if (mounted) Navigator.pop(context);
-        }
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
       },
     );
   }

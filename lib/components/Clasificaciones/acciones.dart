@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -9,6 +9,7 @@ import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../../api/clasificaciones.dart';
 import '../Logs/logs_informativos.dart';
 import '../Generales/flushbar_helper.dart';
+import '../Generales/premium_button.dart';
 import '../Load/load.dart';
 
 class Acciones extends StatefulWidget {
@@ -615,17 +616,25 @@ class _AccionesState extends State<Acciones> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
+                            PremiumActionButton(
                               onPressed: closeRegistroModal,
-                              child: Text('Cancelar'),
+                              label: 'Cancelar',
+                              icon: Icons.close,
+                              style: PremiumButtonStyle.secondary,
                             ),
-                            SizedBox(width: 10),
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _onSubmit,
-                              child: _isLoading
-                                  ? SpinKitFadingCircle(
-                                      color: Colors.white, size: 24)
-                                  : Text(buttonLabel),
+                            const SizedBox(width: 20),
+                            PremiumActionButton(
+                              onPressed: _onSubmit,
+                              label: buttonLabel,
+                              icon: isEliminar
+                                  ? FontAwesomeIcons.trash
+                                  : (widget.accion == 'editar'
+                                      ? FontAwesomeIcons.penToSquare
+                                      : FontAwesomeIcons.floppyDisk),
+                              isLoading: _isLoading,
+                              style: isEliminar
+                                  ? PremiumButtonStyle.danger
+                                  : PremiumButtonStyle.primary,
                             ),
                           ],
                         ),

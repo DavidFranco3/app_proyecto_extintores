@@ -10,6 +10,7 @@ import '../../components/Extintores/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 
 class ExtintoresPage extends StatefulWidget {
   const ExtintoresPage({super.key});
@@ -84,7 +85,8 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
       if (guardados != null) {
         setState(() {
           dataExtintores = guardados
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item))
               .where((item) => item['estado'] == "true")
               .toList();
           loading = false;
@@ -129,17 +131,19 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
   }
 
   List<Map<String, dynamic>> formatModelExtintores(List<dynamic> data) {
-    return data.map((item) => {
-      'id': item['_id'],
-      'numeroSerie': item['numeroSerie'],
-      'idTipoExtintor': item['idTipoExtintor'],
-      'extintor': item['tipoExtintor']['nombre'],
-      'capacidad': item['capacidad'],
-      'ultimaRecarga': item['ultimaRecarga'],
-      'estado': item['estado'],
-      'createdAt': item['createdAt'],
-      'updatedAt': item['updatedAt'],
-    }).toList();
+    return data
+        .map((item) => {
+              'id': item['_id'],
+              'numeroSerie': item['numeroSerie'],
+              'idTipoExtintor': item['idTipoExtintor'],
+              'extintor': item['tipoExtintor']['nombre'],
+              'capacidad': item['capacidad'],
+              'ultimaRecarga': item['ultimaRecarga'],
+              'estado': item['estado'],
+              'createdAt': item['createdAt'],
+              'updatedAt': item['updatedAt'],
+            })
+        .toList();
   }
 
   @override
@@ -150,27 +154,32 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
       body: loading
           ? Load()
           : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Extintores",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Extintores",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      PremiumActionButton(
+                        onPressed: openRegistroModal,
+                        label: "Registrar",
+                        icon: FontAwesomeIcons.plus,
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: openRegistroModal,
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
+                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: TblExtintores(
                     showModal: () {
@@ -191,5 +200,3 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     );
   }
 }
-
-

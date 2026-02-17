@@ -6,6 +6,7 @@ import '../../components/Ramas/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -130,30 +131,32 @@ class _RamasPageState extends State<RamasPage> {
       body: loading
           ? Load()
           : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Tipos de sistemas",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Tipos de sistemas",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
                       ),
-                    ),
+                      PremiumActionButton(
+                        onPressed: openRegistroModal,
+                        label: "Registrar",
+                        icon: FontAwesomeIcons.plus,
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: openRegistroModal,
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
+                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: TblRamas(
                     showModal: () {
@@ -174,5 +177,3 @@ class _RamasPageState extends State<RamasPage> {
     );
   }
 }
-
-

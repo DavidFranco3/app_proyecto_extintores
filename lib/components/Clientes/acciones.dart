@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/clientes.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +11,7 @@ import 'dart:io';
 import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
+import '../Generales/premium_button.dart';
 import '../Load/load.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -24,7 +25,8 @@ class Acciones extends StatefulWidget {
   final dynamic data;
 
   const Acciones(
-      {super.key, required this.showModal,
+      {super.key,
+      required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data});
@@ -456,12 +458,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Clasificación guardada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Clasificación guardada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -480,11 +482,11 @@ class _AccionesState extends State<Acciones> {
             "Se ha registrado el cliente ${data['nombre']} correctamente", {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "La clasificación fue agregada correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "La clasificación fue agregada correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -492,11 +494,11 @@ class _AccionesState extends State<Acciones> {
         });
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message: "No se pudo guardar la clasificación",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error",
+            message: "No se pudo guardar la clasificación",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -505,11 +507,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -577,12 +579,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Clasificación actualizada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Clasificación actualizada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -601,12 +603,12 @@ class _AccionesState extends State<Acciones> {
             "Se ha actualizado el cliente ${data['nombre']} correctamente", {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Actualización exitosa",
-          message:
-              "Los datos de la clasificación fueron actualizados correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Actualización exitosa",
+            message:
+                "Los datos de la clasificación fueron actualizados correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -615,11 +617,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -668,12 +670,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Clasificación eliminada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Clasificación eliminada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -692,12 +694,12 @@ class _AccionesState extends State<Acciones> {
             "Se ha eliminado la cleintes ${data['id']} correctamente", {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Eliminación exitosa",
-          message:
-              "Se han eliminado correctamente los datos de la clasificación",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Eliminación exitosa",
+            message:
+                "Se han eliminado correctamente los datos de la clasificación",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -706,11 +708,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -1120,17 +1122,25 @@ class _AccionesState extends State<Acciones> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed:
-                                  closeRegistroModal, // Cierra el modal pasando false
-                              child: Text('Cancelar'),
+                            PremiumActionButton(
+                              onPressed: closeRegistroModal,
+                              label: 'Cancelar',
+                              icon: Icons.close,
+                              style: PremiumButtonStyle.secondary,
                             ),
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _onSubmit,
-                              child: _isLoading
-                                  ? SpinKitFadingCircle(
-                                      color: Colors.white, size: 24)
-                                  : Text(buttonLabel),
+                            const SizedBox(width: 20),
+                            PremiumActionButton(
+                              onPressed: _onSubmit,
+                              label: buttonLabel,
+                              icon: isEliminar
+                                  ? FontAwesomeIcons.trash
+                                  : (widget.accion == 'editar'
+                                      ? FontAwesomeIcons.penToSquare
+                                      : FontAwesomeIcons.floppyDisk),
+                              isLoading: _isLoading,
+                              style: isEliminar
+                                  ? PremiumButtonStyle.danger
+                                  : PremiumButtonStyle.primary,
                             ),
                           ],
                         ),
@@ -1143,5 +1153,3 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
-
-

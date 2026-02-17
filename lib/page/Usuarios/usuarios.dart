@@ -10,6 +10,7 @@ import '../../components/Usuarios/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 
 class UsuariosPage extends StatefulWidget {
   const UsuariosPage({super.key});
@@ -150,33 +151,40 @@ class _UsuariosPageState extends State<UsuariosPage> {
       body: loading
           ? Load()
           : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Usuarios",
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Usuarios",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      PremiumActionButton(
+                        onPressed: openRegistroModal,
+                        label: "Registrar",
+                        icon: FontAwesomeIcons.plus,
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: openRegistroModal,
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
+                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: dataUsuarios.isEmpty
-                      ? Center(child: Text("No hay usuarios disponibles."))
+                      ? const Center(
+                          child: Text("No hay usuarios disponibles."))
                       : TblUsuarios(
-                          showModal: () { if (mounted) Navigator.pop(context); },
+                          showModal: () {
+                            if (mounted) Navigator.pop(context);
+                          },
                           usuarios: dataUsuarios,
                           onCompleted: cargarUsuarios,
                         ),
@@ -192,7 +200,3 @@ class _UsuariosPageState extends State<UsuariosPage> {
     );
   }
 }
-
-
-
-

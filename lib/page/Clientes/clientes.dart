@@ -10,6 +10,7 @@ import '../../components/Clientes/acciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 
 class ClientesPage extends StatefulWidget {
   const ClientesPage({super.key});
@@ -89,7 +90,8 @@ class _ClientesPageState extends State<ClientesPage> {
       if (mounted) {
         setState(() {
           dataClientes = guardados
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item as Map))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")
               .toList();
           loading = false;
@@ -112,7 +114,9 @@ class _ClientesPageState extends State<ClientesPage> {
         builder: (BuildContext context) {
           return Scaffold(
             body: Acciones(
-              showModal: () { if (mounted) Navigator.pop(context); },
+              showModal: () {
+                if (mounted) Navigator.pop(context);
+              },
               onCompleted: cargarClientes,
               accion: "registrar",
               data: null,
@@ -167,32 +171,40 @@ class _ClientesPageState extends State<ClientesPage> {
       body: loading
           ? Load()
           : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Clientes",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Clientes",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      PremiumActionButton(
+                        onPressed: openRegistroModal,
+                        label: "Registrar",
+                        icon: FontAwesomeIcons.plus,
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: openRegistroModal,
-                      icon: Icon(FontAwesomeIcons.plus),
-                      label: Text("Registrar"),
-                    ),
-                  ),
-                ),
+                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: dataClientes.isEmpty
-                      ? Center(child: Text("No hay clientes disponibles."))
+                      ? const Center(
+                          child: Text("No hay clientes disponibles."))
                       : TblClientes(
-                          showModal: () { if (mounted) Navigator.pop(context); },
+                          showModal: () {
+                            if (mounted) Navigator.pop(context);
+                          },
                           clientes: dataClientes,
                           onCompleted: cargarClientes,
                         ),
@@ -208,7 +220,3 @@ class _ClientesPageState extends State<ClientesPage> {
     );
   }
 }
-
-
-
-

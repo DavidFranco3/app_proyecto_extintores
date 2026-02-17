@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// Spinkit removed
 import '../../api/tipos_extintores.dart';
 import '../Logs/logs_informativos.dart';
+import '../Generales/premium_button.dart';
 import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
@@ -17,7 +19,8 @@ class Acciones extends StatefulWidget {
   final dynamic data;
 
   const Acciones(
-      {super.key, required this.showModal,
+      {super.key,
+      required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data});
@@ -268,12 +271,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Tipo de extintor guardado localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Tipo de extintor guardado localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -294,11 +297,11 @@ class _AccionesState extends State<Acciones> {
             {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "El tipo de extintor fue agregado correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "El tipo de extintor fue agregado correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -306,11 +309,11 @@ class _AccionesState extends State<Acciones> {
         });
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message: "No se pudo guardar el tipo de extintor",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error",
+            message: "No se pudo guardar el tipo de extintor",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -319,11 +322,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -377,12 +380,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Tipo de extintor actualizado localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Tipo de extintor actualizado localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -403,12 +406,12 @@ class _AccionesState extends State<Acciones> {
             {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Actualización exitosa",
-          message:
-              "Los datos del tipo del extintor fueron actualizados correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Actualización exitosa",
+            message:
+                "Los datos del tipo del extintor fueron actualizados correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -417,11 +420,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -471,12 +474,12 @@ class _AccionesState extends State<Acciones> {
       widget.showModal();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Tipo de extintor eliminada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Tipo de extintor eliminada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -497,12 +500,12 @@ class _AccionesState extends State<Acciones> {
             {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Eliminación exitosa",
-          message:
-              "Se han eliminado correctamente los datos del tipo de extintor",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Eliminación exitosa",
+            message:
+                "Se han eliminado correctamente los datos del tipo de extintor",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -511,11 +514,11 @@ class _AccionesState extends State<Acciones> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -606,17 +609,25 @@ class _AccionesState extends State<Acciones> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              onPressed:
-                                  closeRegistroModal, // Cierra el modal pasando false
-                              child: Text('Cancelar'),
+                            PremiumActionButton(
+                              onPressed: closeRegistroModal,
+                              label: 'Cancelar',
+                              icon: Icons.close,
+                              style: PremiumButtonStyle.secondary,
                             ),
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _onSubmit,
-                              child: _isLoading
-                                  ? SpinKitFadingCircle(
-                                      color: Colors.white, size: 24)
-                                  : Text(buttonLabel),
+                            const SizedBox(width: 20),
+                            PremiumActionButton(
+                              onPressed: _onSubmit,
+                              label: buttonLabel,
+                              icon: isEliminar
+                                  ? FontAwesomeIcons.trash
+                                  : (widget.accion == 'editar'
+                                      ? FontAwesomeIcons.penToSquare
+                                      : FontAwesomeIcons.floppyDisk),
+                              isLoading: _isLoading,
+                              style: isEliminar
+                                  ? PremiumButtonStyle.danger
+                                  : PremiumButtonStyle.primary,
                             ),
                           ],
                         ),
@@ -629,5 +640,3 @@ class _AccionesState extends State<Acciones> {
     );
   }
 }
-
-

@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'dart:math' as math;
 
 class Load extends StatefulWidget {
   const Load({super.key});
@@ -7,26 +9,36 @@ class Load extends StatefulWidget {
   State<Load> createState() => _LoadState();
 }
 
-class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+class _LoadState extends State<Load> with TickerProviderStateMixin {
+  late AnimationController _rotationController;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: Duration(milliseconds: 600),
+
+    // Controlador para la rotación del anillo
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+
+    // Controlador para el efecto de pulso del logo
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: 0, end: 10).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _rotationController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -36,36 +48,75 @@ class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
+          // 1. Glassmorphism Background
           Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.5),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(
+                color: const Color(0xFF2C3E50).withValues(alpha: 0.4),
+              ),
             ),
           ),
+          // 2. Center Content
           Center(
-            child: AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(3, (index) {
-                    return Transform.translate(
-                      offset: Offset(0,
-                          index.isEven ? -_animation.value : _animation.value),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: Container(
-                          width: 15,
-                          height: 15,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Anillo de rotación
+                    AnimatedBuilder(
+                      animation: _rotationController,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _rotationController.value * 2 * math.pi,
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.transparent,
+                                width: 4,
+                              ),
+                              gradient: const SweepGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  Color(0xFFE94742), // Red Corporate
+                                  Colors.white,
+                                  Color(0xFFE94742),
+                                ],
+                                stops: [0.0, 0.4, 0.6, 1.0],
+                              ),
+                            ),
                           ),
-                        ),
+                        );
+                      },
+                    ),
+                    // Logo Pulsante
+                    ScaleTransition(
+                      scale: _pulseAnimation,
+                      child: Image.asset(
+                        'lib/assets/img/logo_login.png',
+                        height: 70,
+                        fit: BoxFit.contain,
+                        color: Colors.white,
                       ),
-                    );
-                  }),
-                );
-              },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  "Cargando...",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -73,4 +124,3 @@ class _LoadState extends State<Load> with SingleTickerProviderStateMixin {
     );
   }
 }
-

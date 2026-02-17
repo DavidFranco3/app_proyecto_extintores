@@ -58,81 +58,114 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: const Color.fromARGB(255, 112, 114, 113),
-      title: Row(
-        children: [
-          Spacer(),
-          // 🔄 Indicador de sincronización offline
-          ValueListenableBuilder<int>(
-            valueListenable: OfflineSyncUtil().pendingCount,
-            builder: (context, count, child) {
-              if (count == 0) return SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(right: 15),
-                child: Stack(
-                  alignment: Alignment.topRight,
-                  children: [
-                    IconButton(
-                      icon: FaIcon(FontAwesomeIcons.cloudArrowUp,
-                          color: Colors.white),
-                      onPressed: () {
-                        OfflineSyncUtil().sincronizarTodo();
-                      },
-                      tooltip: 'Sincronizar pendientes ($count)',
-                    ),
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '$count',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+      elevation: 4,
+      shadowColor: Colors.black45,
+      centerTitle: true,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF2C3E50), // Navy Blue
+              Color(0xFF707271), // Dynamic Grey
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              icon: FaIcon(FontAwesomeIcons.circleUser, color: Colors.white),
-              items: [
-                DropdownMenuItem<String>(
-                  value: "logout",
-                  child: Row(
-                    children: [
-                      FaIcon(FontAwesomeIcons.rightFromBracket, size: 18),
-                      SizedBox(width: 10),
-                      Text("Cerrar sesión"),
-                    ],
+        ),
+      ),
+      title: Image.asset(
+        'lib/assets/img/logo_login.png',
+        height: 35,
+        fit: BoxFit.contain,
+        color: Colors.white,
+      ),
+      actions: [
+        // 🔄 Indicador de sincronización offline
+        ValueListenableBuilder<int>(
+          valueListenable: OfflineSyncUtil().pendingCount,
+          builder: (context, count, child) {
+            if (count == 0) return const SizedBox.shrink();
+            return Stack(
+              alignment: Alignment.topRight,
+              children: [
+                IconButton(
+                  icon: const FaIcon(
+                    FontAwesomeIcons.cloudArrowUp,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    OfflineSyncUtil().sincronizarTodo();
+                  },
+                  tooltip: 'Sincronizar pendientes ($count)',
+                ),
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$count',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ],
-              onChanged: (value) {
-                if (value == "logout") {
-                  _cerrarSesion(context);
-                }
-              },
-            ),
+            );
+          },
+        ),
+        // 👤 Perfil
+        PopupMenuButton<String>(
+          icon: const FaIcon(
+            FontAwesomeIcons.solidCircleUser,
+            color: Colors.white,
+            size: 26,
           ),
-        ],
-      ),
+          offset: const Offset(0, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          onSelected: (value) {
+            if (value == "logout") {
+              _cerrarSesion(context);
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem<String>(
+              value: "logout",
+              child: Row(
+                children: const [
+                  FaIcon(
+                    FontAwesomeIcons.rightFromBracket,
+                    size: 18,
+                    color: Colors.redAccent,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    "Cerrar sesión",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 8),
+      ],
+      iconTheme: const IconThemeData(color: Colors.white),
     );
   }
 
