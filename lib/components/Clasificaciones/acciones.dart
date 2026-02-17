@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../Generales/premium_inputs.dart';
 
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
@@ -591,50 +592,70 @@ class _AccionesState extends State<Acciones> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: _nombreController,
-                          decoration: InputDecoration(labelText: 'Nombre'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El nombre es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Detalles de Clasificación",
+                          icon: FontAwesomeIcons.tags,
                         ),
-                        SizedBox(height: 10),
-                        TextFormField(
-                          controller: _descripcionController,
-                          decoration: InputDecoration(labelText: 'Descripción'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La descripción es obligatoria'
-                                  : null,
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _nombreController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Nombre de la Clasificación',
+                                  prefixIcon: FontAwesomeIcons.tag,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El nombre es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _descripcionController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Descripción / Notas',
+                                  prefixIcon: FontAwesomeIcons.alignLeft,
+                                ),
+                                enabled: !isEliminar,
+                                maxLines: 2,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La descripción es obligatoria'
+                                        : null,
+                              ),
+                            ],
+                          ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (widget.accion == 'editar'
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (widget.accion == 'editar'
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),

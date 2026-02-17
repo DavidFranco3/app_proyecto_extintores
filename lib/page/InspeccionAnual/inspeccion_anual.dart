@@ -8,18 +8,21 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Logs/logs_informativos.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../InspeccionEspecial/inspeccion_especial.dart';
 import 'package:flutter/services.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class InspeccionAnualPage extends StatefulWidget {
   final VoidCallback showModal;
   final Function onCompleted;
   final String accion;
   final dynamic data;
-  const InspeccionAnualPage({super.key, 
+  const InspeccionAnualPage({
+    super.key,
     required this.showModal,
     required this.onCompleted,
     required this.accion,
@@ -191,11 +194,11 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
             dataTemp);
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "La inspección anual fue agregada correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "La inspección anual fue agregada correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -203,11 +206,11 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
         });
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la inspección anual",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Hubo un problema",
+            message: "Hubo un error al agregar la inspección anual",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -216,11 +219,11 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -246,165 +249,189 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
     return Scaffold(
       key: _formKey,
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Inspección anual"),
+      drawer: MenuLateral(currentPage: "Actividad anual"),
       body: loading
           ? Load()
           : SingleChildScrollView(
               padding: EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Center(
-                    child: Text(
-                      "Inspección anual",
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  const Text(
+                    "Inspección anual",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2C3E50),
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _publicarEncuesta,
-                        icon: Icon(Icons.add),
-                        label: _isLoading
-                            ? SpinKitFadingCircle(color: Colors.white, size: 24)
-                            : Text("Guardar"),
+                      Expanded(
+                        child: PremiumActionButton(
+                          onPressed: _isLoading ? () {} : _publicarEncuesta,
+                          label: "Guardar",
+                          icon: FontAwesomeIcons.floppyDisk,
+                          isLoading: _isLoading,
+                          isFullWidth: true,
+                        ),
                       ),
-                      SizedBox(width: 16),
-                      ElevatedButton.icon(
-                        onPressed: returnPrincipalPage,
-                        icon: Icon(Icons.arrow_back),
-                        label: _isLoading
-                            ? SpinKitFadingCircle(color: Colors.red, size: 24)
-                            : Text("Regresar"),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: PremiumActionButton(
+                          onPressed: returnPrincipalPage,
+                          label: "Regresar",
+                          icon: FontAwesomeIcons.arrowLeft,
+                          style: PremiumButtonStyle.secondary,
+                          isFullWidth: true,
+                        ),
                       ),
                     ],
                   ),
+                  const Divider(indent: 20, endIndent: 20, height: 32),
                   SizedBox(height: 20),
-                  Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: nombreController,
-                            decoration: InputDecoration(labelText: "Nombre"),
+                  const PremiumSectionTitle(
+                    title: "Información de la Inspección",
+                    icon: FontAwesomeIcons.circleInfo,
+                  ),
+                  PremiumCardField(
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: nombreController,
+                          decoration: PremiumInputs.decoration(
+                            labelText: "Nombre de la inspección",
+                            prefixIcon: FontAwesomeIcons.tag,
                           ),
-                          DropdownSearch<String>(
-                            key: Key('clienteDropdown'),
-                            enabled: dataClientes.isNotEmpty,
-                            items: (filter, _) {
-                              return dataClientes
-                                  .where((c) => c['nombre']
-                                      .toString()
-                                      .toLowerCase()
-                                      .contains(filter.toLowerCase()))
-                                  .map((c) => c['id'].toString())
-                                  .toList();
-                            },
-                            selectedItem: clienteController.text.isEmpty
-                                ? null
-                                : clienteController.text,
-                            onChanged: dataClientes.isEmpty
-                                ? null
-                                : (String? newValue) {
-                                    setState(() {
-                                      clienteController.text = newValue!;
-                                    });
-                                  },
-                            dropdownBuilder: (context, selectedItem) {
-                              final cliente = dataClientes.firstWhere(
-                                  (c) => c['id'].toString() == selectedItem,
-                                  orElse: () => {'nombre': ''});
-                              return Text(
-                                cliente['nombre'] != ''
-                                    ? cliente['nombre']
-                                    : "Selecciona un Cliente",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: selectedItem == null
-                                        ? Colors.grey
-                                        : Colors.black),
-                              );
-                            },
-                            decoratorProps: DropDownDecoratorProps(
-                              decoration: InputDecoration(
-                                labelText: 'Cliente',
-                                border: UnderlineInputBorder(),
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                              ),
-                            ),
-                            popupProps: PopupProps.menu(
-                              showSearchBox: true,
-                              fit: FlexFit.loose,
-                              constraints: BoxConstraints(maxHeight: 300),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownSearch<String>(
+                          key: const Key('clienteDropdown'),
+                          enabled: dataClientes.isNotEmpty,
+                          items: (filter, _) {
+                            return dataClientes
+                                .where((c) => c['nombre']
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()))
+                                .map((c) => c['id'].toString())
+                                .toList();
+                          },
+                          itemAsString: (String? id) {
+                            if (id == null) return "";
+                            final cliente = dataClientes.firstWhere(
+                                (c) => c['id'].toString() == id,
+                                orElse: () => {'nombre': ''});
+                            return cliente['nombre']?.toString() ?? "";
+                          },
+                          selectedItem: clienteController.text.isEmpty
+                              ? null
+                              : clienteController.text,
+                          onChanged: dataClientes.isEmpty
+                              ? null
+                              : (String? newValue) {
+                                  setState(() {
+                                    clienteController.text = newValue!;
+                                  });
+                                },
+                          dropdownBuilder: (context, selectedItem) {
+                            final cliente = dataClientes.firstWhere(
+                                (c) => c['id'].toString() == selectedItem,
+                                orElse: () => {'nombre': ''});
+                            return Text(
+                              cliente['nombre'] != '' ? cliente['nombre'] : "",
+                              style: const TextStyle(fontSize: 14),
+                            );
+                          },
+                          decoratorProps: DropDownDecoratorProps(
+                            decoration: PremiumInputs.decoration(
+                              labelText: 'Cliente',
+                              prefixIcon: FontAwesomeIcons.buildingUser,
                             ),
                           ),
-                        ],
-                      ),
+                          popupProps: const PopupProps.menu(
+                            showSearchBox: true,
+                            fit: FlexFit.loose,
+                            constraints: BoxConstraints(maxHeight: 300),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _agregarPregunta,
-                    child: Text("Agregar Dato"),
+                  const SizedBox(height: 24),
+                  const PremiumSectionTitle(
+                    title: "Agregar Nuevo Campo",
+                    icon: FontAwesomeIcons.plusCircle,
                   ),
-                  SizedBox(height: 20),
-                  Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextField(
-                            controller: preguntaController,
-                            decoration: InputDecoration(labelText: "Pregunta"),
+                  PremiumCardField(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: preguntaController,
+                          decoration: PremiumInputs.decoration(
+                            labelText: "Pregunta / Concepto",
+                            prefixIcon: FontAwesomeIcons.question,
                           ),
-                          TextField(
-                            controller: observacionController,
-                            decoration: InputDecoration(
-                                labelText: "Valores (separados por coma)"),
-                            keyboardType:
-                                TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'^[0-9,]*$')),
-                            ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: observacionController,
+                          decoration: PremiumInputs.decoration(
+                            labelText: "Valores (separados por coma)",
+                            prefixIcon: FontAwesomeIcons.listOl,
                           ),
-                          SizedBox(height: 10),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: preguntas.length,
-                            itemBuilder: (context, index) {
-                              return Card(
-                                margin: EdgeInsets.symmetric(vertical: 5),
-                                child: ListTile(
-                                  title: Text(preguntas[index].pregunta),
-                                  subtitle: Text(
-                                      "Valores: ${preguntas[index].valores}\n"),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () => _eliminarPregunta(index),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^[0-9,]*$')),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        PremiumActionButton(
+                          onPressed: _agregarPregunta,
+                          label: "Agregar Dato",
+                          icon: FontAwesomeIcons.plus,
+                          style: PremiumButtonStyle.secondary,
+                        ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  const PremiumSectionTitle(
+                    title: "Conceptos Agregados",
+                    icon: FontAwesomeIcons.listCheck,
+                  ),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: preguntas.length,
+                    itemBuilder: (context, index) {
+                      return PremiumCardField(
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            preguntas[index].pregunta,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C3E50)),
+                          ),
+                          subtitle: Text(
+                            "Valores: ${preguntas[index].valores}",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          trailing: IconButton(
+                            icon: const FaIcon(FontAwesomeIcons.trashCan,
+                                color: Color(0xFFE74C3C), size: 20),
+                            onPressed: () => _eliminarPregunta(index),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -423,5 +450,3 @@ class Pregunta {
     return {"pregunta": pregunta, "valores": valores};
   }
 }
-
-

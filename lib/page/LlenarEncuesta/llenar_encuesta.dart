@@ -13,7 +13,6 @@ import '../../components/Logs/logs_informativos.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
 import 'package:path_provider/path_provider.dart';
@@ -26,6 +25,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
 
 class EncuestaPage extends StatefulWidget {
   const EncuestaPage({super.key}); // <-- super parameter
@@ -33,13 +34,13 @@ class EncuestaPage extends StatefulWidget {
   EncuestaPageState createState() => EncuestaPageState();
 }
 
-final GlobalKey<DropdownSearchState<String>> clienteKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> ramaKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> clasificacionKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> frecuenciaKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> encuestaKey = GlobalKey();
-
 class EncuestaPageState extends State<EncuestaPage> {
+  final GlobalKey<DropdownSearchState<String>> clienteKey = GlobalKey();
+  final GlobalKey<DropdownSearchState<String>> ramaKey = GlobalKey();
+  final GlobalKey<DropdownSearchState<String>> clasificacionKey = GlobalKey();
+  final GlobalKey<DropdownSearchState<String>> frecuenciaKey = GlobalKey();
+  final GlobalKey<DropdownSearchState<String>> encuestaKey = GlobalKey();
+
   List<Pregunta> preguntas = [];
   List<Map<String, dynamic>> dataEncuestas = [];
   List<Map<String, dynamic>> dataRamas = [];
@@ -803,12 +804,12 @@ class EncuestaPageState extends State<EncuestaPage> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Campos incompletos",
-        message:
-            "Por favor, completa todos los campos obligatorios antes de continuar.",
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Campos incompletos",
+          message:
+              "Por favor, completa todos los campos obligatorios antes de continuar.",
+          backgroundColor: Colors.red,
+        );
       }
       return;
     }
@@ -856,11 +857,11 @@ class EncuestaPageState extends State<EncuestaPage> {
 
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "Los datos de la encuesta fueron llenados correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "Los datos de la encuesta fueron llenados correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -869,12 +870,12 @@ class EncuestaPageState extends State<EncuestaPage> {
 
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message:
-              "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error",
+            message:
+                "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -895,12 +896,12 @@ class EncuestaPageState extends State<EncuestaPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "La encuesta se guardó localmente y se enviará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "La encuesta se guardó localmente y se enviará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
     }
   }
@@ -959,11 +960,11 @@ class EncuestaPageState extends State<EncuestaPage> {
 
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "Los datos de la encuesta fueron llenados correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "Los datos de la encuesta fueron llenados correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -972,12 +973,12 @@ class EncuestaPageState extends State<EncuestaPage> {
 
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message:
-              "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error",
+            message:
+                "Hubo un problema al registrar la encuesta. Inténtalo nuevamente.",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -987,11 +988,11 @@ class EncuestaPageState extends State<EncuestaPage> {
 
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: "Error inesperado: ${error.toString()}",
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: "Error inesperado: ${error.toString()}",
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -1218,44 +1219,31 @@ class EncuestaPageState extends State<EncuestaPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Center(
-                          child: Text(
-                            "Aplicar actividad",
-                            style: TextStyle(
-                                fontSize: 23, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () => _onSubmit("guardar"),
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 12),
-                                  fixedSize: Size(150, 50),
-                                ),
-                                icon: Icon(FontAwesomeIcons.plus),
-                                label: _isLoading
-                                    ? Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          SpinKitFadingCircle(
-                                            color: Colors.red,
-                                            size: 24,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text("Guardando..."),
-                                        ],
-                                      )
-                                    : Text("Guardar"),
+                        Column(
+                          children: [
+                            const Text(
+                              "Aplicar actividad",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF2C3E50),
+                                letterSpacing: -0.5,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 16),
+                            PremiumActionButton(
+                              onPressed: _isLoading
+                                  ? () {}
+                                  : () => _onSubmit("guardar"),
+                              label: _isLoading ? "Guardando..." : "Guardar",
+                              icon: FontAwesomeIcons.floppyDisk,
+                              isLoading: _isLoading,
+                              isFullWidth: true,
+                            ),
+                          ],
                         ),
+                        SizedBox(height: 24),
                         Column(
                           children: [
                             // Primera fila: 2 dropdowns
@@ -1263,261 +1251,259 @@ class EncuestaPageState extends State<EncuestaPage> {
                               children: [
                                 // Dropdown para Cliente
                                 Expanded(
-                                  child: DropdownSearch<String>(
-                                    key: clienteKey,
-                                    items: (filter, _) {
-                                      return dataClientes
-                                          .where((c) => c['nombre']
-                                              .toString()
-                                              .toLowerCase()
-                                              .contains(filter.toLowerCase()))
-                                          .map((c) => c['nombre'].toString())
-                                          .toList();
-                                    },
-                                    selectedItem: selectedClienteId != null
-                                        ? dataClientes.firstWhere((c) =>
-                                                c['id'] ==
-                                                selectedClienteId)['nombre']
-                                            as String
-                                        : null,
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        if (newValue != null) {
-                                          selectedClienteId =
-                                              dataClientes.firstWhere((c) =>
-                                                  c['nombre'] ==
-                                                  newValue)['id'];
-                                        } else {
-                                          selectedClienteId = null;
-                                        }
-                                      });
+                                  child: PremiumCardField(
+                                    child: DropdownSearch<String>(
+                                      key: clienteKey,
+                                      items: (filter, _) {
+                                        return dataClientes
+                                            .where((c) => c['nombre']
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains(filter.toLowerCase()))
+                                            .map((c) => c['nombre'].toString())
+                                            .toList();
+                                      },
+                                      selectedItem: selectedClienteId != null
+                                          ? dataClientes.firstWhere((c) =>
+                                                  c['id'] ==
+                                                  selectedClienteId)['nombre']
+                                              as String
+                                          : null,
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          if (newValue != null) {
+                                            selectedClienteId =
+                                                dataClientes.firstWhere((c) =>
+                                                    c['nombre'] ==
+                                                    newValue)['id'];
+                                          } else {
+                                            selectedClienteId = null;
+                                          }
+                                        });
 
-                                      if (selectedClienteId != null &&
-                                          selectedRamaId != null &&
-                                          selectedFrecuenciaId != null &&
-                                          selectedIdClasificacion != null) {
-                                        getEncuestas(
-                                          selectedRamaId!,
-                                          selectedFrecuenciaId!,
-                                          selectedIdClasificacion!,
-                                          selectedClienteId!,
-                                        );
-                                      }
-                                    },
-                                    dropdownBuilder: (context, selectedItem) =>
-                                        Text(
-                                      selectedItem ?? "",
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                    decoratorProps: DropDownDecoratorProps(
-                                      decoration: InputDecoration(
-                                        labelText: "Selecciona un Cliente",
-                                        border: UnderlineInputBorder(),
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
+                                        if (selectedClienteId != null &&
+                                            selectedRamaId != null &&
+                                            selectedFrecuenciaId != null &&
+                                            selectedIdClasificacion != null) {
+                                          getEncuestas(
+                                            selectedRamaId!,
+                                            selectedFrecuenciaId!,
+                                            selectedIdClasificacion!,
+                                            selectedClienteId!,
+                                          );
+                                        }
+                                      },
+                                      dropdownBuilder:
+                                          (context, selectedItem) => Text(
+                                        selectedItem ?? "",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 14),
                                       ),
+                                      decoratorProps: DropDownDecoratorProps(
+                                        decoration: PremiumInputs.decoration(
+                                          labelText: "Cliente",
+                                          prefixIcon: FontAwesomeIcons.userTag,
+                                        ),
+                                      ),
+                                      popupProps:
+                                          PopupProps.menu(showSearchBox: true),
                                     ),
-                                    popupProps:
-                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
                                 SizedBox(width: 10),
                                 // Dropdown para Tipo de Sistema
                                 Expanded(
-                                  child: DropdownSearch<String>(
-                                    key: ramaKey,
-                                    items: (filter, _) {
-                                      return dataRamas
-                                          .where((r) => r['nombre']
-                                              .toString()
-                                              .toLowerCase()
-                                              .contains(filter.toLowerCase()))
-                                          .map((r) => r['nombre'].toString())
-                                          .toList();
-                                    },
-                                    selectedItem: selectedRamaId != null
-                                        ? dataRamas.firstWhere((r) =>
-                                            r['id'] ==
-                                            selectedRamaId)['nombre'] as String
-                                        : null,
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        if (newValue != null) {
-                                          selectedRamaId = dataRamas.firstWhere(
-                                              (r) =>
-                                                  r['nombre'] ==
-                                                  newValue)['id'];
-                                        } else {
-                                          selectedRamaId = null;
-                                        }
-                                      });
+                                  child: PremiumCardField(
+                                    child: DropdownSearch<String>(
+                                      key: ramaKey,
+                                      items: (filter, _) {
+                                        return dataRamas
+                                            .where((r) => r['nombre']
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains(filter.toLowerCase()))
+                                            .map((r) => r['nombre'].toString())
+                                            .toList();
+                                      },
+                                      selectedItem: selectedRamaId != null
+                                          ? dataRamas.firstWhere((r) =>
+                                                  r['id'] ==
+                                                  selectedRamaId)['nombre']
+                                              as String
+                                          : null,
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          if (newValue != null) {
+                                            selectedRamaId =
+                                                dataRamas.firstWhere((r) =>
+                                                    r['nombre'] ==
+                                                    newValue)['id'];
+                                          } else {
+                                            selectedRamaId = null;
+                                          }
+                                        });
 
-                                      if (selectedClienteId != null &&
-                                          selectedRamaId != null &&
-                                          selectedFrecuenciaId != null &&
-                                          selectedIdClasificacion != null) {
-                                        getEncuestas(
-                                          selectedRamaId!,
-                                          selectedFrecuenciaId!,
-                                          selectedIdClasificacion!,
-                                          selectedClienteId!,
-                                        );
-                                      }
-                                    },
-                                    dropdownBuilder: (context, selectedItem) =>
-                                        Text(
-                                      selectedItem ?? "",
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                    decoratorProps: DropDownDecoratorProps(
-                                      decoration: InputDecoration(
-                                        labelText:
-                                            "Selecciona un Tipo de Sistema",
-                                        border: UnderlineInputBorder(),
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
+                                        if (selectedClienteId != null &&
+                                            selectedRamaId != null &&
+                                            selectedFrecuenciaId != null &&
+                                            selectedIdClasificacion != null) {
+                                          getEncuestas(
+                                            selectedRamaId!,
+                                            selectedFrecuenciaId!,
+                                            selectedIdClasificacion!,
+                                            selectedClienteId!,
+                                          );
+                                        }
+                                      },
+                                      dropdownBuilder:
+                                          (context, selectedItem) => Text(
+                                        selectedItem ?? "",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 14),
                                       ),
+                                      decoratorProps: DropDownDecoratorProps(
+                                        decoration: PremiumInputs.decoration(
+                                          labelText: "Tipo de Sistema",
+                                          prefixIcon:
+                                              FontAwesomeIcons.layerGroup,
+                                        ),
+                                      ),
+                                      popupProps:
+                                          PopupProps.menu(showSearchBox: true),
                                     ),
-                                    popupProps:
-                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
                               ],
                             ),
-
-// segunda fila: Clasificación y Frecuencia
+                            SizedBox(height: 10),
+                            // segunda fila: Clasificación y Frecuencia
                             Row(
                               children: [
                                 // Dropdown para Clasificación
                                 Expanded(
-                                  child: DropdownSearch<String>(
-                                    key: clasificacionKey,
-                                    items: (filter, _) {
-                                      return dataClasificaciones
-                                          .where((c) => c['nombre']
-                                              .toString()
-                                              .toLowerCase()
-                                              .contains(filter.toLowerCase()))
-                                          .map((c) => c['nombre'].toString())
-                                          .toList();
-                                    },
-                                    selectedItem: selectedIdClasificacion !=
-                                            null
-                                        ? dataClasificaciones.firstWhere((c) =>
-                                                c['id'] ==
-                                                selectedIdClasificacion)[
-                                            'nombre'] as String
-                                        : null,
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        if (newValue != null) {
-                                          selectedIdClasificacion =
-                                              dataClasificaciones.firstWhere(
+                                  child: PremiumCardField(
+                                    child: DropdownSearch<String>(
+                                      key: clasificacionKey,
+                                      items: (filter, _) {
+                                        return dataClasificaciones
+                                            .where((c) => c['nombre']
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains(filter.toLowerCase()))
+                                            .map((c) => c['nombre'].toString())
+                                            .toList();
+                                      },
+                                      selectedItem: selectedIdClasificacion !=
+                                              null
+                                          ? dataClasificaciones.firstWhere(
                                                   (c) =>
-                                                      c['nombre'] ==
-                                                      newValue)['id'];
-                                        } else {
-                                          selectedIdClasificacion = null;
-                                        }
-                                      });
+                                                      c['id'] ==
+                                                      selectedIdClasificacion)[
+                                              'nombre'] as String
+                                          : null,
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          if (newValue != null) {
+                                            selectedIdClasificacion =
+                                                dataClasificaciones.firstWhere(
+                                                    (c) =>
+                                                        c['nombre'] ==
+                                                        newValue)['id'];
+                                          } else {
+                                            selectedIdClasificacion = null;
+                                          }
+                                        });
 
-                                      if (selectedRamaId != null &&
-                                          selectedFrecuenciaId != null &&
-                                          selectedIdClasificacion != null &&
-                                          selectedClienteId != null) {
-                                        getEncuestas(
-                                          selectedRamaId!,
-                                          selectedFrecuenciaId!,
-                                          selectedIdClasificacion!,
-                                          selectedClienteId!,
-                                        );
-                                      }
-                                    },
-                                    dropdownBuilder: (context, selectedItem) =>
-                                        Text(
-                                      selectedItem ?? "",
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                    decoratorProps: DropDownDecoratorProps(
-                                      decoration: InputDecoration(
-                                        labelText:
-                                            "Selecciona una clasificación",
-                                        border: UnderlineInputBorder(),
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
+                                        if (selectedRamaId != null &&
+                                            selectedFrecuenciaId != null &&
+                                            selectedIdClasificacion != null &&
+                                            selectedClienteId != null) {
+                                          getEncuestas(
+                                            selectedRamaId!,
+                                            selectedFrecuenciaId!,
+                                            selectedIdClasificacion!,
+                                            selectedClienteId!,
+                                          );
+                                        }
+                                      },
+                                      dropdownBuilder:
+                                          (context, selectedItem) => Text(
+                                        selectedItem ?? "",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 14),
                                       ),
+                                      decoratorProps: DropDownDecoratorProps(
+                                        decoration: PremiumInputs.decoration(
+                                          labelText: "Clasificación",
+                                          prefixIcon: FontAwesomeIcons.tags,
+                                        ),
+                                      ),
+                                      popupProps:
+                                          PopupProps.menu(showSearchBox: true),
                                     ),
-                                    popupProps:
-                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
                                 SizedBox(width: 10),
                                 // Dropdown para Frecuencia
                                 Expanded(
-                                  child: DropdownSearch<String>(
-                                    key: frecuenciaKey,
-                                    items: (filter, _) {
-                                      return dataFrecuencias
-                                          .where((f) => f['nombre']
-                                              .toString()
-                                              .toLowerCase()
-                                              .contains(filter.toLowerCase()))
-                                          .map((f) => f['nombre'].toString())
-                                          .toList();
-                                    },
-                                    selectedItem: selectedFrecuenciaId != null
-                                        ? dataFrecuencias.firstWhere((f) =>
-                                                f['id'] ==
-                                                selectedFrecuenciaId)['nombre']
-                                            as String
-                                        : null,
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        if (newValue != null) {
-                                          selectedFrecuenciaId =
-                                              dataFrecuencias.firstWhere((f) =>
-                                                  f['nombre'] ==
-                                                  newValue)['id'];
-                                        } else {
-                                          selectedFrecuenciaId = null;
-                                        }
-                                      });
+                                  child: PremiumCardField(
+                                    child: DropdownSearch<String>(
+                                      key: frecuenciaKey,
+                                      items: (filter, _) {
+                                        return dataFrecuencias
+                                            .where((f) => f['nombre']
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains(filter.toLowerCase()))
+                                            .map((f) => f['nombre'].toString())
+                                            .toList();
+                                      },
+                                      selectedItem: selectedFrecuenciaId != null
+                                          ? dataFrecuencias.firstWhere((f) =>
+                                                  f['id'] ==
+                                                  selectedFrecuenciaId)[
+                                              'nombre'] as String
+                                          : null,
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          if (newValue != null) {
+                                            selectedFrecuenciaId =
+                                                dataFrecuencias.firstWhere(
+                                                    (f) =>
+                                                        f['nombre'] ==
+                                                        newValue)['id'];
+                                          } else {
+                                            selectedFrecuenciaId = null;
+                                          }
+                                        });
 
-                                      if (selectedRamaId != null &&
-                                          selectedFrecuenciaId != null &&
-                                          selectedIdClasificacion != null &&
-                                          selectedClienteId != null) {
-                                        getEncuestas(
-                                          selectedRamaId!,
-                                          selectedFrecuenciaId!,
-                                          selectedIdClasificacion!,
-                                          selectedClienteId!,
-                                        );
-                                      }
-                                    },
-                                    dropdownBuilder: (context, selectedItem) =>
-                                        Text(
-                                      selectedItem ?? "",
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                    decoratorProps: DropDownDecoratorProps(
-                                      decoration: InputDecoration(
-                                        labelText: "Selecciona un periodo",
-                                        border: UnderlineInputBorder(),
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
+                                        if (selectedRamaId != null &&
+                                            selectedFrecuenciaId != null &&
+                                            selectedIdClasificacion != null &&
+                                            selectedClienteId != null) {
+                                          getEncuestas(
+                                            selectedRamaId!,
+                                            selectedFrecuenciaId!,
+                                            selectedIdClasificacion!,
+                                            selectedClienteId!,
+                                          );
+                                        }
+                                      },
+                                      dropdownBuilder:
+                                          (context, selectedItem) => Text(
+                                        selectedItem ?? "",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 14),
                                       ),
+                                      decoratorProps: DropDownDecoratorProps(
+                                        decoration: PremiumInputs.decoration(
+                                          labelText: "Periodo",
+                                          prefixIcon: FontAwesomeIcons.clock,
+                                        ),
+                                      ),
+                                      popupProps:
+                                          PopupProps.menu(showSearchBox: true),
                                     ),
-                                    popupProps:
-                                        PopupProps.menu(showSearchBox: true),
                                   ),
                                 ),
                               ],
@@ -1525,52 +1511,54 @@ class EncuestaPageState extends State<EncuestaPage> {
 
                             SizedBox(height: 10),
 
-// Dropdown para Encuesta
-                            DropdownSearch<String>(
-                              key: encuestaKey,
-                              enabled: dataEncuestas.isNotEmpty,
-                              items: (filter, _) {
-                                return dataEncuestas
-                                    .where((e) => e['nombre']
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(filter.toLowerCase()))
-                                    .map((e) => e['nombre'].toString())
-                                    .toList();
-                              },
-                              selectedItem: selectedEncuestaId != null
-                                  ? dataEncuestas.firstWhere((e) =>
-                                      e['id'] ==
-                                      selectedEncuestaId)['nombre'] as String
-                                  : null,
-                              onChanged: (String? newValue) {
-                                if (newValue == null) return;
-                                setState(() {
-                                  selectedEncuestaId = dataEncuestas.firstWhere(
-                                      (e) => e['nombre'] == newValue)['id'];
-                                  currentPage = 0;
-                                  selectedIdFrecuencia =
-                                      dataEncuestas.firstWhere((e) =>
-                                          e['nombre'] ==
-                                          newValue)['idFrecuencia'];
-                                });
-                                actualizarPreguntas(selectedEncuestaId!);
-                              },
-                              dropdownBuilder: (context, selectedItem) => Text(
-                                selectedItem ?? "",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              decoratorProps: DropDownDecoratorProps(
-                                decoration: InputDecoration(
-                                  labelText: "Selecciona una actividad",
-                                  border: UnderlineInputBorder(),
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                            // Dropdown para Encuesta
+                            PremiumCardField(
+                              child: DropdownSearch<String>(
+                                key: encuestaKey,
+                                enabled: dataEncuestas.isNotEmpty,
+                                items: (filter, _) {
+                                  return dataEncuestas
+                                      .where((e) => e['nombre']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .map((e) => e['nombre'].toString())
+                                      .toList();
+                                },
+                                selectedItem: selectedEncuestaId != null
+                                    ? dataEncuestas.firstWhere((e) =>
+                                        e['id'] ==
+                                        selectedEncuestaId)['nombre'] as String
+                                    : null,
+                                onChanged: (String? newValue) {
+                                  if (newValue == null) return;
+                                  setState(() {
+                                    selectedEncuestaId =
+                                        dataEncuestas.firstWhere((e) =>
+                                            e['nombre'] == newValue)['id'];
+                                    currentPage = 0;
+                                    selectedIdFrecuencia =
+                                        dataEncuestas.firstWhere((e) =>
+                                            e['nombre'] ==
+                                            newValue)['idFrecuencia'];
+                                  });
+                                  actualizarPreguntas(selectedEncuestaId!);
+                                },
+                                dropdownBuilder: (context, selectedItem) =>
+                                    Text(
+                                  selectedItem ?? "",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 14),
                                 ),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: "Actividad",
+                                    prefixIcon: FontAwesomeIcons.clipboardList,
+                                  ),
+                                ),
+                                popupProps:
+                                    PopupProps.menu(showSearchBox: true),
                               ),
-                              popupProps: PopupProps.menu(showSearchBox: true),
                             ),
                           ],
                         ),
@@ -1594,180 +1582,214 @@ class EncuestaPageState extends State<EncuestaPage> {
                                         itemCount: preguntas.length,
                                         itemBuilder: (context, index) {
                                           final pregunta = preguntas[index];
-                                          return Card(
-                                            margin: EdgeInsets.all(4),
-                                            child: Padding(
-                                              padding: EdgeInsets.all(4.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  // Título de la pregunta
-                                                  Text(
-                                                    pregunta.titulo,
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 15,
-                                                    ),
+                                          return PremiumCardField(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // Título de la pregunta
+                                                Text(
+                                                  pregunta.titulo,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 16,
+                                                    color: Color(0xFF2C3E50),
                                                   ),
-                                                  // Opciones
-                                                  SizedBox(
-                                                    height: 100,
-                                                    child: RadioGroup<String>(
-                                                      groupValue:
-                                                          pregunta.respuesta,
-                                                      onChanged: (value) {
-                                                        setState(() {
-                                                          pregunta.respuesta =
-                                                              value ?? '';
-                                                        });
-                                                      },
-                                                      child: ListView.builder(
-                                                        shrinkWrap: true,
-                                                        physics:
-                                                            const ClampingScrollPhysics(),
-                                                        itemCount: pregunta
-                                                            .opciones.length,
-                                                        itemBuilder:
-                                                            (context, i) {
-                                                          final opcion =
-                                                              pregunta
-                                                                  .opciones[i];
-                                                          final esNoAplica =
-                                                              opcion.toLowerCase() ==
-                                                                  "no aplica";
-
-                                                          return ListTile(
-                                                            contentPadding:
-                                                                EdgeInsets.zero,
-                                                            title: Text(opcion),
-                                                            leading: esNoAplica
-                                                                ? null
-                                                                : Radio<String>(
-                                                                    value:
-                                                                        opcion),
-                                                          );
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ),
-
-                                                  // Observaciones
-                                                  TextField(
-                                                    decoration: InputDecoration(
-                                                      labelText:
-                                                          "Observaciones",
-                                                      border:
-                                                          OutlineInputBorder(),
-                                                    ),
-                                                    maxLines: 2,
+                                                ),
+                                                const SizedBox(height: 12),
+                                                // Opciones
+                                                SizedBox(
+                                                  height: 100,
+                                                  child: RadioGroup<String>(
+                                                    groupValue:
+                                                        pregunta.respuesta,
                                                     onChanged: (value) {
                                                       setState(() {
-                                                        pregunta.observaciones =
-                                                            value;
+                                                        pregunta.respuesta =
+                                                            value ?? '';
                                                       });
                                                     },
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  // Selector de imagen
-                                                  GestureDetector(
-                                                    onTap: () async {
-                                                      final img =
-                                                          await _pickImage(); // devuelve File?
-                                                      if (img != null) {
-                                                        setState(() {
-                                                          pregunta.imagen =
-                                                              img; // Imagen temporal
-                                                        });
-                                                      }
-                                                    },
-                                                    child: Container(
-                                                      width: double.infinity,
-                                                      height: 200,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.grey[200],
-                                                        border: Border.all(
-                                                            color: Colors.grey),
-                                                      ),
-                                                      child: pregunta.imagen ==
-                                                              null
-                                                          ? const Center(
-                                                              child: Icon(
-                                                                Icons
-                                                                    .cloud_upload,
-                                                                size: 50,
-                                                                color: Colors
-                                                                    .blueAccent,
-                                                              ),
-                                                            )
-                                                          : ClipRRect(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                              child: Image.file(
-                                                                pregunta
-                                                                    .imagen!,
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              ),
+                                                    child: ListView.builder(
+                                                      shrinkWrap: true,
+                                                      physics:
+                                                          const ClampingScrollPhysics(),
+                                                      itemCount: pregunta
+                                                          .opciones.length,
+                                                      itemBuilder:
+                                                          (context, i) {
+                                                        final opcion = pregunta
+                                                            .opciones[i];
+                                                        final esNoAplica = opcion
+                                                                .toLowerCase() ==
+                                                            "no aplica";
+
+                                                        return ListTile(
+                                                          contentPadding:
+                                                              EdgeInsets.zero,
+                                                          title: Text(
+                                                            opcion,
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 14,
+                                                              color: Color(
+                                                                  0xFF4A5568),
                                                             ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  // Campo para valor
-                                                  TextField(
-                                                    controller: pregunta
-                                                        .controllerValor,
-                                                    decoration: InputDecoration(
-                                                      labelText: "Valor",
-                                                      border:
-                                                          OutlineInputBorder(),
-                                                    ),
-                                                    keyboardType:
-                                                        TextInputType.number,
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        pregunta.controllerValor
-                                                            .text = value;
-                                                      });
-                                                    },
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  // Botón "Guardar imagen"
-                                                  ElevatedButton.icon(
-                                                    onPressed:
-                                                        pregunta.imagen == null
-                                                            ? null
-                                                            : () {
-                                                                // Guarda la imagen en el arreglo global
-                                                                agregarImagenEncuesta(
-                                                                  pregunta
-                                                                      .imagen,
-                                                                  comentario:
+                                                          ),
+                                                          leading: esNoAplica
+                                                              ? null
+                                                              : Radio<String>(
+                                                                  value: opcion,
+                                                                  groupValue:
                                                                       pregunta
-                                                                          .titulo,
-                                                                  valor: pregunta
-                                                                      .controllerValor
-                                                                      .text,
-                                                                );
-
-                                                                setState(() {
-                                                                  // Limpia solo la imagen y el valor
-                                                                  pregunta.imagen =
-                                                                      null;
-                                                                  pregunta
-                                                                      .controllerValor
-                                                                      .clear();
-                                                                });
-                                                              },
-                                                    icon: Icon(Icons.save),
-                                                    label:
-                                                        Text("Guardar imagen"),
+                                                                          .respuesta,
+                                                                  activeColor:
+                                                                      const Color(
+                                                                          0xFF1E88E5),
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    setState(
+                                                                        () {
+                                                                      pregunta.respuesta =
+                                                                          value ??
+                                                                              '';
+                                                                    });
+                                                                  },
+                                                                ),
+                                                        );
+                                                      },
+                                                    ),
                                                   ),
-                                                ],
-                                              ),
+                                                ),
+
+                                                // Observaciones
+                                                TextFormField(
+                                                  decoration:
+                                                      PremiumInputs.decoration(
+                                                    labelText: "Observaciones",
+                                                  ),
+                                                  maxLines: 2,
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      pregunta.observaciones =
+                                                          value;
+                                                    });
+                                                  },
+                                                ),
+                                                SizedBox(height: 10),
+                                                // Selector de imagen
+                                                GestureDetector(
+                                                  onTap: () async {
+                                                    final img =
+                                                        await _pickImage(); // devuelve File?
+                                                    if (img != null) {
+                                                      setState(() {
+                                                        pregunta.imagen =
+                                                            img; // Imagen temporal
+                                                      });
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: double.infinity,
+                                                    height: 200,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[50],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                            0xFFE2E8F0),
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: pregunta.imagen ==
+                                                            null
+                                                        ? Column(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Icon(
+                                                                Icons
+                                                                    .cloud_upload_outlined,
+                                                                size: 40,
+                                                                color: const Color(
+                                                                    0xFF1E88E5),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 8),
+                                                              const Text(
+                                                                "Toca para subir imagen",
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: Color(
+                                                                      0xFF64748B),
+                                                                  fontSize: 14,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          )
+                                                        : ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
+                                                            child: Image.file(
+                                                              pregunta.imagen!,
+                                                              fit: BoxFit.cover,
+                                                            ),
+                                                          ),
+                                                  ),
+                                                ),
+                                                SizedBox(height: 10),
+                                                // Campo para valor
+                                                TextFormField(
+                                                  controller:
+                                                      pregunta.controllerValor,
+                                                  decoration:
+                                                      PremiumInputs.decoration(
+                                                    labelText: "Valor",
+                                                  ),
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      pregunta.controllerValor
+                                                          .text = value;
+                                                    });
+                                                  },
+                                                ),
+                                                SizedBox(height: 12),
+                                                // Botón "Guardar imagen"
+                                                PremiumActionButton(
+                                                  onPressed: pregunta.imagen ==
+                                                          null
+                                                      ? null
+                                                      : () {
+                                                          // Guarda la imagen en el arreglo global
+                                                          agregarImagenEncuesta(
+                                                            pregunta.imagen,
+                                                            comentario:
+                                                                pregunta.titulo,
+                                                            valor: pregunta
+                                                                .controllerValor
+                                                                .text,
+                                                          );
+
+                                                          setState(() {
+                                                            // Limpia solo la imagen y el valor
+                                                            pregunta.imagen =
+                                                                null;
+                                                            pregunta
+                                                                .controllerValor
+                                                                .clear();
+                                                          });
+                                                        },
+                                                  icon: FontAwesomeIcons
+                                                      .floppyDisk,
+                                                  label: "Guardar imagen",
+                                                ),
+                                              ],
                                             ),
                                           );
                                         },
@@ -1775,29 +1797,30 @@ class EncuestaPageState extends State<EncuestaPage> {
 
                                       // Descripción General al final
                                       Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Descripción General",
-                                              style: TextStyle(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.bold,
+                                        padding: EdgeInsets.symmetric(
+                                            vertical: 16.0),
+                                        child: PremiumCardField(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              PremiumSectionTitle(
+                                                  title: "Descripción General"),
+                                              SizedBox(height: 10),
+                                              TextFormField(
+                                                controller:
+                                                    descripcionController,
+                                                maxLines: 4,
+                                                decoration:
+                                                    PremiumInputs.decoration(
+                                                  labelText:
+                                                      "Descripción de la actividad",
+                                                  hintText:
+                                                      "Escribe aquí la descripción...",
+                                                ),
                                               ),
-                                            ),
-                                            SizedBox(height: 10),
-                                            TextField(
-                                              controller: descripcionController,
-                                              maxLines: 4,
-                                              decoration: InputDecoration(
-                                                hintText:
-                                                    "Escribe aquí la descripción de la actividad...",
-                                                border: OutlineInputBorder(),
-                                              ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -1810,169 +1833,186 @@ class EncuestaPageState extends State<EncuestaPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text("Descripción del problema",
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 8),
-                                        TextField(
-                                          controller:
-                                              descripcionEficienciaController,
-                                          maxLines: 4,
-                                          decoration: InputDecoration(
-                                            hintText: "Describe el problema...",
-                                            border: OutlineInputBorder(),
+                                        PremiumCardField(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const PremiumSectionTitle(
+                                                  title:
+                                                      "Descripción del problema"),
+                                              const SizedBox(height: 12),
+                                              TextFormField(
+                                                controller:
+                                                    descripcionEficienciaController,
+                                                maxLines: 3,
+                                                decoration:
+                                                    PremiumInputs.decoration(
+                                                  labelText: "Descripción",
+                                                  hintText:
+                                                      "Describe el problema...",
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                         const SizedBox(height: 16),
-                                        const Text("Calificación",
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 8),
-                                        DropdownSearch<String>(
-                                          key: Key('calificacionDropdown'),
-                                          enabled:
-                                              true, // Siempre habilitado, ya que siempre hay opciones
-                                          items: (filter, _) {
-                                            final opciones = [
-                                              "Crítico",
-                                              "No crítico",
-                                              "Desactivación",
-                                              "Solucionado"
-                                            ];
-                                            return opciones
-                                                .where((o) => o
-                                                    .toLowerCase()
-                                                    .contains(
-                                                        filter.toLowerCase()))
-                                                .toList();
-                                          },
-                                          selectedItem:
-                                              calificacionSeleccionada,
-                                          onChanged: (String? valor) {
-                                            setState(() {
-                                              calificacionSeleccionada = valor;
-                                            });
-                                          },
-                                          dropdownBuilder:
-                                              (context, selectedItem) => Text(
-                                            selectedItem ?? "",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color: selectedItem == null
-                                                    ? Colors.grey
-                                                    : Colors.black),
-                                          ),
-                                          decoratorProps:
-                                              DropDownDecoratorProps(
-                                            decoration: InputDecoration(
-                                              labelText: "Calificación",
-                                              border: OutlineInputBorder(),
-                                              isDense: true,
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                            ),
-                                          ),
-                                          popupProps: PopupProps.menu(
-                                            showSearchBox: true,
-                                            fit: FlexFit.loose,
-                                            constraints:
-                                                BoxConstraints(maxHeight: 300),
+                                        PremiumCardField(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const PremiumSectionTitle(
+                                                  title:
+                                                      "Calificación y Comentarios"),
+                                              const SizedBox(height: 12),
+                                              DropdownButtonFormField<String>(
+                                                decoration:
+                                                    PremiumInputs.decoration(
+                                                  labelText: "Calificación",
+                                                  prefixIcon:
+                                                      FontAwesomeIcons.star,
+                                                ),
+                                                value: calificacionSeleccionada,
+                                                items: [
+                                                  "Crítico",
+                                                  "No crítico",
+                                                  "Desactivación",
+                                                  "Solucionado"
+                                                ]
+                                                    .map((e) => DropdownMenuItem(
+                                                        value: e,
+                                                        child: Text(e,
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        14))))
+                                                    .toList(),
+                                                onChanged: (String? valor) {
+                                                  setState(() {
+                                                    calificacionSeleccionada =
+                                                        valor;
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(height: 12),
+                                              TextFormField(
+                                                controller:
+                                                    comentariosEficienciaController,
+                                                maxLines: 3,
+                                                decoration:
+                                                    PremiumInputs.decoration(
+                                                  labelText: "Comentarios",
+                                                  hintText:
+                                                      "Comentarios adicionales...",
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                         const SizedBox(height: 16),
-                                        const Text("Comentarios",
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 8),
-                                        TextField(
-                                          controller:
-                                              comentariosEficienciaController,
-                                          maxLines: 4,
-                                          decoration: InputDecoration(
-                                            hintText:
-                                                "Comentarios adicionales...",
-                                            border: OutlineInputBorder(),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          "Foto",
-                                          style: TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        GestureDetector(
-                                          onTap: seleccionarImagen,
-                                          child: Container(
-                                            width: double.infinity,
-                                            height: 250,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              border: Border.all(
-                                                  color: Colors.grey),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            child: imagenSeleccionada == null
-                                                ? const Center(
-                                                    child: Icon(
-                                                      Icons.cloud_upload,
-                                                      size: 50,
-                                                      color: Colors.blueAccent,
-                                                    ),
-                                                  )
-                                                : ClipRRect(
+                                        PremiumCardField(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const PremiumSectionTitle(
+                                                  title:
+                                                      "Evidencia Fotográfica"),
+                                              const SizedBox(height: 12),
+                                              GestureDetector(
+                                                onTap: seleccionarImagen,
+                                                child: Container(
+                                                  width: double.infinity,
+                                                  height: 250,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[50],
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            10),
-                                                    child: Image.file(
-                                                      File(imagenSeleccionada!
-                                                          .path),
-                                                      fit: BoxFit.cover,
+                                                            12),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                          0xFFE2E8F0),
+                                                      width: 1.5,
                                                     ),
                                                   ),
+                                                  child: imagenSeleccionada ==
+                                                          null
+                                                      ? Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .add_a_photo_outlined,
+                                                              size: 40,
+                                                              color: const Color(
+                                                                  0xFF1E88E5),
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 8),
+                                                            const Text(
+                                                              "Toca para agregar foto",
+                                                              style: TextStyle(
+                                                                color: Color(
+                                                                    0xFF64748B),
+                                                                fontSize: 14,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      : ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                          child: Image.file(
+                                                            File(
+                                                                imagenSeleccionada!
+                                                                    .path),
+                                                            fit: BoxFit.cover,
+                                                          ),
+                                                        ),
+                                                ),
+                                              ),
+                                              if (imagenSeleccionada != null)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 8.0),
+                                                  child: Center(
+                                                    child: Text(
+                                                      "Imagen seleccionada",
+                                                      style: TextStyle(
+                                                          color: Colors
+                                                              .green.shade600,
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
-                                        if (imagenSeleccionada != null)
-                                          const Text(
-                                            "Imagen seleccionada",
-                                            style: TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 15),
-                                          ),
-                                        if (imagenSeleccionada == null)
-                                          const Text(
-                                            "Selecciona una imagen",
-                                            style: TextStyle(
-                                                color: Colors.red,
-                                                fontSize: 15),
-                                          ),
                                         const SizedBox(height: 20),
                                         Center(
                                           child: Column(
                                             children: [
-                                              ElevatedButton(
+                                              PremiumActionButton(
                                                 onPressed: () {
                                                   agregarRegistro();
-                                                  // 👉 Limpia solo la imagen seleccionada
                                                   setState(() {
                                                     imagenSeleccionada = null;
                                                   });
                                                 },
-                                                child: const Text(
-                                                    "Agregar registro"),
+                                                label: "Agregar registro",
+                                                icon: FontAwesomeIcons.plus,
+                                                isFullWidth: true,
                                               ),
                                               const SizedBox(height: 10),
-                                              ElevatedButton(
+                                              PremiumActionButton(
                                                 onPressed: () {
-                                                  // 👉 Limpia todo el formulario
                                                   setState(() {
                                                     descripcionEficienciaController
                                                         .clear();
@@ -1983,56 +2023,99 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                     imagenSeleccionada = null;
                                                   });
                                                 },
-                                                child: const Text(
-                                                    "Limpiar formulario"),
+                                                label: "Limpiar formulario",
+                                                icon: FontAwesomeIcons.eraser,
+                                                style: PremiumButtonStyle
+                                                    .secondary,
+                                                isFullWidth: true,
                                               ),
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                physics:
-                                                    const NeverScrollableScrollPhysics(),
-                                                itemCount:
-                                                    registrosEficiencia.length,
-                                                itemBuilder: (context, index) {
-                                                  final registro =
-                                                      registrosEficiencia[
-                                                          index];
-                                                  return Card(
-                                                    margin: const EdgeInsets
-                                                        .symmetric(vertical: 8),
-                                                    child: ListTile(
-                                                      leading: Image.file(
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        if (registrosEficiencia.isNotEmpty) ...[
+                                          const Padding(
+                                            padding:
+                                                EdgeInsets.only(bottom: 10),
+                                            child: PremiumSectionTitle(
+                                                title: "Registros Agregados"),
+                                          ),
+                                          ListView.builder(
+                                            shrinkWrap: true,
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            itemCount:
+                                                registrosEficiencia.length,
+                                            itemBuilder: (context, index) {
+                                              final registro =
+                                                  registrosEficiencia[index];
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 8.0),
+                                                child: PremiumCardField(
+                                                  child: ListTile(
+                                                    contentPadding:
+                                                        EdgeInsets.zero,
+                                                    leading: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      child: Image.file(
                                                         File(registro["imagen"]
                                                             .path),
                                                         width: 50,
                                                         height: 50,
                                                         fit: BoxFit.cover,
                                                       ),
-                                                      title: Text(
-                                                        '${registro["comentarios"]} - ${registro["calificacion"]}',
-                                                        style: const TextStyle(
-                                                            fontSize: 14),
-                                                      ),
-                                                      subtitle: Text(registro[
-                                                          "descripcion"]),
-                                                      trailing: IconButton(
-                                                        icon: const Icon(
-                                                            Icons.delete,
-                                                            color: Colors.red),
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            registrosEficiencia
-                                                                .removeAt(
-                                                                    index);
-                                                          });
-                                                        },
-                                                      ),
                                                     ),
-                                                  );
-                                                },
-                                              )
-                                            ],
+                                                    title: Text(
+                                                      '${registro["calificacion"]}',
+                                                      style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    subtitle: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                            registro[
+                                                                "descripcion"],
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis),
+                                                        Text(
+                                                            registro[
+                                                                "comentarios"],
+                                                            style: TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Colors.grey[
+                                                                        600])),
+                                                      ],
+                                                    ),
+                                                    trailing: IconButton(
+                                                      icon: const Icon(
+                                                          FontAwesomeIcons
+                                                              .trash,
+                                                          size: 18,
+                                                          color: Colors.red),
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          registrosEficiencia
+                                                              .removeAt(index);
+                                                        });
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        ),
+                                        ]
                                       ],
                                     ),
                                   );
@@ -2042,42 +2125,54 @@ class EncuestaPageState extends State<EncuestaPage> {
                                     child: SingleChildScrollView(
                                       child: Padding(
                                         padding: const EdgeInsets.all(16.0),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Text(
-                                              "Firma del cliente",
-                                              style: TextStyle(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              child: Signature(
-                                                controller: _controller,
-                                                height: 300,
-                                                backgroundColor:
-                                                    Colors.transparent,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceEvenly,
-                                              children: [
-                                                ElevatedButton(
-                                                  onPressed: _isLoading
-                                                      ? null
-                                                      : _controller.clear,
-                                                  child: const Text(
-                                                      "Limpiar Firma"),
+                                        child: PremiumCardField(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const PremiumSectionTitle(
+                                                  title: "Firma del cliente"),
+                                              const SizedBox(height: 12),
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade300),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
-                                              ],
-                                            ),
-                                          ],
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  child: Signature(
+                                                    controller: _controller,
+                                                    height: 300,
+                                                    backgroundColor:
+                                                        Colors.transparent,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 20),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Expanded(
+                                                    child: PremiumActionButton(
+                                                      onPressed: _isLoading
+                                                          ? null
+                                                          : _controller.clear,
+                                                      label: "Limpiar Firma",
+                                                      icon: FontAwesomeIcons
+                                                          .eraser,
+                                                      style: PremiumButtonStyle
+                                                          .secondary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -2097,29 +2192,47 @@ class EncuestaPageState extends State<EncuestaPage> {
                     right: 0,
                     child: Container(
                       height: 60,
-                      color: Colors
-                          .transparent, // quita border y borderRadius para que quede al ras
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withOpacity(0.0),
+                            Colors.white.withOpacity(0.9),
+                            Colors.white,
+                          ],
+                        ),
+                      ),
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextButton(
+                          TextButton.icon(
                             onPressed: currentPage > 0
                                 ? () => _pageController.previousPage(
                                       duration: Duration(milliseconds: 300),
                                       curve: Curves.easeInOut,
                                     )
                                 : null,
-                            child: Text('Anterior'),
+                            icon: Icon(Icons.arrow_back_ios, size: 16),
+                            label: Text('Anterior'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Color(0xFF2C3E50),
+                            ),
                           ),
-                          TextButton(
+                          TextButton.icon(
                             onPressed: currentPage < 2
                                 ? () => _pageController.nextPage(
                                       duration: Duration(milliseconds: 300),
                                       curve: Curves.easeIn,
                                     )
                                 : null,
-                            child: Text('Siguiente'),
+                            icon: Icon(Icons.arrow_forward_ios, size: 16),
+                            label: Text('Siguiente'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Color(0xFF2C3E50),
+                            ),
+                            iconAlignment: IconAlignment.end,
                           ),
                         ],
                       ),
@@ -2150,4 +2263,3 @@ class Pregunta {
     this.imagen,
   }) : controllerValor = controllerValor ?? TextEditingController();
 }
-

@@ -5,9 +5,10 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../components/Generales/grafico.dart';
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../components/Generales/premium_inputs.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class GraficaInspeccionesPage extends StatefulWidget {
@@ -184,86 +185,74 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
       drawer: MenuLateral(currentPage: "Gráfico de actividades"),
       body: loading
           ? Load()
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Gráfico de actividades",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: PremiumSectionTitle(title: "Gráfico de actividades"),
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Dropdown para seleccionar la encuesta
+                  PremiumCardField(
+                    child: DropdownButtonFormField<String>(
+                      decoration: PremiumInputs.decoration(
+                        labelText: "Seleccionar Encuesta",
+                        prefixIcon: FontAwesomeIcons.clipboardList,
                       ),
+                      value: selectedEncuestaId,
+                      items:
+                          dataEncuestas.map<DropdownMenuItem<String>>((item) {
+                        return DropdownMenuItem<String>(
+                          value: item['id'].toString(),
+                          child: Text(
+                            "${item['nombre']} - ${item['frecuencia']}",
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: loading
+                          ? null
+                          : (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  selectedEncuestaId = newValue;
+                                });
+                                cargarInspecciones(newValue);
+                              }
+                            },
+                      isExpanded: true,
                     ),
                   ),
-                ),
-                // Dropdown para seleccionar la encuesta
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: DropdownSearch<Map<String, dynamic>>(
-                    key: Key('encuestaDropdown'),
-                    enabled: dataEncuestas.isNotEmpty,
-                    items: (filter, _) {
-                      return dataEncuestas
-                          .where((e) => "${e['nombre']} - ${e['frecuencia']}"
-                              .toLowerCase()
-                              .contains(filter.toLowerCase()))
-                          .toList();
-                    },
-                    itemAsString: (item) =>
-                        "${item['nombre']} - ${item['frecuencia']}",
-                    selectedItem: selectedEncuestaId != null
-                        ? dataEncuestas.firstWhere(
-                            (e) => e['id'].toString() == selectedEncuestaId,
-                            orElse: () => dataEncuestas.first)
-                        : null,
-                    compareFn: (item, selectedItem) =>
-                        item['id'] == selectedItem['id'],
-                    onChanged: dataEncuestas.isEmpty
-                        ? null
-                        : (Map<String, dynamic>? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                selectedEncuestaId = newValue['id'].toString();
-                              });
-                              cargarInspecciones(newValue['id'].toString());
-                            }
-                          },
-                    dropdownBuilder: (context, selectedItem) {
-                      return Text(
-                        selectedItem != null
-                            ? "${selectedItem['nombre']} - ${selectedItem['frecuencia']}"
-                            : "Seleccionar Encuesta",
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 14,
-                            color: selectedItem == null
-                                ? Colors.grey
-                                : Colors.black),
-                      );
-                    },
-                    decoratorProps: DropDownDecoratorProps(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      ),
-                    ),
-                    popupProps: PopupProps.menu(
-                      showSearchBox: true,
-                      fit: FlexFit.loose,
-                      constraints: BoxConstraints(maxHeight: 300),
+
+                  const SizedBox(height: 20),
+
+                  Expanded(
+                    child: PremiumCardField(
+                      padding: const EdgeInsets.all(16),
+                      child: dataInspecciones.isNotEmpty
+                          ? GraficaBarras(
+                              dataInspecciones: dataInspecciones,
+                            )
+                          : const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(FontAwesomeIcons.chartBar,
+                                      size: 50, color: Colors.grey),
+                                  SizedBox(height: 10),
+                                  Text("No hay datos para mostrar",
+                                      style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: GraficaBarras(
-                    dataInspecciones: dataInspecciones,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }

@@ -4,6 +4,7 @@ import '../../components/Inspecciones/list_inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -15,7 +16,8 @@ class InspeccionesInspectorPage extends StatefulWidget {
   final dynamic data;
   final dynamic data2;
 
-  const InspeccionesInspectorPage({super.key, 
+  const InspeccionesInspectorPage({
+    super.key,
     required this.showModal,
     required this.data,
     required this.data2,
@@ -184,13 +186,20 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: returnPage,
-                      icon: Icon(FontAwesomeIcons.arrowLeft),
-                      label: Text("Regresar"),
-                    ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: PremiumActionButton(
+                          onPressed: returnPage,
+                          label: "Regresar",
+                          icon: FontAwesomeIcons.arrowLeft,
+                          style: PremiumButtonStyle.secondary,
+                          isFullWidth: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Padding(
@@ -216,5 +225,3 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
     );
   }
 }
-
-

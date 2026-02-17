@@ -119,15 +119,25 @@ class _LogsPageState extends State<LogsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Logs",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                        child: Center(
+                          child: Text(
+                            "Logs de auditoría",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2C3E50),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 Expanded(
@@ -144,5 +154,3 @@ class _LogsPageState extends State<LogsPage> {
     );
   }
 }
-
-

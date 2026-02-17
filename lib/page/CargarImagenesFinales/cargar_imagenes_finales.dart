@@ -4,7 +4,8 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Logs/logs_informativos.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import '../../components/Generales/premium_button.dart';
+
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +24,8 @@ class CargarImagenesFinalesScreen extends StatefulWidget {
   final dynamic data;
 
   @override
-  const CargarImagenesFinalesScreen({super.key, 
+  const CargarImagenesFinalesScreen({
+    super.key,
     required this.showModal,
     required this.onCompleted,
     required this.accion,
@@ -257,12 +259,12 @@ class _CargarImagenesFinalesScreenState
       returnPrincipalPage();
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Encuesta actualizada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Encuesta actualizada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
       return;
     }
@@ -282,11 +284,12 @@ class _CargarImagenesFinalesScreenState
             {});
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Actualización exitosa",
-          message: "Los datos de la encuesta fueron actualizados correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Actualización exitosa",
+            message:
+                "Los datos de la encuesta fueron actualizados correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       }
     } catch (error) {
@@ -295,11 +298,11 @@ class _CargarImagenesFinalesScreenState
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -421,7 +424,7 @@ class _CargarImagenesFinalesScreenState
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-          currentPage: "Cargar imagenes finales"), // Usa el menú lateral
+          currentPage: "Historial de actividades"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
@@ -431,13 +434,15 @@ class _CargarImagenesFinalesScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
                       child: Center(
                         child: Text(
                           "Reporte",
                           style: TextStyle(
-                            fontSize: 24, // Tamaño grande
-                            fontWeight: FontWeight.bold, // Negrita
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: -0.5,
                           ),
                         ),
                       ),
@@ -446,35 +451,23 @@ class _CargarImagenesFinalesScreenState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _onSubmit,
-                          icon: Icon(FontAwesomeIcons.plus), // Ícono de +
-                          label: _isLoading
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SpinKitFadingCircle(
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text("Cargando..."), // Texto de carga
-                                  ],
-                                )
-                              : Text(
-                                  buttonLabel), // Texto normal cuando no está cargando
+                        Expanded(
+                          child: PremiumActionButton(
+                            onPressed: _isLoading ? () {} : _onSubmit,
+                            icon: FontAwesomeIcons.plus,
+                            label: _isLoading ? "Cargando..." : buttonLabel,
+                            isLoading: _isLoading,
+                            style: PremiumButtonStyle.primary,
+                          ),
                         ),
-                        SizedBox(width: 10), // Separación entre botones
-                        ElevatedButton.icon(
-                          onPressed: returnPrincipalPage,
-                          icon: Icon(FontAwesomeIcons
-                              .arrowLeft), // Ícono de flecha hacia la izquierda
-                          label: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24,
-                                )
-                              : Text("Regresar"),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: PremiumActionButton(
+                            onPressed: returnPrincipalPage,
+                            icon: FontAwesomeIcons.arrowLeft,
+                            label: "Regresar",
+                            style: PremiumButtonStyle.secondary,
+                          ),
                         ),
                       ],
                     ),
@@ -535,10 +528,11 @@ class _CargarImagenesFinalesScreenState
                               SizedBox(height: 16),
                               // Centrar el botón de agregar
                               Center(
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _agregarImagen, // Verifica que este método maneje la lógica correctamente
-                                  child: Text("Agregar"),
+                                child: PremiumActionButton(
+                                  onPressed: _agregarImagen,
+                                  label: "Agregar",
+                                  icon: FontAwesomeIcons.plus,
+                                  style: PremiumButtonStyle.primary,
                                 ),
                               ),
                               SizedBox(height: 16),
@@ -575,5 +569,3 @@ class _CargarImagenesFinalesScreenState
     );
   }
 }
-
-

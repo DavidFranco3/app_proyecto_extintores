@@ -1,7 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
-import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
+import '../Generales/list_view.dart';
+import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import 'lista_preguntas.dart';
 import '../../page/CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
@@ -80,7 +81,9 @@ class _TblEncuestasState extends State<TblEncuestas> {
           return Scaffold(
             body: PreguntasVisualPage(
               showModal: () {
-                if (mounted) Navigator.pop(context); // Eliminar la lógica de cerrar el modal
+                if (mounted)
+                  Navigator.pop(
+                      context); // Eliminar la lógica de cerrar el modal
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",
@@ -127,9 +130,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
               }).toList(),
               columnas: columnas,
               accionesBuilder: (Map<String, dynamic> row) {
-                return PopupMenuButton<String>(
-                  icon: FaIcon(FontAwesomeIcons.bars,
-                      color: Color.fromARGB(255, 27, 40, 223)),
+                return PremiumTableActions(
                   onSelected: (String value) {
                     if (value == 'eliminar') {
                       openEliminarModal(row['_originalRow']);
@@ -139,8 +140,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                       openRegistroPage(row['_originalRow']);
                     }
                   },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
+                  items: <PopupMenuEntry<String>>[
                     PopupMenuItem<String>(
                       value: 'editar',
                       child: Row(
@@ -148,7 +148,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                           FaIcon(FontAwesomeIcons.pen,
                               color: Color(0xFFFFC107), size: 16),
                           SizedBox(width: 8),
-                          Text('Editar'),
+                          const Text('Editar'),
                         ],
                       ),
                     ),
@@ -159,7 +159,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                           FaIcon(FontAwesomeIcons.trash,
                               color: Color(0xFFDC3545), size: 16),
                           SizedBox(width: 8),
-                          Text('Eliminar'),
+                          const Text('Eliminar'),
                         ],
                       ),
                     ),
@@ -170,7 +170,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
                           FaIcon(FontAwesomeIcons.eye,
                               color: Color.fromARGB(255, 88, 6, 211), size: 16),
                           SizedBox(width: 8),
-                          Text('Ver preguntas'),
+                          const Text('Ver preguntas'),
                         ],
                       ),
                     ),
@@ -184,6 +184,3 @@ class _TblEncuestasState extends State<TblEncuestas> {
     );
   }
 }
-
-
-

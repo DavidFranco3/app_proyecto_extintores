@@ -1,7 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
-import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
+import '../Generales/list_view.dart';
+import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 
@@ -39,50 +40,27 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
   }
 
   void openEliminarModal(Map<String, dynamic> row) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Eliminar inspeccion anual',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  if (mounted) Navigator.pop(context); // Cierra el diálogo
-                },
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Aquí agregamos un widget GestureDetector para que cuando el usuario toque fuera del formulario, el teclado se cierre.
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context)
-                          .unfocus(); // Cierra el teclado al tocar fuera
-                    },
-                    child: Acciones(
-                      showModal: widget.showModal,
-                      onCompleted: widget.onCompleted,
-                      accion: "eliminar",
-                      data: row,
-                    ),
-                  ),
-                ],
-              ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Eliminar Inspección'),
+              backgroundColor: const Color(0xFFE94742), // Red corporate
+              foregroundColor: Colors.white,
             ),
-          ),
-        );
-      },
+            body: Acciones(
+              showModal: () {
+                if (mounted) Navigator.pop(context);
+              },
+              onCompleted: widget.onCompleted,
+              accion: "eliminar",
+              data: row,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -116,11 +94,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
                 }).toList(),
                 columnas: columnas,
                 accionesBuilder: (Map<String, dynamic> row) {
-                  return PopupMenuButton<String>(
-                    icon: FaIcon(
-                      FontAwesomeIcons.bars,
-                      color: Color.fromARGB(255, 27, 40, 223),
-                    ), // Icono del menú
+                  return PremiumTableActions(
                     onSelected: (String value) {
                       if (value == 'eliminar') {
                         openEliminarModal(row['_originalRow']);
@@ -128,8 +102,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
                         openGraficaPage(row['_originalRow']);
                       }
                     },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
+                    items: <PopupMenuEntry<String>>[
                       PopupMenuItem<String>(
                         value: 'eliminar',
                         child: Row(
@@ -140,7 +113,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Eliminar'),
+                            const Text('Eliminar'),
                           ],
                         ),
                       ),
@@ -154,7 +127,7 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Ver Gráfica'),
+                            const Text('Ver Gráfica'),
                           ],
                         ),
                       ),
@@ -167,6 +140,3 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
     );
   }
 }
-
-
-

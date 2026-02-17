@@ -160,21 +160,45 @@ class _MenuLateralState extends State<MenuLateral> {
                     Icons.assignment_outlined,
                     'Actividades',
                     [
+                      _buildSubTile(context, Icons.add_task_outlined,
+                          'Crear actividad', const EncuestasPage()),
+                      _buildSubTile(context, Icons.edit_note_outlined,
+                          'Aplicar actividad', const EncuestaPage()),
                       _buildSubTile(
-                          context, 'Crear actividad', const EncuestasPage()),
-                      _buildSubTile(
-                          context, 'Aplicar actividad', const EncuestaPage()),
-                      _buildSubTile(context, 'Historial',
+                          context,
+                          Icons.history_outlined,
+                          'Historial de actividades',
                           const InspeccionesPantalla1Page()),
-                      _buildSubTile(context, 'Seleccionar actividad',
+                      _buildSubTile(
+                          context,
+                          Icons.checklist_outlined,
+                          'Seleccionar actividad',
                           const ClienteInspeccionesApp()),
-                      _buildSubTile(context, 'Próximas',
+                      _buildSubTile(
+                          context,
+                          Icons.event_repeat_outlined,
+                          'Actividades próximas',
                           const InspeccionesProximasPage()),
-                      _buildSubTile(context, 'Programa',
+                      _buildSubTile(
+                          context,
+                          Icons.calendar_month_outlined,
+                          'Programa de actividades',
                           const ProgramaInspeccionesPage()),
                       _buildSubTile(
-                          context, 'Gráficas', const GraficaInspeccionesPage()),
+                          context,
+                          Icons.bar_chart_outlined,
+                          'Gráfico de actividades',
+                          const GraficaInspeccionesPage()),
                     ],
+                    initiallyExpanded: [
+                      'Crear actividad',
+                      'Aplicar actividad',
+                      'Historial de actividades',
+                      'Seleccionar actividad',
+                      'Actividades próximas',
+                      'Programa de actividades',
+                      'Gráfico de actividades'
+                    ].contains(widget.currentPage),
                   ),
                   _buildListTile(context, Icons.category_outlined,
                       'Clasificaciones', const ClasificacionesPage()),
@@ -187,10 +211,16 @@ class _MenuLateralState extends State<MenuLateral> {
                     Icons.fire_extinguisher,
                     'Extintores',
                     [
-                      _buildSubTile(context, 'Listado', const ExtintoresPage()),
+                      _buildSubTile(context, Icons.list_alt_outlined,
+                          'Extintores', const ExtintoresPage()),
                       _buildSubTile(
-                          context, 'Tipos', const TiposExtintoresPage()),
+                          context,
+                          Icons.format_list_bulleted_outlined,
+                          'Tipos de extintores',
+                          const TiposExtintoresPage()),
                     ],
+                    initiallyExpanded: ['Extintores', 'Tipos de extintores']
+                        .contains(widget.currentPage),
                   ),
                   _buildListTile(context, Icons.manage_accounts_outlined,
                       'Usuarios', const UsuariosPage()),
@@ -316,8 +346,9 @@ class _MenuLateralState extends State<MenuLateral> {
     );
   }
 
-  Widget _buildExpansionTile(BuildContext context, IconData icon, String title,
-      List<Widget> children) {
+  Widget _buildExpansionTile(
+      BuildContext context, IconData icon, String title, List<Widget> children,
+      {bool initiallyExpanded = false}) {
     return ExpansionTile(
       leading: Icon(icon, color: Colors.blueGrey[700]),
       title: Text(title,
@@ -325,31 +356,45 @@ class _MenuLateralState extends State<MenuLateral> {
               color: Colors.blueGrey[800],
               fontWeight: FontWeight.w500,
               fontSize: 15)),
+      initiallyExpanded: initiallyExpanded,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       childrenPadding: const EdgeInsets.only(left: 10),
       children: children,
     );
   }
 
-  Widget _buildSubTile(BuildContext context, String title, Widget page) {
+  Widget _buildSubTile(
+      BuildContext context, IconData icon, String title, Widget page) {
     bool isSelected = widget.currentPage == title;
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.blueGrey[600],
-          fontSize: 14,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 2.0),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        leading: Icon(
+          icon,
+          size: 20,
+          color: isSelected ? Colors.white : Colors.blueGrey[400],
         ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.blueGrey[600],
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        tileColor: isSelected ? const Color(0xFFE94742) : null,
+        onTap: () {
+          if (!isSelected) {
+            Navigator.pop(context);
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => page));
+          } else {
+            Navigator.pop(context);
+          }
+        },
       ),
-      tileColor:
-          isSelected ? const Color(0xFFE94742).withValues(alpha: 0.8) : null,
-      onTap: () {
-        Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-      },
     );
   }
 }

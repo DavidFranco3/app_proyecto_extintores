@@ -24,6 +24,13 @@ class _DataTableCustomState extends State<DataTableCustom> {
   bool _sortAscending = true;
   int _currentPage = 1;
   int _itemsPerPage = 10;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,38 +78,75 @@ class _DataTableCustomState extends State<DataTableCustom> {
           // Header: Search & Sort Controls
           _buildHeader(),
 
-          // List Body
-          if (filteredData.isEmpty)
-            Container(
-              height: 200,
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                  SizedBox(height: 16),
-                  Text(
-                    'No se encontraron registros',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+          // Body with Transition
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: filteredData.isEmpty
+                ? _buildEmptyState(isSearching: _searchQuery.isNotEmpty)
+                : ListView.separated(
+                    key: ValueKey('list_$_currentPage'), // Key for animation
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: currentData.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final row = currentData[index];
+                      return _buildRowCard(row);
+                    },
                   ),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics:
-                  const NeverScrollableScrollPhysics(), // Scroll handled by parent usually
-              itemCount: currentData.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final row = currentData[index];
-                return _buildRowCard(row);
-              },
-            ),
+          ),
 
           // Footer: Pagination
           if (totalPages > 1) _buildPaginationFooter(totalPages, totalItems),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({required bool isSearching}) {
+    return Container(
+      key: const ValueKey('empty_state'),
+      height: 250,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isSearching ? Icons.search_off : Icons.inbox_outlined,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isSearching
+                ? 'No se encontraron registros para "$_searchQuery"'
+                : 'No hay datos disponibles',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+          ),
+          if (isSearching) ...[
+            const SizedBox(height: 24),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _searchQuery = '';
+                  _searchController.clear();
+                  _currentPage = 1;
+                });
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Limpiar búsqueda'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blueAccent,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.blueAccent.withOpacity(0.3)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -129,9 +173,22 @@ class _DataTableCustomState extends State<DataTableCustom> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Buscar...',
                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                _searchQuery = '';
+                                _searchController.clear();
+                                _currentPage = 1;
+                              });
+                            },
+                          )
+                        : null,
                     filled: true,
                     fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
@@ -266,42 +323,60 @@ class _DataTableCustomState extends State<DataTableCustom> {
             expandedCrossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Divider(),
-              // Detail list inside
-              ...widget.columnas.skip(2).map((col) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 120,
-                          child: Text(
-                            '${col['name']}:',
+              // Detail grid inside
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Wrap(
+                  spacing: 20,
+                  runSpacing: 16,
+                  children: widget.columnas.skip(2).map((col) {
+                    return SizedBox(
+                      width: (MediaQuery.of(context).size.width - 100) / 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            col['name'].toString().toUpperCase(),
                             style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
-                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[500],
+                              fontSize: 10,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
+                          const SizedBox(height: 4),
+                          Text(
                             row[col['name']]?.toString() ?? 'N/A',
                             style: const TextStyle(
                               fontSize: 14,
+                              fontWeight: FontWeight.w500,
                               color: Colors.black87,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
               if (widget.accionesBuilder != null) ...[
                 const SizedBox(height: 16),
                 const Divider(),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: widget.accionesBuilder!(row),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "ACCIONES",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[400],
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    widget.accionesBuilder!(row),
+                  ],
                 ),
               ]
             ],

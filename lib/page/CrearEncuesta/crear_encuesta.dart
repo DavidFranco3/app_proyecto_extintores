@@ -5,7 +5,6 @@ import '../../api/ramas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
 import '../../components/Generales/pregunta.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -16,6 +15,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
 
 class CrearEncuestaScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -569,12 +570,12 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
 
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Sin conexión",
-        message:
-            "Encuesta guardada localmente y se sincronizará cuando haya internet",
-        backgroundColor: Colors.orange,
-      );
+          context: context,
+          title: "Sin conexión",
+          message:
+              "Encuesta guardada localmente y se sincronizará cuando haya internet",
+          backgroundColor: Colors.orange,
+        );
       }
 
       return;
@@ -602,11 +603,11 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
             dataTemp);
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Registro exitoso",
-          message: "La encuesta fue agregada correctamente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Registro exitoso",
+            message: "La encuesta fue agregada correctamente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         setState(() {
@@ -614,11 +615,11 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         });
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Hubo un problema",
-          message: "Hubo un error al agregar la encuesta",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Hubo un problema",
+            message: "Hubo un error al agregar la encuesta",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
@@ -627,11 +628,11 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
       });
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
@@ -695,164 +696,144 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Center(
-                        child: Text(
-                          "Crear actividad",
-                          style: TextStyle(
-                            fontSize: 24, // Tamaño grande
-                            fontWeight: FontWeight.bold, // Negrita
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Crear actividad",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2C3E50),
+                              letterSpacing: -0.5,
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    // Botones centrados con separación
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(width: 10), // Separación entre botones
-                        ElevatedButton.icon(
-                          onPressed: returnPrincipalPage,
-                          icon: Icon(FontAwesomeIcons
-                              .arrowLeft), // Ícono de flecha hacia la izquierda
-                          label: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24,
-                                )
-                              : Text("Regresar"),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _publicarEncuesta,
-                          icon: Icon(FontAwesomeIcons.plus),
-                          label: _isLoading
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SpinKitFadingCircle(
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text("Cargando..."),
-                                  ],
-                                )
-                              : Text(buttonLabel),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    // Sección de Preguntas
-                    Card(
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Botón de "Agregar Pregunta" centrado en la parte superior de la Card
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: _agregarPregunta,
-                                child: Text("Agregar Pregunta"),
-                              ),
-                            ),
-                            SizedBox(height: 20), // Espacio debajo del botón
-                            Text("Preguntas",
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 10),
-                            TextField(
-                              controller: preguntaController,
-                              decoration:
-                                  InputDecoration(labelText: "Pregunta"),
-                            ),
-                            SizedBox(height: 10),
-// Combo para seleccionar entre Sí, No, No aplica
-                            DropdownSearch<String>(
-                              key: Key('opcionDropdown'),
-                              items: (filter, _) {
-                                final opciones = ["Sí/No", "No aplica"];
-                                return opciones
-                                    .where((o) => o
-                                        .toLowerCase()
-                                        .contains(filter.toLowerCase()))
-                                    .toList();
-                              },
-                              selectedItem: opcionSeleccionada,
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  opcionSeleccionada = newValue;
-                                });
-                              },
-                              dropdownBuilder: (context, selectedItem) => Text(
-                                selectedItem ?? "",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: selectedItem == null
-                                        ? Colors.grey
-                                        : Colors.black),
-                              ),
-                              decoratorProps: DropDownDecoratorProps(
-                                decoration: InputDecoration(
-                                  labelText: 'Opción',
-                                  border: UnderlineInputBorder(),
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: PremiumActionButton(
+                                  onPressed:
+                                      _isLoading ? () {} : _publicarEncuesta,
+                                  label: buttonLabel,
+                                  icon: FontAwesomeIcons.plus,
+                                  isLoading: _isLoading,
+                                  isFullWidth: true,
                                 ),
                               ),
-                              popupProps: PopupProps.menu(
-                                showSearchBox: true,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: PremiumActionButton(
+                                  onPressed: returnPrincipalPage,
+                                  label: "Regresar",
+                                  icon: FontAwesomeIcons.arrowLeft,
+                                  style: PremiumButtonStyle.secondary,
+                                  isFullWidth: true,
+                                ),
                               ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'La opcion es obligatoria'
-                                      : null,
-                            ),
-
-                            SizedBox(height: 10),
-
-                            SizedBox(height: 10),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: widget.preguntas.length,
-                              itemBuilder: (context, index) {
-                                // Verificar si la categoría coincide antes de crear el widget
-                                if (widget.preguntas[index].categoria !=
-                                    "Default") {
-                                  return SizedBox.shrink();
-                                }
-                                return Card(
-                                  margin: EdgeInsets.symmetric(vertical: 5),
-                                  child: ListTile(
-                                    title: Text(widget.preguntas[index].titulo),
-                                    subtitle: Text(
-                                      "Categoría: ${widget.preguntas[index].categoria}\n"
-                                      "Opciones: ${widget.preguntas[index].opciones.join(", ")}",
-                                    ),
-                                    trailing: IconButton(
-                                      icon:
-                                          Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => _eliminarPregunta(index),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+                    const Divider(indent: 20, endIndent: 20, height: 32),
+                    const SizedBox(height: 24),
+                    SizedBox(height: 20),
+                    const PremiumSectionTitle(
+                      title: "Configurar Pregunta",
+                      icon: FontAwesomeIcons.circleQuestion,
+                    ),
+                    PremiumCardField(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: preguntaController,
+                            decoration: PremiumInputs.decoration(
+                              labelText: "Pregunta",
+                              prefixIcon: FontAwesomeIcons.solidCommentDots,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownSearch<String>(
+                            key: const Key('opcionDropdown'),
+                            items: (filter, _) {
+                              final opciones = ["Sí/No", "No aplica"];
+                              return opciones
+                                  .where((o) => o
+                                      .toLowerCase()
+                                      .contains(filter.toLowerCase()))
+                                  .toList();
+                            },
+                            selectedItem: opcionSeleccionada,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                opcionSeleccionada = newValue;
+                              });
+                            },
+                            dropdownBuilder: (context, selectedItem) => Text(
+                              selectedItem ?? "",
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.black),
+                            ),
+                            decoratorProps: DropDownDecoratorProps(
+                              decoration: PremiumInputs.decoration(
+                                labelText: 'Tipo de Respuesta',
+                                prefixIcon: FontAwesomeIcons.listCheck,
+                              ),
+                            ),
+                            popupProps: const PopupProps.menu(
+                              showSearchBox: true,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: PremiumActionButton(
+                              onPressed: _agregarPregunta,
+                              label: "Agregar Pregunta",
+                              icon: FontAwesomeIcons.plus,
+                              style: PremiumButtonStyle.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PremiumSectionTitle(
+                      title: "Listado de Preguntas",
+                      icon: FontAwesomeIcons.listOl,
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: widget.preguntas.length,
+                      itemBuilder: (context, index) {
+                        if (widget.preguntas[index].categoria != "Default") {
+                          return const SizedBox.shrink();
+                        }
+                        return PremiumCardField(
+                          child: ListTile(
+                            title: Text(
+                              widget.preguntas[index].titulo,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C3E50),
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Opciones: ${widget.preguntas[index].opciones.join(", ")}",
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(FontAwesomeIcons.trashCan,
+                                  color: Color(0xFFE94742), size: 18),
+                              onPressed: () => _eliminarPregunta(index),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -861,5 +842,3 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
     );
   }
 }
-
-

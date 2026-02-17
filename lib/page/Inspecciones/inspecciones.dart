@@ -9,6 +9,7 @@ import '../../components/Inspecciones/list_inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
+import '../../components/Generales/premium_button.dart';
 import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
 
 class InspeccionesPage extends StatefulWidget {
@@ -16,7 +17,8 @@ class InspeccionesPage extends StatefulWidget {
   final dynamic data;
   final dynamic data2;
 
-  const InspeccionesPage({super.key, 
+  const InspeccionesPage({
+    super.key,
     required this.showModal,
     required this.data,
     required this.data2,
@@ -115,10 +117,10 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         'idUsuario': item['idUsuario'],
         'idCliente': item['idCliente'],
         'idEncuesta': item['idEncuesta'],
-        'idRama': item['cuestionario']['idRama'],
-        'idClasificacion': item['cuestionario']['idClasificacion'],
-        'idFrecuencia': item['cuestionario']['idFrecuencia'],
-        'idCuestionario': item['cuestionario']['_id'],
+        'idRama': item['cuestionario']?['idRama'],
+        'idClasificacion': item['cuestionario']?['idClasificacion'],
+        'idFrecuencia': item['cuestionario']?['idFrecuencia'],
+        'idCuestionario': item['cuestionario']?['_id'],
         'encuesta': item['encuesta'],
         'imagenes': item?['imagenes'] ?? [],
         'imagenesCloudinary': item?['imagenesCloudinary'] ?? [],
@@ -127,17 +129,20 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
         'comentarios': item['comentarios'],
         'preguntas': item['encuesta'],
         'descripcion': item['descripcion'],
-        'usuario': item['usuario']['nombre'],
-        'cliente': item['cliente']['nombre'],
-        'puestoCliente': item['cliente']['puesto'],
-        'responsableCliente': item['cliente']['responsable'],
-        'estadoDom': item['cliente']['direccion']['estadoDom'],
-        'municipio': item['cliente']['direccion']['municipio'],
-        'imagen_cliente': item['cliente']['imagen'],
-        'imagen_cliente_cloudinary': item['cliente']['imagenCloudinary'],
-        'firma_usuario': item['usuario']['firma'],
-        'firma_usuario_cloudinary': item['usuario']['firmaCloudinary'],
-        'cuestionario': item['cuestionario']['nombre'],
+        'usuario': item['usuario']?['nombre'] ?? 'Sin usuario',
+        'cliente': item['cliente']?['nombre'] ?? 'Sin cliente',
+        'puestoCliente': item['cliente']?['puesto'] ?? 'Sin puesto',
+        'responsableCliente':
+            item['cliente']?['responsable'] ?? 'Sin responsable',
+        'estadoDom':
+            item['cliente']?['direccion']?['estadoDom'] ?? 'Sin estado',
+        'municipio':
+            item['cliente']?['direccion']?['municipio'] ?? 'Sin municipio',
+        'imagen_cliente': item['cliente']?['imagen'],
+        'imagen_cliente_cloudinary': item['cliente']?['imagenCloudinary'],
+        'firma_usuario': item['usuario']?['firma'],
+        'firma_usuario_cloudinary': item['usuario']?['firmaCloudinary'],
+        'cuestionario': item['cuestionario']?['nombre'] ?? 'Sin cuestionario',
         'usuarios': item['usuario'],
         'inspeccion_eficiencias': item['inspeccionEficiencias'],
         'estado': item['estado'],
@@ -173,37 +178,53 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Actividades",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                if (esOffline)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Mostrando datos en modo offline",
-                      style: TextStyle(color: Colors.orange),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: returnPage,
-                      icon: Icon(FontAwesomeIcons.arrowLeft),
-                      label: Text("Regresar"),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "Cliente: ${widget.data["cliente"]}",
-                    style: TextStyle(fontSize: 18),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Historial de actividades",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: PremiumActionButton(
+                              onPressed: returnPage,
+                              label: "Regresar",
+                              icon: FontAwesomeIcons.arrowLeft,
+                              style: PremiumButtonStyle.secondary,
+                              isFullWidth: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (esOffline) ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Modo offline: mostrando datos locales",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.orange, fontSize: 14),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      Text(
+                        "Cliente: ${widget.data["cliente"]}",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF34495E),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
@@ -220,5 +241,3 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     );
   }
 }
-
-

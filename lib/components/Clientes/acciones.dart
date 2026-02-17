@@ -17,6 +17,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../Generales/premium_inputs.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -829,318 +830,412 @@ class _AccionesState extends State<Acciones> {
                     child: Column(
                       children: [
                         if (!isEliminar) ...[
-                          Text(
-                            "Logo de la empresa",
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                          const PremiumSectionTitle(
+                            title: "Identidad Corporativa",
+                            icon: FontAwesomeIcons.image,
                           ),
-                          GestureDetector(
-                            onTap:
-                                _pickImage, // Al hacer tap, se activa el selector de imágenes
-                            child: Container(
-                              width: double.infinity,
-                              height: 250,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: _image == null && imageUrl == null
-                                  ? Center(
-                                      child: Icon(
-                                        Icons.cloud_upload,
-                                        size: 50,
-                                        color: Colors.blueAccent,
-                                      ),
-                                    )
-                                  : (_image != null
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: Image.file(
-                                            File(_image!.path),
-                                            fit: BoxFit.cover,
+                          PremiumCardField(
+                            child: Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: _pickImage,
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 180,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[50],
+                                      border: Border.all(
+                                          color: Colors.grey
+                                              .withValues(alpha: 0.2)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: _image == null && imageUrl == null
+                                        ? const Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                    FontAwesomeIcons
+                                                        .cloudArrowUp,
+                                                    size: 40,
+                                                    color: Color(0xFFE94742)),
+                                                SizedBox(height: 12),
+                                                Text("Subir Logo",
+                                                    style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ],
+                                            ),
+                                          )
+                                        : ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            child: _image != null
+                                                ? Image.file(File(_image!.path),
+                                                    fit: BoxFit.contain)
+                                                : Image.network(imageUrl!,
+                                                    fit: BoxFit.contain),
                                           ),
-                                        )
-                                      : ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: Image.network(
-                                            imageUrl!,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        )),
+                                  ),
+                                ),
+                                if (_image != null || imageUrl != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.check_circle,
+                                            color: Colors.green, size: 16),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                            "Imagen cargada correctamente",
+                                            style: TextStyle(
+                                                color: Colors.green,
+                                                fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 10),
-                          if (_image != null || imageUrl != null)
-                            Text(
-                              "Imagen seleccionada",
-                              style:
-                                  TextStyle(color: Colors.green, fontSize: 16),
-                            ),
-                          if (_image == null || imageUrl == null)
-                            Text(
-                              "Selecciona una imagen",
-                              style: TextStyle(color: Colors.red, fontSize: 16),
-                            ),
                         ],
-                        TextFormField(
-                          controller: _nombreController,
-                          decoration: InputDecoration(labelText: 'Nombre'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El nombre es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Información General",
+                          icon: FontAwesomeIcons.building,
                         ),
-                        TextFormField(
-                          controller: _correoController,
-                          decoration: InputDecoration(labelText: 'Email'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'El email es obligatorio';
-                                  }
-                                  // Expresión regular para validar email
-                                  final emailRegex = RegExp(
-                                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-                                  if (!emailRegex.hasMatch(value)) {
-                                    return 'Ingrese un email válido';
-                                  }
-                                  return null;
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _nombreController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Razón Social / Nombre',
+                                  prefixIcon: FontAwesomeIcons.idCard,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El nombre es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _correoController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Correo Electrónico',
+                                  prefixIcon: FontAwesomeIcons.envelope,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'El email es obligatorio';
+                                        }
+                                        final emailRegex = RegExp(
+                                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                                        if (!emailRegex.hasMatch(value)) {
+                                          return 'Ingrese un email válido';
+                                        }
+                                        return null;
+                                      },
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _telefonoController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Teléfono',
+                                  prefixIcon: FontAwesomeIcons.phone,
+                                  hintText: '10 dígitos',
+                                ),
+                                enabled: !isEliminar,
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
+                                validator: isEliminar
+                                    ? null
+                                    : (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'El teléfono es obligatorio';
+                                        }
+                                        if (!RegExp(r'^\d{10}$')
+                                            .hasMatch(value)) {
+                                          return 'Debe contener exactamente 10 dígitos';
+                                        }
+                                        return null;
+                                      },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const PremiumSectionTitle(
+                          title: "Ubicación y Domicilio",
+                          icon: FontAwesomeIcons.locationDot,
+                        ),
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _calleController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Calle / Avenida',
+                                  prefixIcon: FontAwesomeIcons.road,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La calle es obligatoria'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _nExteriorController,
+                                      decoration: PremiumInputs.decoration(
+                                        labelText: 'Núm. Ext.',
+                                        prefixIcon: FontAwesomeIcons.hashtag,
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      enabled: !isEliminar,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _nInteriorController,
+                                      decoration: PremiumInputs.decoration(
+                                        labelText: 'Núm. Int.',
+                                        prefixIcon: FontAwesomeIcons.doorOpen,
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      enabled: !isEliminar,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _coloniaController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Colonia / Fraccionamiento',
+                                  prefixIcon: FontAwesomeIcons.mapLocationDot,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La colonia es obligatoria'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownSearch<String>(
+                                key: const Key('estadoDropdown'),
+                                enabled: !isEliminar,
+                                items: (filter, _) {
+                                  return _estadosFuture
+                                      .where((e) => e['nombre']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .map((e) => e['nombre'].toString())
+                                      .toList();
                                 },
-                        ),
-                        TextFormField(
-                          controller: _telefonoController,
-                          decoration: InputDecoration(
-                            labelText: 'Teléfono',
-                            hintText: 'Ingresa solo números (máx. 10)',
-                          ),
-                          enabled: !isEliminar,
-                          keyboardType: TextInputType
-                              .phone, // Para mostrar el teclado numérico
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Permite solo números
-                            LengthLimitingTextInputFormatter(
-                                10), // Limita a 10 caracteres
-                          ],
-                          validator: isEliminar
-                              ? null
-                              : (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'El teléfono es obligatorio';
+                                selectedItem: _estadoDomController.text.isEmpty
+                                    ? null
+                                    : _estadoDomController.text,
+                                onChanged: isEliminar
+                                    ? null
+                                    : (String? newValue) {
+                                        setState(() {
+                                          _estadoDomController.text = newValue!;
+                                          _municipioController.text = '';
+                                        });
+                                      },
+                                dropdownBuilder: (context, selectedItem) =>
+                                    Text(
+                                  selectedItem ?? "",
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: selectedItem == null
+                                          ? Colors.grey
+                                          : Colors.black),
+                                ),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: "Estado",
+                                    prefixIcon: FontAwesomeIcons.map,
+                                  ),
+                                ),
+                                popupProps:
+                                    const PopupProps.menu(showSearchBox: true),
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value == null || value.isEmpty
+                                        ? 'El estado es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownSearch<String>(
+                                key: const Key('municipioDropdown'),
+                                enabled: _estadoDomController.text.isNotEmpty &&
+                                    !isEliminar,
+                                items: (filter, _) {
+                                  if (_estadoDomController.text.isEmpty ||
+                                      !_municipiosMap.containsKey(
+                                          _estadoDomController.text)) {
+                                    return [];
                                   }
-                                  if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-                                    return 'Debe contener exactamente 10 dígitos';
-                                  }
-                                  return null;
+                                  final municipios = _municipiosMap[
+                                      _estadoDomController.text]!;
+                                  return municipios
+                                      .where((m) => m
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .toList();
                                 },
-                        ),
-                        TextFormField(
-                          controller: _calleController,
-                          decoration: InputDecoration(labelText: 'Calle'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La calle es obligatoria'
-                                  : null,
-                        ),
-                        TextFormField(
-                          controller: _nExteriorController,
-                          decoration: InputDecoration(
-                            labelText: 'Número exterior',
+                                selectedItem:
+                                    _municipioController.text.isNotEmpty
+                                        ? _municipioController.text
+                                        : null,
+                                onChanged: isEliminar
+                                    ? null
+                                    : (String? newValue) {
+                                        setState(() {
+                                          _municipioController.text = newValue!;
+                                        });
+                                      },
+                                dropdownBuilder: (context, selectedItem) =>
+                                    Text(
+                                  selectedItem ?? "",
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: selectedItem == null
+                                          ? Colors.grey
+                                          : Colors.black),
+                                ),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: 'Municipio',
+                                    prefixIcon: FontAwesomeIcons.city,
+                                  ),
+                                ),
+                                popupProps:
+                                    const PopupProps.menu(showSearchBox: true),
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value == null || value.isEmpty
+                                        ? 'El municipio es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _cpostalController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Código Postal',
+                                  prefixIcon: FontAwesomeIcons.envelopesBulk,
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(5),
+                                ],
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'El código postal es obligatorio';
+                                        } else if (value.length != 5) {
+                                          return 'Debe tener 5 dígitos';
+                                        }
+                                        return null;
+                                      },
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _referenciaController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Referencia / Entre Calles',
+                                  prefixIcon: FontAwesomeIcons.mapPin,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La referencia es obligatoria'
+                                        : null,
+                              ),
+                            ],
                           ),
-                          keyboardType: TextInputType
-                              .number, // Solo permite números en el teclado
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Solo números
-                          ],
-                          enabled: !isEliminar,
                         ),
-                        TextFormField(
-                          controller: _nInteriorController,
-                          decoration: InputDecoration(
-                            labelText: 'Número interior',
+                        const PremiumSectionTitle(
+                          title: "Información Adicional",
+                          icon: FontAwesomeIcons.circleInfo,
+                        ),
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _responsableController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Persona Responsable',
+                                  prefixIcon: FontAwesomeIcons.userTie,
+                                ),
+                                enabled: !isEliminar,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _puestoController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Puesto / Cargo',
+                                  prefixIcon: FontAwesomeIcons.briefcase,
+                                ),
+                                enabled: !isEliminar,
+                              ),
+                            ],
                           ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          enabled: !isEliminar,
                         ),
-                        TextFormField(
-                          controller: _coloniaController,
-                          decoration: InputDecoration(labelText: 'Colonia'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La colonia es obligatoria'
-                                  : null,
-                        ),
-                        DropdownSearch<String>(
-                          key: Key('estadoDropdown'),
-                          items: (filter, _) {
-                            return _estadosFuture
-                                .where((e) => e['nombre']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(filter.toLowerCase()))
-                                .map((e) => e['nombre'].toString())
-                                .toList();
-                          },
-                          selectedItem: _estadoDomController.text.isEmpty
-                              ? null
-                              : _estadoDomController.text,
-                          onChanged: isEliminar
-                              ? null
-                              : (String? newValue) {
-                                  setState(() {
-                                    _estadoDomController.text = newValue!;
-                                    _municipioController.text =
-                                        ''; // limpia municipio al cambiar
-                                  });
-                                },
-                          dropdownBuilder: (context, selectedItem) => Text(
-                            selectedItem ?? "",
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          decoratorProps: DropDownDecoratorProps(
-                            decoration: InputDecoration(
-                              labelText: "Estado",
-                              border: UnderlineInputBorder(),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                            ),
-                          ),
-                          popupProps: PopupProps.menu(showSearchBox: true),
-                          validator: isEliminar
-                              ? null
-                              : (value) => value == null || value.isEmpty
-                                  ? 'El estado es obligatorio'
-                                  : null,
-                        ),
-
-                        // Dropdown para seleccionar Municipio
-                        DropdownSearch<String>(
-                          key: Key('municipioDropdown'),
-                          enabled: _estadoDomController.text
-                              .isNotEmpty, // Deshabilitado si no hay estado
-
-                          items: (filter, _) {
-                            if (_estadoDomController.text.isEmpty ||
-                                !_municipiosMap
-                                    .containsKey(_estadoDomController.text)) {
-                              return [];
-                            }
-
-                            final municipios =
-                                _municipiosMap[_estadoDomController.text]!;
-
-                            return municipios
-                                .where((m) => m
-                                    .toLowerCase()
-                                    .contains(filter.toLowerCase()))
-                                .toList();
-                          },
-                          selectedItem: _municipioController.text.isNotEmpty
-                              ? _municipioController.text
-                              : null,
-                          onChanged: isEliminar
-                              ? null
-                              : (String? newValue) {
-                                  setState(() {
-                                    _municipioController.text = newValue!;
-                                  });
-                                },
-                          dropdownBuilder: (context, selectedItem) => Text(
-                            selectedItem ?? "",
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          decoratorProps: DropDownDecoratorProps(
-                            decoration: InputDecoration(
-                              labelText: 'Municipio',
-                              border: UnderlineInputBorder(),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                            ),
-                          ),
-                          popupProps: PopupProps.menu(showSearchBox: true),
-                          validator: isEliminar
-                              ? null
-                              : (value) => value == null || value.isEmpty
-                                  ? 'El municipio es obligatorio'
-                                  : null,
-                        ),
-
-                        TextFormField(
-                          controller: _cpostalController,
-                          decoration: InputDecoration(
-                            labelText: 'Código postal',
-                          ),
-                          keyboardType: TextInputType
-                              .number, // Solo permite números en el teclado
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Solo números
-                            LengthLimitingTextInputFormatter(
-                                5), // Máximo 5 caracteres
-                          ],
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'El código postal es obligatorio';
-                                  } else if (value.length != 5) {
-                                    return 'Debe tener 5 dígitos';
-                                  }
-                                  return null;
-                                },
-                        ),
-                        TextFormField(
-                          controller: _referenciaController,
-                          decoration: InputDecoration(labelText: 'Referencia'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La referencia es obligatoria'
-                                  : null,
-                        ),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (widget.accion == 'editar'
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (widget.accion == 'editar'
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),

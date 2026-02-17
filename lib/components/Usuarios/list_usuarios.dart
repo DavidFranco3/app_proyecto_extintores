@@ -1,7 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
 import 'acciones.dart';
-import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
+import '../Generales/list_view.dart';
+import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 
 class TblUsuarios extends StatefulWidget {
@@ -93,10 +94,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
               }).toList(),
               columnas: columnas,
               accionesBuilder: (Map<String, dynamic> row) {
-                return PopupMenuButton<String>(
-                  icon: FaIcon(FontAwesomeIcons.bars,
-                      color: Color.fromARGB(255, 27, 40,
-                          223)), // Este es el botón faBars que muestra el menú
+                return PremiumTableActions(
                   onSelected: (String value) {
                     if (value == 'editar') {
                       openEditarModal(row['_originalRow']);
@@ -104,8 +102,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
                       openEliminarModal(row['_originalRow']);
                     }
                   },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
+                  items: <PopupMenuEntry<String>>[
                     PopupMenuItem<String>(
                       value: 'editar',
                       child: Row(
@@ -113,7 +110,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
                           FaIcon(FontAwesomeIcons.pen,
                               color: Color(0xFFFFC107), size: 16),
                           SizedBox(width: 8),
-                          Text('Editar'),
+                          const Text('Editar'),
                         ],
                       ),
                     ),
@@ -124,7 +121,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
                           FaIcon(FontAwesomeIcons.trash,
                               color: Color(0xFFDC3545), size: 16),
                           SizedBox(width: 8),
-                          Text('Eliminar'),
+                          const Text('Eliminar'),
                         ],
                       ),
                     ),
@@ -138,6 +135,3 @@ class _TblUsuariosState extends State<TblUsuarios> {
     );
   }
 }
-
-
-

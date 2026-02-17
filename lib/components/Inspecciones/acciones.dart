@@ -8,6 +8,7 @@ import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Generales/premium_button.dart';
 import '../Load/load.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../Generales/premium_inputs.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
@@ -351,58 +352,83 @@ class _AccionesState extends State<Acciones> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: _usuarioController,
-                          decoration: InputDecoration(labelText: 'Usuario'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El usuario es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Detalles de la Inspección",
+                          icon: FontAwesomeIcons.clipboardCheck,
                         ),
-                        TextFormField(
-                          controller: _clienteController,
-                          decoration: InputDecoration(labelText: 'Cliente'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El cliente es obligatorio'
-                                  : null,
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _usuarioController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Usuario Responsable',
+                                  prefixIcon: FontAwesomeIcons.userCheck,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El usuario es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _clienteController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Cliente / Empresa',
+                                  prefixIcon: FontAwesomeIcons.building,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El cliente es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _encuestaController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Encuesta Aplicada',
+                                  prefixIcon: FontAwesomeIcons.rectangleList,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La encuesta es obligatoria'
+                                        : null,
+                              ),
+                            ],
+                          ),
                         ),
-                        TextFormField(
-                          controller: _encuestaController,
-                          decoration: InputDecoration(labelText: 'Encuesta'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La encuesta es obligatoria'
-                                  : null,
-                        ),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (widget.accion == 'editar'
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (widget.accion == 'editar'
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),

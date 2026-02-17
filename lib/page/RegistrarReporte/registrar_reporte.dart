@@ -3,7 +3,9 @@ import '../../api/reporte_final.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
+
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +25,8 @@ class RegistrarReporteScreen extends StatefulWidget {
   final dynamic data;
 
   @override
-  const RegistrarReporteScreen({super.key, 
+  const RegistrarReporteScreen({
+    super.key,
     required this.showModal,
     required this.onCompleted,
     required this.accion,
@@ -208,12 +211,12 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
         returnPrincipalPage();
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Sin conexión",
-          message:
-              "Reporte guardado localmente y se sincronizará cuando haya internet",
-          backgroundColor: Colors.orange,
-        );
+            context: context,
+            title: "Sin conexión",
+            message:
+                "Reporte guardado localmente y se sincronizará cuando haya internet",
+            backgroundColor: Colors.orange,
+          );
         }
       }
       return;
@@ -231,11 +234,11 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
           returnPrincipalPage();
           if (mounted) {
             showCustomFlushbar(
-            context: context,
-            title: "Registro exitoso",
-            message: "El reporte se ha guardado correctamente",
-            backgroundColor: Colors.green,
-          );
+              context: context,
+              title: "Registro exitoso",
+              message: "El reporte se ha guardado correctamente",
+              backgroundColor: Colors.green,
+            );
           }
         }
       }
@@ -246,11 +249,11 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
         });
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error",
-          message: error.toString(),
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error",
+            message: error.toString(),
+            backgroundColor: Colors.red,
+          );
         }
       }
     }
@@ -380,8 +383,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
       key: _formKey,
       appBar: Header(), // Usa el header con menú de usuario
       drawer: MenuLateral(
-          currentPage:
-              "Reporte de inspecciones y pruebas"), // Usa el menú lateral
+          currentPage: "Reporte de actividades"), // Usa el menú lateral
       body: loading
           ? Load() // Muestra el widget de carga mientras se obtienen los datos
           : SingleChildScrollView(
@@ -403,153 +405,152 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
                       ),
                     ),
                     // Botones centrados con separación
+                    // Botones centrados con separación
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _onSubmit,
-                          icon: Icon(FontAwesomeIcons.plus), // Ícono de +
-                          label: _isLoading
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SpinKitFadingCircle(
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text("Cargando..."), // Texto de carga
-                                  ],
-                                )
-                              : Text(
-                                  buttonLabel), // Texto normal cuando no está cargando
+                        Expanded(
+                          child: PremiumActionButton(
+                            onPressed: _isLoading ? () {} : _onSubmit,
+                            label: buttonLabel,
+                            icon: FontAwesomeIcons.plus,
+                            isLoading: _isLoading,
+                            isFullWidth: true,
+                          ),
                         ),
-                        SizedBox(width: 10), // Separación entre botones
-                        ElevatedButton.icon(
-                          onPressed: returnPrincipalPage,
-                          icon: Icon(FontAwesomeIcons
-                              .arrowLeft), // Ícono de flecha hacia la izquierda
-                          label: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24,
-                                )
-                              : Text("Regresar"),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: PremiumActionButton(
+                            onPressed: returnPrincipalPage,
+                            label: "Regresar",
+                            icon: FontAwesomeIcons.arrowLeft,
+                            style: PremiumButtonStyle.secondary,
+                            isFullWidth: true,
+                          ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 20),
-                    // Campo de texto para descripción (tipo textarea)
-                    TextFormField(
-                      controller: descripcionController,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        labelText: 'Descripción',
-                        hintText: 'Escribe aquí la descripción del reporte...',
-                        border: OutlineInputBorder(),
+                    const SizedBox(height: 20),
+                    const PremiumSectionTitle(
+                      title: "Detalles del Reporte",
+                      icon: FontAwesomeIcons.fileLines,
+                    ),
+                    PremiumCardField(
+                      child: TextFormField(
+                        controller: descripcionController,
+                        maxLines: 5,
+                        decoration: PremiumInputs.decoration(
+                          labelText: 'Descripción',
+                          hintText:
+                              'Escribe aquí la descripción del reporte...',
+                          prefixIcon: FontAwesomeIcons.alignLeft,
+                        ),
                       ),
                     ),
                     SizedBox(height: 16),
 
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: SingleChildScrollView(
-                          // Permite desplazamiento cuando el contenido excede la pantalla
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Center(
-                                child: Text(
-                                  "Carga de Imágenes",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                    const PremiumSectionTitle(
+                      title: "Evidencia Fotográfica",
+                      icon: FontAwesomeIcons.camera,
+                    ),
+                    PremiumCardField(
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: double.infinity,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                border: Border.all(
+                                    color: Colors.grey.withValues(alpha: 0.2)),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-
-                              SizedBox(height: 10),
-
-                              // Centrar la parte de carga de imágenes
-                              Center(
-                                child: GestureDetector(
-                                  onTap:
-                                      _pickImage, // Asegúrate de implementar este método
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 250,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[200],
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: _image == null
-                                        ? Center(
-                                            child: Icon(
-                                              Icons.cloud_upload,
-                                              size: 50,
-                                              color: Colors.blueAccent,
-                                            ),
-                                          )
-                                        : ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: Image.file(
-                                              File(_image!.path),
-                                              fit: BoxFit.cover,
-                                            ),
+                              child: _image == null
+                                  ? Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          FontAwesomeIcons.cloudArrowUp,
+                                          size: 50,
+                                          color: const Color(0xFFE94742)
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          "Toca para subir imagen",
+                                          style: TextStyle(
+                                            color: const Color(0xFF2C3E50)
+                                                .withValues(alpha: 0.5),
+                                            fontWeight: FontWeight.w600,
                                           ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 16),
-
-                              // Campo de texto para comentario
-                              TextField(
-                                controller: _comentarioController,
-                                decoration:
-                                    InputDecoration(labelText: "Comentario"),
-                              ),
-                              SizedBox(height: 16),
-                              // Centrar el botón de agregar
-                              Center(
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _agregarImagen, // Verifica que este método maneje la lógica correctamente
-                                  child: Text("Agregar"),
-                                ),
-                              ),
-                              SizedBox(height: 16),
-
-                              // Lista de imágenes con comentarios
-                              if (imagePaths
-                                  .isNotEmpty) // Asegúrate de que la lista no esté vacía
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: imagePaths.length,
-                                  itemBuilder: (context, index) {
-                                    return Card(
-                                      margin: EdgeInsets.symmetric(vertical: 8),
-                                      child: ListTile(
-                                        leading: Image.file(
-                                          File(imagePaths[index]["imagePath"]),
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
                                         ),
-                                        title: Text(
-                                          '${imagePaths[index]["comentario"]}',
-                                        ),
+                                      ],
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.file(
+                                        File(_image!.path),
+                                        fit: BoxFit.cover,
                                       ),
-                                    );
-                                  },
-                                ),
-                            ],
+                                    ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _comentarioController,
+                            decoration: PremiumInputs.decoration(
+                              labelText: "Comentario",
+                              prefixIcon: FontAwesomeIcons.comment,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          PremiumActionButton(
+                            onPressed: _agregarImagen,
+                            label: "Agregar Evidencia",
+                            icon: FontAwesomeIcons.plus,
+                            style: PremiumButtonStyle.secondary,
+                            isFullWidth: true,
+                          ),
+                        ],
                       ),
                     ),
+                    if (imagePaths.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const PremiumSectionTitle(
+                        title: "Imágenes Adjuntas",
+                        icon: FontAwesomeIcons.images,
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: imagePaths.length,
+                        itemBuilder: (context, index) {
+                          return PremiumCardField(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            child: ListTile(
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(imagePaths[index]["imagePath"]),
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              title: Text(
+                                '${imagePaths[index]["comentario"]}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -557,5 +558,3 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
     );
   }
 }
-
-

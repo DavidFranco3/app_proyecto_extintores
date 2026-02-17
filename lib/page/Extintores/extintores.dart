@@ -157,20 +157,20 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          "Extintores",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                            letterSpacing: -0.5,
-                          ),
+                      const Text(
+                        "Extintores",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 16),
                       PremiumActionButton(
                         onPressed: openRegistroModal,
                         label: "Registrar",

@@ -10,6 +10,9 @@ import '../../api/inspeccion_anual.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../Generales/flushbar_helper.dart';
+import '../../utils/pdf_utils.dart';
+import '../../components/Generales/premium_button.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class GraficaLineas extends StatefulWidget {
   final List<Map<String, dynamic>> encuestaAbierta;
@@ -63,7 +66,7 @@ class _GraficaLineasState extends State<GraficaLineas> {
 
   PdfColor getPdfColorForPregunta(String pregunta) {
     final color = getColorForPregunta(pregunta);
-    return PdfColor.fromInt(color.value);
+    return PdfColor.fromInt(color.toARGB32());
   }
 
   Future<pw.Document> _generatePdfDocument() async {
@@ -89,10 +92,10 @@ class _GraficaLineasState extends State<GraficaLineas> {
     for (var i = 0; i < preguntas.length; i++) {
       final preguntaData = preguntas[i];
       final respuestasString = preguntaData['valores'] as String;
-      final respuestas = respuestasString
-          .split(',')
-          .map((valor) => double.tryParse(valor.trim()) ?? 0)
-          .toList();
+      final respuestas = respuestasString.split(',').map((valor) {
+        final v = double.tryParse(valor.trim()) ?? 0;
+        return (v.isNaN || v.isInfinite) ? 0.0 : v;
+      }).toList();
 
       if (respuestas.length > maxX) maxX = respuestas.length;
 
@@ -132,9 +135,13 @@ class _GraficaLineasState extends State<GraficaLineas> {
                     pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
-                          pw.Text(formatDate(data["createdAt"]),
+                          pw.Text(
+                              PdfUtils.removeAccents(
+                                  formatDate(data["createdAt"].toString())),
                               style: const pw.TextStyle(fontSize: 10)),
-                          pw.Text(data["cliente"],
+                          pw.Text(
+                              PdfUtils.removeAccents(
+                                  data["cliente"].toString()),
                               style: const pw.TextStyle(fontSize: 10)),
                         ])
                   ],
@@ -151,9 +158,10 @@ class _GraficaLineasState extends State<GraficaLineas> {
                     pw.Container(
                         width: 10,
                         height: 10,
-                        color: getPdfColorForPregunta(p['pregunta'])),
+                        color:
+                            getPdfColorForPregunta(p['pregunta'].toString())),
                     pw.SizedBox(width: 4),
-                    pw.Text(p['pregunta'],
+                    pw.Text(PdfUtils.removeAccents(p['pregunta'].toString()),
                         style: const pw.TextStyle(fontSize: 10)),
                   ]);
                 }).toList(),
@@ -166,7 +174,8 @@ class _GraficaLineasState extends State<GraficaLineas> {
                 height: 300,
                 child: pw.Chart(
                   grid: pw.CartesianGrid(
-                    xAxis: pw.FixedAxis(List.generate(maxX, (index) => index),
+                    xAxis: pw.FixedAxis(
+                        List.generate(maxX < 2 ? 2 : maxX, (index) => index),
                         format: (v) => v.toInt().toString()),
                     yAxis: pw.FixedAxis(
                       [0, 20, 40, 60, 80, 100, if (maxY > 100) maxY],
@@ -217,22 +226,21 @@ class _GraficaLineasState extends State<GraficaLineas> {
         var response = await inspeccionAnualService.sendEmail(
             widget.encuestaAbierta[0]["id"], file.path);
 
-        if (mounted) {
-          if (response['status'] == 200) {
-            showCustomFlushbar(
-              context: context,
-              title: "Correo enviado",
-              message: "El PDF fue enviado exitosamente al correo del cliente",
-              backgroundColor: Colors.green,
-            );
-          } else {
-            showCustomFlushbar(
-              context: context,
-              title: "Error al enviar el correo",
-              message: "Hubo un problema al enviar el PDF por correo",
-              backgroundColor: Colors.red,
-            );
-          }
+        if (!context.mounted) return;
+        if (response['status'] == 200) {
+          showCustomFlushbar(
+            context: context,
+            title: "Correo enviado",
+            message: "El PDF fue enviado exitosamente al correo del cliente",
+            backgroundColor: Colors.green,
+          );
+        } else {
+          showCustomFlushbar(
+            context: context,
+            title: "Error al enviar el correo",
+            message: "Hubo un problema al enviar el PDF por correo",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (e) {
@@ -299,25 +307,21 @@ class _GraficaLineasState extends State<GraficaLineas> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
               Wrap(
                 spacing: 20,
                 runSpacing: 10,
                 alignment: WrapAlignment.center,
                 children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.picture_as_pdf),
-                    label: const Text("Generar PDF"),
+                  PremiumActionButton(
+                    icon: FontAwesomeIcons.filePdf,
+                    label: "Generar PDF",
                     onPressed: _downloadPdf,
                   ),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.send),
-                    label: const Text("Enviar PDF"),
+                  PremiumActionButton(
+                    icon: FontAwesomeIcons.paperPlane,
+                    label: "Enviar PDF",
                     onPressed: () => _enviarPdfAlBackend(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                    ),
+                    style: PremiumButtonStyle.primary,
                   ),
                 ],
               ),

@@ -160,24 +160,24 @@ class _InspeccionEspecialPageState extends State<InspeccionEspecialPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      const Expanded(
-                        child: Text(
-                          "Actividad anual",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                            letterSpacing: -0.5,
-                          ),
+                      const Text(
+                        "Actividad anual",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 16),
                       PremiumActionButton(
                         onPressed: openRegistroPage,
                         label: "Registrar",
                         icon: FontAwesomeIcons.plus,
+                        isFullWidth: true,
                       ),
                     ],
                   ),

@@ -97,10 +97,10 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
         'idFrecuencia': item['idFrecuencia'],
         'idCliente': item['idCliente'],
         'idEncuesta': item['idEncuesta'],
-        'cuestionario': item['cuestionario']['nombre'],
-        'frecuencia': item['frecuencia']['nombre'],
-        'cliente': item['cliente']['nombre'],
-        'proximaInspeccion': item['nuevaInspeccion'],
+        'cuestionario': item['cuestionario']?['nombre'] ?? 'Sin cuestionario',
+        'frecuencia': item['frecuencia']?['nombre'] ?? 'Sin frecuencia',
+        'cliente': item['cliente']?['nombre'] ?? 'Sin cliente',
+        'proximaInspeccion': item['nuevaInspeccion'] ?? '',
         'estado': item['estado'],
         'createdAt': item['createdAt'],
         'updatedAt': item['updatedAt'],
@@ -127,13 +127,15 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
                   child: Center(
                     child: Text(
                       "Programa de actividades",
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF2C3E50),
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
@@ -146,4 +148,3 @@ class _ProgramaInspeccionesPageState extends State<ProgramaInspeccionesPage> {
     );
   }
 }
-

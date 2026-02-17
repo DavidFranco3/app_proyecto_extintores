@@ -12,6 +12,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../Generales/premium_inputs.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -685,134 +686,166 @@ class _AccionesState extends State<Acciones> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: _numeroSerieController,
-                          decoration:
-                              InputDecoration(labelText: 'Numero de serie'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El numero de serie es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Especificaciones Técnicas",
+                          icon: FontAwesomeIcons.fireExtinguisher,
                         ),
-                        DropdownSearch<String>(
-                          key: Key('tipoExtintorDropdown'),
-                          enabled: dataTiposExtintores
-                              .isNotEmpty, // Deshabilitado si no hay datos
-
-                          items: (filter, _) {
-                            return dataTiposExtintores
-                                .where((tipo) => tipo['nombre']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(filter.toLowerCase()))
-                                .map((tipo) => tipo['id'].toString())
-                                .toList();
-                          },
-                          selectedItem: _idTipoExtintorController.text.isEmpty
-                              ? null
-                              : _idTipoExtintorController.text,
-                          onChanged: isEliminar
-                              ? null
-                              : (String? newValue) {
-                                  setState(() {
-                                    _idTipoExtintorController.text = newValue!;
-                                  });
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _numeroSerieController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Número de Serie',
+                                  prefixIcon: FontAwesomeIcons.barcode,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El número de serie es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownSearch<String>(
+                                key: const Key('tipoExtintorDropdown'),
+                                enabled: dataTiposExtintores.isNotEmpty &&
+                                    !isEliminar,
+                                items: (filter, _) {
+                                  return dataTiposExtintores
+                                      .where((tipo) => tipo['nombre']
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .map((tipo) => tipo['id'].toString())
+                                      .toList();
                                 },
-                          dropdownBuilder: (context, selectedItem) {
-                            // Mostrar el nombre del tipo de extintor en lugar del ID
-                            final tipo = dataTiposExtintores.firstWhere(
-                                (t) => t['id'].toString() == selectedItem,
-                                orElse: () => {'nombre': ''});
-                            return Text(
-                              tipo['nombre'] ?? '',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14),
-                            );
-                          },
-                          decoratorProps: DropDownDecoratorProps(
-                            decoration: InputDecoration(
-                              labelText: 'Tipo de extintor',
-                              border: UnderlineInputBorder(),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                            ),
+                                selectedItem:
+                                    _idTipoExtintorController.text.isEmpty
+                                        ? null
+                                        : _idTipoExtintorController.text,
+                                onChanged: isEliminar
+                                    ? null
+                                    : (String? newValue) {
+                                        setState(() {
+                                          _idTipoExtintorController.text =
+                                              newValue!;
+                                        });
+                                      },
+                                dropdownBuilder: (context, selectedItem) {
+                                  final tipo = dataTiposExtintores.firstWhere(
+                                      (t) => t['id'].toString() == selectedItem,
+                                      orElse: () => {'nombre': ''});
+                                  return Text(
+                                    tipo['nombre'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: selectedItem == null
+                                          ? Colors.grey
+                                          : Colors.black,
+                                    ),
+                                  );
+                                },
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: 'Tipo de Extintor',
+                                    prefixIcon: FontAwesomeIcons.layerGroup,
+                                  ),
+                                ),
+                                popupProps:
+                                    const PopupProps.menu(showSearchBox: true),
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value == null || value.isEmpty
+                                        ? 'El tipo de extintor es obligatorio'
+                                        : null,
+                              ),
+                            ],
                           ),
-                          popupProps: PopupProps.menu(showSearchBox: true),
-                          validator: isEliminar
-                              ? null
-                              : (value) => value == null || value.isEmpty
-                                  ? 'El tipo de extintor es obligatorio'
-                                  : null,
                         ),
-                        TextFormField(
-                          controller: _capacidadController,
-                          decoration: InputDecoration(labelText: 'Capacidad'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La capacidad es obligatoria'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Estado y Capacidad",
+                          icon: FontAwesomeIcons.gaugeHigh,
                         ),
-                        TextFormField(
-                          controller: _ultimaRecargaController,
-                          decoration:
-                              InputDecoration(labelText: 'Última recarga'),
-                          enabled: !isEliminar,
-                          readOnly:
-                              true, // Para que el usuario no escriba manualmente
-                          onTap: () async {
-                            // Muestra el selector de fecha
-                            DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime
-                                  .now(), // Fecha inicial, puedes ajustarla si lo necesitas
-                              firstDate:
-                                  DateTime(1900), // Fecha mínima seleccionable
-                              lastDate:
-                                  DateTime(2100), // Fecha máxima seleccionable
-                              locale: Locale('es',
-                                  'ES'), // Aquí se asegura que la fecha esté en español
-                            );
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _capacidadController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Capacidad',
+                                  prefixIcon: FontAwesomeIcons.weightHanging,
+                                  hintText: 'Ej. 4.5kg / 6kg',
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La capacidad es obligatoria'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _ultimaRecargaController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Última Recarga',
+                                  prefixIcon: FontAwesomeIcons.calendarCheck,
+                                ),
+                                enabled: !isEliminar,
+                                readOnly: true,
+                                onTap: isEliminar
+                                    ? null
+                                    : () async {
+                                        DateTime? pickedDate =
+                                            await showDatePicker(
+                                          context: context,
+                                          initialDate: DateTime.now(),
+                                          firstDate: DateTime(1900),
+                                          lastDate: DateTime(2100),
+                                          locale: const Locale('es', 'ES'),
+                                        );
 
-                            if (pickedDate != null) {
-                              // Si se seleccionó una fecha, actualiza el controlador
-                              _ultimaRecargaController.text =
-                                  "${pickedDate.toLocal()}".split(' ')[
-                                      0]; // Formatea la fecha a 'YYYY-MM-DD'
-                            }
-                          },
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La última recarga es obligatoria'
-                                  : null,
+                                        if (pickedDate != null) {
+                                          _ultimaRecargaController.text =
+                                              "${pickedDate.toLocal()}"
+                                                  .split(' ')[0];
+                                        }
+                                      },
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La última recarga es obligatoria'
+                                        : null,
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (widget.accion == 'editar'
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (widget.accion == 'editar'
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),

@@ -39,7 +39,8 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
         debugPrint("Conectado a internet");
         await getInspeccionesProximasDesdeAPI();
       } else {
-        debugPrint("Sin conexión, cargando inspecciones próximas desde Hive...");
+        debugPrint(
+            "Sin conexión, cargando inspecciones próximas desde Hive...");
         await getInspeccionesProximasDesdeHive();
       }
     } catch (e) {
@@ -82,10 +83,9 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
 
     if (guardadas != null) {
       setState(() {
-        dataInspeccionesProximas = List<Map<String, dynamic>>.from(
-            guardadas.map((e) => Map<String, dynamic>.from(e))
+        dataInspeccionesProximas = List<Map<String, dynamic>>.from(guardadas
+            .map((e) => Map<String, dynamic>.from(e))
             .where((item) => item['estado'] == "true"));
-
       });
     } else {
       setState(() {
@@ -124,13 +124,15 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
                   child: Center(
                     child: Text(
                       "Actividades próximas",
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF2C3E50),
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
@@ -149,5 +151,3 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
     );
   }
 }
-
-

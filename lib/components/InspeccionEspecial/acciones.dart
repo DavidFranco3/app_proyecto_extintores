@@ -6,6 +6,7 @@ import '../Generales/flushbar_helper.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../Generales/premium_button.dart';
+import '../Generales/premium_inputs.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class Acciones extends StatefulWidget {
@@ -34,12 +35,12 @@ class _AccionesState extends State<Acciones> {
   @override
   void initState() {
     super.initState();
-    debugPrint(widget.data);
+    debugPrint(widget.data.toString());
     _tituloController = TextEditingController();
     _clienteController = TextEditingController();
 
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
-      _tituloController.text = widget.data['usuario'] ?? '';
+      _tituloController.text = widget.data['titulo'] ?? '';
       _clienteController.text = widget.data['cliente'] ?? '';
     }
 
@@ -77,7 +78,7 @@ class _AccionesState extends State<Acciones> {
     final conectado = await verificarConexion();
     if (!conectado) return;
 
-    final box = Hive.box('operacionesOfflineInspeccionesAnuales');
+    final box = Hive.box('operacionesOfflineInspeccionAnual');
     final operacionesRaw = box.get('operaciones', defaultValue: []);
 
     final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
@@ -171,7 +172,7 @@ class _AccionesState extends State<Acciones> {
     var dataTemp = {'estado': "false"};
 
     if (!conectado) {
-      final box = Hive.box('operacionesOfflineInspeccionesAnuales');
+      final box = Hive.box('operacionesOfflineInspeccionAnual');
       final operaciones = box.get('operaciones', defaultValue: []);
       operaciones.add({
         'accion': 'eliminar',
@@ -280,54 +281,82 @@ class _AccionesState extends State<Acciones> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _tituloController,
-            decoration: InputDecoration(labelText: 'Titulo'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) =>
-                    value?.isEmpty ?? true ? 'El titulo es obligatorio' : null,
-          ),
-          TextFormField(
-            controller: _clienteController,
-            decoration: InputDecoration(labelText: 'Cliente'),
-            enabled: !isEliminar,
-            validator: isEliminar
-                ? null
-                : (value) =>
-                    value?.isEmpty ?? true ? 'El cliente es obligatorio' : null,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
             children: [
-              PremiumActionButton(
-                onPressed: closeRegistroModal,
-                label: 'Cancelar',
-                icon: Icons.close,
-                style: PremiumButtonStyle.secondary,
+              const PremiumSectionTitle(
+                title: "Datos de Inspección Especial",
+                icon: FontAwesomeIcons.circleCheck,
               ),
-              const SizedBox(width: 20),
-              PremiumActionButton(
-                onPressed: _onSubmit,
-                label: buttonLabel,
-                icon: isEliminar
-                    ? FontAwesomeIcons.trash
-                    : (widget.accion == 'editar'
-                        ? FontAwesomeIcons.penToSquare
-                        : FontAwesomeIcons.floppyDisk),
-                isLoading: _isLoading,
-                style: isEliminar
-                    ? PremiumButtonStyle.danger
-                    : PremiumButtonStyle.primary,
+              PremiumCardField(
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _tituloController,
+                      decoration: PremiumInputs.decoration(
+                        labelText: 'Título de la Inspección',
+                        prefixIcon: FontAwesomeIcons.heading,
+                      ),
+                      enabled: !isEliminar,
+                      validator: isEliminar
+                          ? null
+                          : (value) => value?.isEmpty ?? true
+                              ? 'El titulo es obligatorio'
+                              : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _clienteController,
+                      decoration: PremiumInputs.decoration(
+                        labelText: 'Cliente Asociado',
+                        prefixIcon: FontAwesomeIcons.buildingUser,
+                      ),
+                      enabled: !isEliminar,
+                      validator: isEliminar
+                          ? null
+                          : (value) => value?.isEmpty ?? true
+                              ? 'El cliente es obligatorio'
+                              : null,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: PremiumActionButton(
+                      onPressed: closeRegistroModal,
+                      label: 'Cancelar',
+                      icon: Icons.close,
+                      style: PremiumButtonStyle.secondary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: PremiumActionButton(
+                      onPressed: _onSubmit,
+                      label: buttonLabel,
+                      icon: isEliminar
+                          ? FontAwesomeIcons.trash
+                          : (widget.accion == 'editar'
+                              ? FontAwesomeIcons.penToSquare
+                              : FontAwesomeIcons.floppyDisk),
+                      isLoading: _isLoading,
+                      style: isEliminar
+                          ? PremiumButtonStyle.danger
+                          : PremiumButtonStyle.primary,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

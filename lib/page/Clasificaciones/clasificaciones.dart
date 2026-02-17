@@ -149,20 +149,20 @@ class _ClasificacionesPageState extends State<ClasificacionesPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          "Clasificaciones",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                            letterSpacing: -0.5,
-                          ),
+                      const Text(
+                        "Clasificaciones",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 16),
                       PremiumActionButton(
                         onPressed: openRegistroView,
                         label: "Registrar",

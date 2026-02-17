@@ -5,7 +5,6 @@ import '../../api/ramas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../Encuestas/encuestas.dart';
 import '../CrearEncuesta/crear_encuesta.dart';
 import '../../components/Generales/pregunta.dart';
@@ -14,6 +13,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
 
 class CrearEncuestaPantalla1Screen extends StatefulWidget {
   final VoidCallback showModal;
@@ -26,7 +27,8 @@ class CrearEncuestaPantalla1Screen extends StatefulWidget {
 
   @override
   const CrearEncuestaPantalla1Screen(
-      {super.key, required this.showModal,
+      {super.key,
+      required this.showModal,
       required this.onCompleted,
       required this.accion,
       required this.data,
@@ -49,7 +51,6 @@ class _CrearEncuestaPantalla1ScreenState
   List<Map<String, dynamic>> dataClasificaciones = [];
   List<Map<String, dynamic>> dataRamas = [];
   bool loading = true;
-  final bool _isLoading = false;
   final List<Map<String, String>> secciones = [];
 
   @override
@@ -366,214 +367,173 @@ class _CrearEncuestaPantalla1ScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Center(
-                        child: Text(
-                          "Crear actividad",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: returnPrincipalPage,
-                          icon: Icon(FontAwesomeIcons.arrowLeft),
-                          label: _isLoading
-                              ? SpinKitFadingCircle(
-                                  color: const Color.fromARGB(255, 241, 8, 8),
-                                  size: 24,
-                                )
-                              : Text("Regresar"),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Card(
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Form(
-                          key: _formKey, // Asigna el GlobalKey<FormState> aquí
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextFormField(
-                                controller: widget.nombreController,
-                                decoration:
-                                    InputDecoration(labelText: "Nombre"),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'El nombre es obligatorio';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              // Dropdown de Tipo de Sistema (Rama)
-                              // Dropdown de Rama
-                              DropdownSearch<String>(
-                                key: Key('ramaDropdown'),
-                                enabled: dataRamas.isNotEmpty,
-                                items: (filter, _) {
-                                  return dataRamas
-                                      .where((tipo) => tipo['nombre']
-                                          .toString()
-                                          .toLowerCase()
-                                          .contains(filter.toLowerCase()))
-                                      .map((tipo) => tipo['nombre']
-                                          .toString()) // ✅ valor = nombre
-                                      .toList();
-                                },
-                                selectedItem: widget.ramaController.text.isEmpty
-                                    ? null
-                                    : widget.ramaController.text,
-                                onChanged: dataRamas.isEmpty
-                                    ? null
-                                    : (String? newValue) {
-                                        setState(() {
-                                          widget.ramaController.text =
-                                              newValue!;
-                                        });
-                                      },
-                                dropdownBuilder: (context, selectedItem) =>
-                                    Text(
-                                  selectedItem ?? '',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: selectedItem == null
-                                          ? Colors.grey
-                                          : Colors.black),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: 'Tipo de Sistema',
-                                    border: UnderlineInputBorder(),
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                  ),
-                                ),
-                                popupProps: PopupProps.menu(
-                                  showSearchBox: true,
-                                  fit: FlexFit.loose,
-                                  constraints: BoxConstraints(maxHeight: 300),
-                                ),
-                                validator: dataRamas.isEmpty
-                                    ? null
-                                    : (value) => value == null || value.isEmpty
-                                        ? 'La rama es obligatoria'
-                                        : null,
-                              ),
-
-// Dropdown de Clasificación
-                              DropdownSearch<String>(
-                                key: Key('clasificacionDropdown'),
-                                enabled: dataClasificaciones.isNotEmpty,
-                                items: (filter, _) {
-                                  return dataClasificaciones
-                                      .where((tipo) => tipo['nombre']
-                                          .toString()
-                                          .toLowerCase()
-                                          .contains(filter.toLowerCase()))
-                                      .map((tipo) => tipo['nombre']
-                                          .toString()) // ✅ valor = nombre
-                                      .toList();
-                                },
-                                selectedItem:
-                                    widget.clasificacionController.text.isEmpty
-                                        ? null
-                                        : widget.clasificacionController.text,
-                                onChanged: dataClasificaciones.isEmpty
-                                    ? null
-                                    : (String? newValue) {
-                                        setState(() {
-                                          widget.clasificacionController.text =
-                                              newValue!;
-                                        });
-                                      },
-                                dropdownBuilder: (context, selectedItem) =>
-                                    Text(
-                                  selectedItem ??
-                                      '',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: selectedItem == null
-                                          ? Colors.grey
-                                          : Colors.black),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: 'Clasificación',
-                                    border: UnderlineInputBorder(),
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                  ),
-                                ),
-                                popupProps: PopupProps.menu(
-                                  showSearchBox: true,
-                                  fit: FlexFit.loose,
-                                  constraints: BoxConstraints(maxHeight: 300),
-                                ),
-                                validator: dataClasificaciones.isEmpty
-                                    ? null
-                                    : (value) => value == null || value.isEmpty
-                                        ? 'La clasificación es obligatoria'
-                                        : null,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Column(
-                      children: dataFrecuencias.map((frecuencia) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              onPressed: () => {
-                                openPantalla2Page(frecuencia),
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      frecuencia['nombre'],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    size: 24,
-                                  ),
-                                ],
-                              ),
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Crear actividad",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2C3E50),
+                              letterSpacing: -0.5,
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          PremiumActionButton(
+                            onPressed: returnPrincipalPage,
+                            label: "Regresar",
+                            icon: FontAwesomeIcons.arrowLeft,
+                            style: PremiumButtonStyle.secondary,
+                            isFullWidth: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(indent: 20, endIndent: 20, height: 32),
+                    SizedBox(height: 10),
+                    const PremiumSectionTitle(
+                      title: "Configuración Básica",
+                      icon: FontAwesomeIcons.gear,
+                    ),
+                    PremiumCardField(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextFormField(
+                              controller: widget.nombreController,
+                              decoration: PremiumInputs.decoration(
+                                labelText: "Nombre de la actividad",
+                                prefixIcon: FontAwesomeIcons.tag,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'El nombre es obligatorio';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownSearch<String>(
+                              key: const Key('ramaDropdown'),
+                              enabled: dataRamas.isNotEmpty,
+                              items: (filter, _) {
+                                return dataRamas
+                                    .where((tipo) => tipo['nombre']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(filter.toLowerCase()))
+                                    .map((tipo) => tipo['nombre'].toString())
+                                    .toList();
+                              },
+                              selectedItem: widget.ramaController.text.isEmpty
+                                  ? null
+                                  : widget.ramaController.text,
+                              onChanged: dataRamas.isEmpty
+                                  ? null
+                                  : (String? newValue) {
+                                      setState(() {
+                                        widget.ramaController.text = newValue!;
+                                      });
+                                    },
+                              dropdownBuilder: (context, selectedItem) => Text(
+                                selectedItem ?? "",
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Tipo de Sistema',
+                                  prefixIcon: FontAwesomeIcons.microchip,
+                                ),
+                              ),
+                              popupProps: const PopupProps.menu(
+                                showSearchBox: true,
+                                fit: FlexFit.loose,
+                                constraints: BoxConstraints(maxHeight: 300),
+                              ),
+                              validator: dataRamas.isEmpty
+                                  ? null
+                                  : (value) => value == null || value.isEmpty
+                                      ? 'El tipo de sistema es obligatorio'
+                                      : null,
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownSearch<String>(
+                              key: const Key('clasificacionDropdown'),
+                              enabled: dataClasificaciones.isNotEmpty,
+                              items: (filter, _) {
+                                return dataClasificaciones
+                                    .where((tipo) => tipo['nombre']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(filter.toLowerCase()))
+                                    .map((tipo) => tipo['nombre'].toString())
+                                    .toList();
+                              },
+                              selectedItem:
+                                  widget.clasificacionController.text.isEmpty
+                                      ? null
+                                      : widget.clasificacionController.text,
+                              onChanged: dataClasificaciones.isEmpty
+                                  ? null
+                                  : (String? newValue) {
+                                      setState(() {
+                                        widget.clasificacionController.text =
+                                            newValue!;
+                                      });
+                                    },
+                              dropdownBuilder: (context, selectedItem) => Text(
+                                selectedItem ?? "",
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Clasificación',
+                                  prefixIcon: FontAwesomeIcons.layerGroup,
+                                ),
+                              ),
+                              popupProps: const PopupProps.menu(
+                                showSearchBox: true,
+                                fit: FlexFit.loose,
+                                constraints: BoxConstraints(maxHeight: 300),
+                              ),
+                              validator: dataClasificaciones.isEmpty
+                                  ? null
+                                  : (value) => value == null || value.isEmpty
+                                      ? 'La clasificación es obligatoria'
+                                      : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    const PremiumSectionTitle(
+                      title: "Frecuencia de Actividad",
+                      icon: FontAwesomeIcons.calendarCheck,
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: dataFrecuencias.length,
+                      itemBuilder: (context, index) {
+                        final frecuencia = dataFrecuencias[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: PremiumActionButton(
+                            onPressed: () => openPantalla2Page(frecuencia),
+                            label: frecuencia['nombre'],
+                            icon: FontAwesomeIcons.chevronRight,
+                            style: PremiumButtonStyle.secondary,
+                            iconRight: true,
+                          ),
                         );
-                      }).toList(),
+                      },
                     ),
                   ],
                 ),
@@ -582,5 +542,3 @@ class _CrearEncuestaPantalla1ScreenState
     );
   }
 }
-
-

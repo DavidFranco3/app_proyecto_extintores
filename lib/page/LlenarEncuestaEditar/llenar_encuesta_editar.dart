@@ -13,13 +13,14 @@ import '../../components/Logs/logs_informativos.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
+import '../../components/Generales/premium_button.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -183,8 +184,24 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
             ?.cast<Map<String, dynamic>>() ??
         [];
 
-    getEncuestas(widget.data["idRama"]!, widget.data["idFrecuencia"]!,
-        widget.data["idClasificacion"]!, widget.data["idCliente"]!);
+    final idRama = widget.data["idRama"];
+    final idFrecuencia = widget.data["idFrecuencia"];
+    final idClasificacion = widget.data["idClasificacion"];
+    final idCliente = widget.data["idCliente"];
+
+    if (idRama != null &&
+        idFrecuencia != null &&
+        idClasificacion != null &&
+        idCliente != null) {
+      getEncuestas(idRama, idFrecuencia, idClasificacion, idCliente);
+    } else {
+      debugPrint(
+          "Error: Faltan datos obligatorios en widget.data para getEncuestas");
+      setState(() {
+        loading = false;
+      });
+    }
+
     setState(() {
       debugPrint("encuestas");
       debugPrint(dataEncuestas.toString());
@@ -1115,38 +1132,22 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                           child: Text(
                             "Aplicar actividad",
                             style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2C3E50),
+                              letterSpacing: -0.5,
+                            ),
                           ),
                         ),
-                        SizedBox(height: 10),
+                        SizedBox(height: 20), // Aumentado espacio
                         Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () => _onSubmit("guardar"),
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 12),
-                                  fixedSize: Size(150, 50),
-                                ),
-                                icon: Icon(FontAwesomeIcons.plus),
-                                label: _isLoading
-                                    ? Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          SpinKitFadingCircle(
-                                            color: Colors.red,
-                                            size: 24,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text("Guardando..."),
-                                        ],
-                                      )
-                                    : Text("Guardar"),
-                              ),
-                            ],
+                          child: PremiumActionButton(
+                            onPressed:
+                                _isLoading ? () {} : () => _onSubmit("guardar"),
+                            icon: FontAwesomeIcons.plus,
+                            label: _isLoading ? "Guardando..." : "Guardar",
+                            isLoading: _isLoading,
+                            style: PremiumButtonStyle.primary,
                           ),
                         ),
                         SizedBox(height: 20),
@@ -1166,9 +1167,11 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                       .toList();
                                 },
                                 selectedItem: selectedClienteId != null
-                                    ? dataClientes.firstWhere((c) =>
-                                        c['id'] ==
-                                        selectedClienteId)['nombre'] as String
+                                    ? dataClientes.firstWhere(
+                                        (c) => c['id'] == selectedClienteId,
+                                        orElse: () =>
+                                            <String, dynamic>{'nombre': null},
+                                      )['nombre'] as String?
                                     : null,
                                 onChanged: (String? newValue) {
                                   setState(() {
@@ -1201,11 +1204,26 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 ),
                                 decoratorProps: DropDownDecoratorProps(
                                   decoration: InputDecoration(
-                                    labelText: "Selecciona un Cliente",
-                                    border: UnderlineInputBorder(),
-                                    isDense: true,
+                                    labelText: "Cliente",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Color(0xFF3498DB), width: 2),
+                                    ),
+                                    filled: true,
+                                    fillColor: Color(0xFFF8F9FA),
                                     contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                        horizontal: 16, vertical: 12),
                                   ),
                                 ),
                                 popupProps:
@@ -1227,9 +1245,11 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                       .toList();
                                 },
                                 selectedItem: selectedRamaId != null
-                                    ? dataRamas.firstWhere((r) =>
-                                            r['id'] == selectedRamaId)['nombre']
-                                        as String
+                                    ? dataRamas.firstWhere(
+                                        (r) => r['id'] == selectedRamaId,
+                                        orElse: () =>
+                                            <String, dynamic>{'nombre': null},
+                                      )['nombre'] as String?
                                     : null,
                                 onChanged: (String? newValue) {
                                   setState(() {
@@ -1261,11 +1281,26 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 ),
                                 decoratorProps: DropDownDecoratorProps(
                                   decoration: InputDecoration(
-                                    labelText: "Selecciona un Tipo de Sistema",
-                                    border: UnderlineInputBorder(),
-                                    isDense: true,
+                                    labelText: "Tipo de Sistema",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Color(0xFF3498DB), width: 2),
+                                    ),
+                                    filled: true,
+                                    fillColor: Color(0xFFF8F9FA),
                                     contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                        horizontal: 16, vertical: 12),
                                   ),
                                 ),
                                 popupProps:
@@ -1292,10 +1327,12 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                       .toList();
                                 },
                                 selectedItem: selectedIdClasificacion != null
-                                    ? dataClasificaciones.firstWhere((c) =>
-                                            c['id'] ==
-                                            selectedIdClasificacion)['nombre']
-                                        as String
+                                    ? dataClasificaciones.firstWhere(
+                                        (c) =>
+                                            c['id'] == selectedIdClasificacion,
+                                        orElse: () =>
+                                            <String, dynamic>{'nombre': null},
+                                      )['nombre'] as String?
                                     : null,
                                 onChanged: (String? newValue) {
                                   setState(() {
@@ -1328,11 +1365,26 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 ),
                                 decoratorProps: DropDownDecoratorProps(
                                   decoration: InputDecoration(
-                                    labelText: "Selecciona una clasificación",
-                                    border: UnderlineInputBorder(),
-                                    isDense: true,
+                                    labelText: "Clasificación",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Color(0xFF3498DB), width: 2),
+                                    ),
+                                    filled: true,
+                                    fillColor: Color(0xFFF8F9FA),
                                     contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                        horizontal: 16, vertical: 12),
                                   ),
                                 ),
                                 popupProps:
@@ -1354,10 +1406,11 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                       .toList();
                                 },
                                 selectedItem: selectedFrecuenciaId != null
-                                    ? dataFrecuencias.firstWhere((f) =>
-                                            f['id'] ==
-                                            selectedFrecuenciaId)['nombre']
-                                        as String
+                                    ? dataFrecuencias.firstWhere(
+                                        (f) => f['id'] == selectedFrecuenciaId,
+                                        orElse: () =>
+                                            <String, dynamic>{'nombre': null},
+                                      )['nombre'] as String?
                                     : null,
                                 onChanged: (String? newValue) {
                                   setState(() {
@@ -1390,11 +1443,26 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 ),
                                 decoratorProps: DropDownDecoratorProps(
                                   decoration: InputDecoration(
-                                    labelText: "Selecciona un periodo",
-                                    border: UnderlineInputBorder(),
-                                    isDense: true,
+                                    labelText: "Periodo",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide:
+                                          BorderSide(color: Color(0xFFE0E0E0)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Color(0xFF3498DB), width: 2),
+                                    ),
+                                    filled: true,
+                                    fillColor: Color(0xFFF8F9FA),
                                     contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                        horizontal: 16, vertical: 12),
                                   ),
                                 ),
                                 popupProps:
@@ -1420,9 +1488,11 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 .toList();
                           },
                           selectedItem: selectedEncuestaId != null
-                              ? dataEncuestas.firstWhere((e) =>
-                                      e['id'] == selectedEncuestaId)['nombre']
-                                  as String
+                              ? dataEncuestas.firstWhere(
+                                  (e) => e['id'] == selectedEncuestaId,
+                                  orElse: () =>
+                                      <String, dynamic>{'nombre': null},
+                                )['nombre'] as String?
                               : null,
                           onChanged: (String? newValue) {
                             if (newValue == null) return;
@@ -1443,11 +1513,26 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                           ),
                           decoratorProps: DropDownDecoratorProps(
                             decoration: InputDecoration(
-                              labelText: "Selecciona una actividad",
-                              border: UnderlineInputBorder(),
-                              isDense: true,
+                              labelText: "Actividad",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFE0E0E0)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Color(0xFFE0E0E0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                    color: Color(0xFF3498DB), width: 2),
+                              ),
+                              filled: true,
+                              fillColor: Color(0xFFF8F9FA),
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                  horizontal: 16, vertical: 12),
                             ),
                           ),
                           popupProps: PopupProps.menu(showSearchBox: true),
@@ -1636,12 +1721,31 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                               DropDownDecoratorProps(
                                             decoration: InputDecoration(
                                               labelText: "Calificación",
-                                              border: OutlineInputBorder(),
-                                              isDense: true,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                borderSide: BorderSide(
+                                                    color: Color(0xFFE0E0E0)),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                borderSide: BorderSide(
+                                                    color: Color(0xFFE0E0E0)),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                borderSide: BorderSide(
+                                                    color: Color(0xFF3498DB),
+                                                    width: 2),
+                                              ),
+                                              filled: true,
+                                              fillColor: Color(0xFFF8F9FA),
                                               contentPadding:
                                                   EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
+                                                      horizontal: 16,
+                                                      vertical: 12),
                                             ),
                                           ),
                                           popupProps: PopupProps.menu(
@@ -1881,9 +1985,12 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                             SizedBox(height: 16),
 
                                             Center(
-                                              child: ElevatedButton(
+                                              child: PremiumActionButton(
                                                 onPressed: _agregarImagen,
-                                                child: Text("Agregar"),
+                                                label: "Agregar",
+                                                icon: FontAwesomeIcons.plus,
+                                                style:
+                                                    PremiumButtonStyle.primary,
                                               ),
                                             ),
                                             SizedBox(height: 16),

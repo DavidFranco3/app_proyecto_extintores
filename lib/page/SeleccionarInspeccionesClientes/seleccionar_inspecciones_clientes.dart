@@ -12,6 +12,9 @@ import '../../api/inspecciones.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() => runApp(MaterialApp(home: ClienteInspeccionesApp()));
@@ -231,6 +234,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
       }
 
       if (pdfPaths.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('No hay inspecciones en la fecha seleccionada.')),
@@ -289,76 +293,162 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
 
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Periodos"), // Usa el menú lateral
+      drawer: MenuLateral(currentPage: "Seleccionar actividad"),
       body: isLoading
-          ? Load() // Muestra el widget de carga mientras se obtienen los datos
-          : Padding(
+          ? Load()
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DropdownButton<String>(
-                    hint: Text('Selecciona un cliente'),
-                    value: clienteSeleccionado,
-                    onChanged: (nuevoClienteId) {
-                      setState(() {
-                        clienteSeleccionado = nuevoClienteId;
-                        fechaSeleccionada = null;
-                      });
-                      if (nuevoClienteId != null) {
-                        cargarInspecciones(nuevoClienteId);
-                      }
-                    },
-                    items:
-                        dataClientes.map<DropdownMenuItem<String>>((cliente) {
-                      return DropdownMenuItem<String>(
-                        value: cliente['id'],
-                        child: Text(cliente['nombre']),
-                      );
-                    }).toList(),
+                  Center(
+                    child: PremiumSectionTitle(title: "Seleccionar cliente"),
+                  ),
+                  const SizedBox(height: 15),
+                  PremiumCardField(
+                    child: DropdownButtonFormField<String>(
+                      decoration: PremiumInputs.decoration(
+                        labelText: "Cliente",
+                        prefixIcon: FontAwesomeIcons.user,
+                      ),
+                      value: clienteSeleccionado,
+                      items:
+                          dataClientes.map<DropdownMenuItem<String>>((cliente) {
+                        return DropdownMenuItem<String>(
+                          value: cliente['id'],
+                          child: Text(
+                            cliente['nombre'],
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (nuevoClienteId) {
+                        setState(() {
+                          clienteSeleccionado = nuevoClienteId;
+                          fechaSeleccionada = null;
+                        });
+                        if (nuevoClienteId != null) {
+                          cargarInspecciones(nuevoClienteId);
+                        }
+                      },
+                      isExpanded: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: PremiumSectionTitle(
+                        title: fechaSeleccionada == null
+                            ? "Todas las fechas"
+                            : "Fecha: ${DateFormat('dd/MM/yyyy').format(fechaSeleccionada!)}"),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => seleccionarFecha(context),
-                        child: const Text('Elegir Fecha'),
-                      ),
-                    ],
+                  PremiumActionButton(
+                    onPressed: () => seleccionarFecha(context),
+                    label: "Filtrar por Fecha",
+                    icon: FontAwesomeIcons.calendarDays,
+                    style: PremiumButtonStyle.secondary,
+                    isFullWidth: true,
                   ),
                   const SizedBox(height: 20),
-                  Expanded(
-                    child: clienteSeleccionado != null &&
-                            inspeccionesFiltradas.isNotEmpty
-                        ? Scrollbar(
-                            child: ListView.builder(
-                              itemCount: inspeccionesFiltradas.length,
-                              itemBuilder: (context, index) {
-                                final inspeccion = inspeccionesFiltradas[index];
-                                return ListTile(
-                                  title: Text(
-                                    "${inspeccion['cuestionario']} - ${inspeccion['frecuencia']}",
+                  if (clienteSeleccionado != null) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child:
+                          PremiumSectionTitle(title: "Actividades Encontradas"),
+                    ),
+                    if (inspeccionesFiltradas.isNotEmpty)
+                      ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: inspeccionesFiltradas.length,
+                        itemBuilder: (context, index) {
+                          final inspeccion = inspeccionesFiltradas[index];
+                          final fecha = DateTime.parse(inspeccion['createdAt']);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: PremiumCardField(
+                              child: ListTile(
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE3F2FD),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  subtitle: Text(
-                                    DateFormat('yyyy-MM-dd HH:mm').format(
-                                      DateTime.parse(inspeccion['createdAt']),
+                                  child: const Icon(
+                                      FontAwesomeIcons.fileContract,
+                                      color: Color(0xFF1565C0),
+                                      size: 20),
+                                ),
+                                title: Text(
+                                  "${inspeccion['cuestionario']}",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(FontAwesomeIcons.clock,
+                                            size: 12, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          DateFormat('yyyy-MM-dd HH:mm')
+                                              .format(fecha),
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                );
-                              },
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Frecuencia: ${inspeccion['frecuencia']}",
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[700]),
+                                    ),
+                                  ],
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios,
+                                    size: 14, color: Colors.grey),
+                                onTap: () {
+                                  // Accion al tocar (si se requiere navegar o algo)
+                                },
+                              ),
                             ),
-                          )
-                        : Center(child: Text('No hay inspecciones')),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: handleDownloadMultiplePDFs,
-                    child: Text('Descargar PDF combinado'),
-                  ),
+                          );
+                        },
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(FontAwesomeIcons.folderOpen,
+                                  size: 40, color: Colors.grey[400]),
+                              const SizedBox(height: 10),
+                              Text("No hay actividades registradas",
+                                  style: TextStyle(color: Colors.grey[600])),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    if (inspeccionesFiltradas.isNotEmpty)
+                      PremiumActionButton(
+                        onPressed: handleDownloadMultiplePDFs,
+                        label: "Descargar PDF Combinado",
+                        icon: FontAwesomeIcons.filePdf,
+                        isFullWidth: true,
+                      ),
+                  ],
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
     );
   }
 }
-

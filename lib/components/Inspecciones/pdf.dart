@@ -54,8 +54,13 @@ class PdfGenerator {
     double getValue(List<dynamic> list, int index) {
       if (index < list.length) {
         final val = list[index]['valor'];
-        if (val is num) return val.toDouble();
-        if (val is String) return double.tryParse(val) ?? 0.0;
+        double? result;
+        if (val is num) result = val.toDouble();
+        if (val is String) result = double.tryParse(val);
+
+        if (result != null && !result.isNaN && result >= 0) {
+          return result;
+        }
       }
       return 0.0;
     }
@@ -94,11 +99,20 @@ class PdfGenerator {
     final val6 = getValue(imagenes, 5);
     final val7 = getValue(imagenes, 6); // Pressure residual
 
-    final double caudal1 = 129.84 * 0.95 * pow(0.5, 2) * sqrt(val3);
-    final double caudal2 = 129.84 * 0.95 * pow(0.5, 2) * sqrt(val4);
-    final double caudal3 = 129.84 * 0.95 * pow(0.5, 2) * sqrt(val5);
-    final double caudal4 = 129.84 * 0.95 * pow(0.5, 2) * sqrt(val6);
+    // Safe sqrt helper
+    double safeSqrt(double val) => (val <= 0 || val.isNaN) ? 0 : sqrt(val);
+
+    final double caudal1 = 129.84 * 0.95 * pow(0.5, 2) * safeSqrt(val3);
+    final double caudal2 = 129.84 * 0.95 * pow(0.5, 2) * safeSqrt(val4);
+    final double caudal3 = 129.84 * 0.95 * pow(0.5, 2) * safeSqrt(val5);
+    final double caudal4 = 129.84 * 0.95 * pow(0.5, 2) * safeSqrt(val6);
     final double sumaCaudales = caudal1 + caudal2 + caudal3 + caudal4;
+
+    // Helper for safe formatting
+    String formatDouble(double val) {
+      if (val.isNaN || val.isInfinite) return '0.00';
+      return val.toStringAsFixed(2);
+    }
 
     // --- 4. Build PDF ---
 
@@ -116,16 +130,19 @@ class PdfGenerator {
               pw.Align(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Text(
-                  '${PdfUtils.capitalizeWords(data["municipio"] ?? "")}, ${PdfUtils.capitalizeWords(data["estadoDom"] ?? "")} a ${PdfUtils.formatDate(data["createdAt"] ?? "")}',
+                  PdfUtils.removeAccents(
+                      '${PdfUtils.capitalizeWords(data["municipio"] ?? "")}, ${PdfUtils.capitalizeWords(data["estadoDom"] ?? "")} a ${PdfUtils.formatDate(data["createdAt"] ?? "")}'),
                   style: PdfTheme.bodyStyle,
                 ),
               ),
               pw.SizedBox(height: 20),
-              pw.Text('Atn: ${data["responsableCliente"]}',
+              pw.Text(
+                  PdfUtils.removeAccents('Atn: ${data["responsableCliente"]}'),
                   style: PdfTheme.bodyStyle
                       .copyWith(fontWeight: pw.FontWeight.bold)),
-              pw.Text(data["puestoCliente"] ?? "", style: PdfTheme.bodyStyle),
-              pw.Text(data["cliente"] ?? "",
+              pw.Text(PdfUtils.removeAccents(data["puestoCliente"] ?? ""),
+                  style: PdfTheme.bodyStyle),
+              pw.Text(PdfUtils.removeAccents(data["cliente"] ?? ""),
                   style: PdfTheme.bodyStyle
                       .copyWith(fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
@@ -169,8 +186,8 @@ class PdfGenerator {
                         text: PdfUtils.formatDate(data["createdAt"]),
                         style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.TextSpan(
-                        text:
-                            " se realizó una prueba de caudal al sistema contra incendio instalado actualmente en la empresa ${data["cliente"]}, la prueba se realizó en la manguera de 1½ x 30 m más alejada al punto de alimentación del sistema."),
+                        text: PdfUtils.removeAccents(
+                            " se realizó una prueba de caudal al sistema contra incendio instalado actualmente en la empresa ${data["cliente"]}, la prueba se realizó en la manguera de 1½ x 30 m más alejada al punto de alimentación del sistema.")),
                   ],
                 ),
               ),
@@ -318,13 +335,13 @@ class PdfGenerator {
                           ]),
                       // Rows
                       _buildDataRow('1', '0.95', '½', '$val3 (Figura 3)',
-                          caudal1.toStringAsFixed(2)),
+                          formatDouble(caudal1)),
                       _buildDataRow('1', '0.95', '½', '$val4 (Figura 4)',
-                          caudal2.toStringAsFixed(2)),
+                          formatDouble(caudal2)),
                       _buildDataRow('1', '0.95', '½', '$val5 (Figura 5)',
-                          caudal3.toStringAsFixed(2)),
+                          formatDouble(caudal3)),
                       _buildDataRow('1', '0.95', '½', '$val6 (Figura 6)',
-                          caudal4.toStringAsFixed(2)),
+                          formatDouble(caudal4)),
                       // Total
                       pw.TableRow(
                           decoration:
@@ -345,7 +362,7 @@ class PdfGenerator {
                             ),
                             pw.Padding(
                               padding: pw.EdgeInsets.all(8),
-                              child: pw.Text(sumaCaudales.toStringAsFixed(2),
+                              child: pw.Text(formatDouble(sumaCaudales),
                                   style: pw.TextStyle(
                                       fontWeight: pw.FontWeight.bold,
                                       fontSize: 10)),
@@ -429,7 +446,7 @@ class PdfGenerator {
                       pw.TableRow(children: [
                         _paddedText('Caudal'),
                         _paddedText('100 gpm'),
-                        _paddedText('${sumaCaudales.toStringAsFixed(2)} gpm')
+                        _paddedText('${formatDouble(sumaCaudales)} gpm')
                       ]),
                       pw.TableRow(children: [
                         _paddedText('Presión residual'),
@@ -468,8 +485,8 @@ class PdfGenerator {
                     style: PdfTheme.bodyStyle.copyWith(fontSize: 12),
                     children: [
                       pw.TextSpan(
-                          text:
-                              "De acuerdo a la revisión y a la prueba realizada al sistema contra incendio de la empresa ${data["cliente"]}, se concluye que, "),
+                          text: PdfUtils.removeAccents(
+                              "De acuerdo a la revisión y a la prueba realizada al sistema contra incendio de la empresa ${data["cliente"]}, se concluye que, ")),
                       pw.TextSpan(
                           text: "SI CUMPLE ",
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
@@ -499,11 +516,13 @@ class PdfGenerator {
                       child: pw.Image(pw.MemoryImage(firma),
                           height: 80, fit: pw.BoxFit.contain)),
                 pw.Center(
-                    child: pw.Text(data["usuario"] ?? "",
+                    child: pw.Text(
+                        PdfUtils.removeAccents(data["usuario"] ?? ""),
                         style: PdfTheme.bodyStyle
                             .copyWith(fontWeight: pw.FontWeight.bold))),
                 pw.Center(
-                    child: pw.Text("AGGO Fire Consultant",
+                    child: pw.Text(
+                        PdfUtils.removeAccents("AGGO Fire Consultant"),
                         style: PdfTheme.bodyStyle)),
                 pw.Spacer(),
                 PdfComponents.buildFooter(

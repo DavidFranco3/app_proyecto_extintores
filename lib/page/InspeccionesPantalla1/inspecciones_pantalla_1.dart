@@ -88,7 +88,8 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
       if (mounted) {
         setState(() {
           dataClientes = guardados
-              .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item as Map))
+              .map<Map<String, dynamic>>(
+                  (item) => Map<String, dynamic>.from(item as Map))
               .where((item) => item['estado'] == "true")
               .toList();
           loading = false;
@@ -161,15 +162,21 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
               children: [
                 // Centra el encabezado
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Actividades",
-                      style: TextStyle(
-                        fontSize: 24, // Tamaño grande
-                        fontWeight: FontWeight.bold, // Negrita
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Seleccionar cliente",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 Padding(
@@ -204,4 +211,3 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
     );
   }
 }
-

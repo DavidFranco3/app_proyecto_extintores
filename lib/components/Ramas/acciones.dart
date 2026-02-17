@@ -10,6 +10,7 @@ import '../Load/load.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../Generales/premium_inputs.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -560,38 +561,55 @@ class _AccionesState extends State<Acciones> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: _nombreController,
-                          decoration: InputDecoration(labelText: 'Nombre'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El nombre es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Información del Sistema",
+                          icon: FontAwesomeIcons.networkWired,
                         ),
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _nombreController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Nombre del Tipo de Sistema',
+                                  prefixIcon: FontAwesomeIcons.sitemap,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El nombre es obligatorio'
+                                        : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (widget.accion == 'editar'
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (widget.accion == 'editar'
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),

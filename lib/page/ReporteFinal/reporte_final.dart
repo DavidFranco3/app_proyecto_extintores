@@ -143,7 +143,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(
-        currentPage: "Reporte de Actividades y pruebas",
+        currentPage: "Reporte de actividades",
       ),
       body: loading
           ? Load()

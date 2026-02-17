@@ -121,19 +121,21 @@ class _GraficaDatosInspeccionesPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
-      drawer: MenuLateral(currentPage: "Gráfico de Datos"),
+      drawer: MenuLateral(currentPage: "Gráfico de actividades"),
       body: loading
           ? Load()
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
                   child: Center(
                     child: Text(
                       "Gráfico de Datos",
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF2C3E50),
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
@@ -148,4 +150,3 @@ class _GraficaDatosInspeccionesPageState
     );
   }
 }
-

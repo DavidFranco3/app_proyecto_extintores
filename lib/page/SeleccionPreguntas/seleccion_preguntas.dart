@@ -10,6 +10,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../utils/offline_sync_util.dart';
+import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class EncuestasJerarquicasWidget extends StatefulWidget {
   const EncuestasJerarquicasWidget({super.key});
@@ -510,7 +513,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(
-        currentPage: "Configuración de Cliente",
+        currentPage: "Configuración Cliente",
       ),
       body: loading
           ? Load()
@@ -518,97 +521,89 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
               padding: const EdgeInsets.all(16),
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Configuración de Cliente",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Configuración de Cliente",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                      PremiumActionButton(
+                        onPressed: _guardando
+                            ? () {}
+                            : () async {
+                                setState(() {
+                                  _guardando = true;
+                                });
+
+                                final dataAGuardar =
+                                    await generarEstructuraGuardar(
+                                  context,
+                                  jerarquia,
+                                  seleccionados.toList(),
+                                  clienteController,
+                                );
+
+                                debugPrint("data a guardar");
+                                debugPrint(dataAGuardar.toString());
+
+                                setState(() {
+                                  _guardando = false;
+                                  seleccionados.clear(); // Limpiar checkboxes
+                                  clienteController.text =
+                                      ''; // Limpiar dropdown
+                                });
+                              },
+                        label:
+                            _guardando ? "Guardando..." : "Guardar selección",
+                        icon: FontAwesomeIcons.floppyDisk,
+                        isLoading: _guardando,
+                        isFullWidth: true,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                PremiumCardField(
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey(
+                        clienteController.text), // 👈 esto obliga a reconstruir
+                    value: clienteController.text.isEmpty
+                        ? null
+                        : clienteController.text,
+                    decoration: PremiumInputs.decoration(
+                      labelText: 'Cliente',
+                      prefixIcon: FontAwesomeIcons.userTag,
                     ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: _guardando
-                      ? null
-                      : () async {
-                          setState(() {
-                            _guardando = true;
-                          });
-
-                          final dataAGuardar = await generarEstructuraGuardar(
-                            context,
-                            jerarquia,
-                            seleccionados.toList(),
-                            clienteController,
-                          );
-
-                          debugPrint("data a guardar");
-                          debugPrint(dataAGuardar.toString());
-
-                          setState(() {
-                            _guardando = false;
-                            seleccionados.clear(); // Limpiar checkboxes
-                            clienteController.text = ''; // Limpiar dropdown
-                          });
-                        },
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 300),
-                    transitionBuilder:
-                        (Widget child, Animation<double> animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: child,
+                    isExpanded: true,
+                    items: dataClientes.map((cliente) {
+                      return DropdownMenuItem<String>(
+                        value: cliente['id'],
+                        child: Text(cliente['nombre']!),
                       );
+                    }).toList(),
+                    onChanged: (newValue) async {
+                      setState(() {
+                        clienteController.text = newValue!;
+                        seleccionados.clear(); // 👉 limpia visualmente primero
+                      });
+
+                      await precargarEncuestasCliente(
+                          newValue!); // 👉 vuelve a llenar 'seleccionados'
                     },
-                    child: _guardando
-                        ? SizedBox(
-                            key: ValueKey('cargando'),
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            'Guardar selección',
-                            key: ValueKey('texto'),
-                          ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'El cliente es obligatorio'
+                        : null,
                   ),
                 ),
-                DropdownButtonFormField<String>(
-                  key: ValueKey(
-                      clienteController.text), // 👈 esto obliga a reconstruir
-                  initialValue: clienteController.text.isEmpty
-                      ? null
-                      : clienteController.text,
-                  decoration: InputDecoration(labelText: 'Cliente'),
-                  isExpanded: true,
-                  items: dataClientes.map((cliente) {
-                    return DropdownMenuItem<String>(
-                      value: cliente['id'],
-                      child: Text(cliente['nombre']!),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) async {
-                    setState(() {
-                      clienteController.text = newValue!;
-                      seleccionados.clear(); // 👉 limpia visualmente primero
-                    });
-
-                    await precargarEncuestasCliente(
-                        newValue!); // 👉 vuelve a llenar 'seleccionados'
-                  },
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'El cliente es obligatorio'
-                      : null,
-                ),
+                const SizedBox(height: 24),
                 ...jerarquia.entries.map((ramaEntry) {
                   final ramaId = ramaEntry.key;
                   final ramaContiene = [ramaId];
@@ -626,142 +621,208 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                     });
                   });
 
-                  return ExpansionTile(
-                    title: CheckboxListTile(
-                      value: estanTodosSeleccionados(todosHijosRama),
-                      onChanged: (val) {
-                        actualizarSeleccionJerarquica(
-                          hijos: [...todosHijosRama, ...ramaContiene],
-                          seleccionar: val!,
-                        );
-                      },
-                      title: Text('🧬 Tipo de sistema: ${ramaId.split("-")[1]}',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    children: ramaEntry.value.entries.map((clasificacionEntry) {
-                      final clasificacionId = clasificacionEntry.key;
-                      final hijosClasificacion = <String>[];
-
-                      clasificacionEntry.value
-                          .forEach((frecuencia, encuestasList) {
-                        hijosClasificacion.add(frecuencia);
-                        for (var encuesta in encuestasList) {
-                          hijosClasificacion.add(encuesta['id']);
-                          encuesta['preguntas'].asMap().forEach((i, pregunta) {
-                            hijosClasificacion.add('${encuesta['id']}_$i');
-                          });
-                        }
-                      });
-
-                      return ExpansionTile(
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: PremiumCardField(
+                      child: ExpansionTile(
+                        shape: Border.all(color: Colors.transparent),
+                        tilePadding: EdgeInsets.zero,
                         title: CheckboxListTile(
-                          value: estanTodosSeleccionados(hijosClasificacion),
+                          value: estanTodosSeleccionados(todosHijosRama),
                           onChanged: (val) {
                             actualizarSeleccionJerarquica(
-                              hijos: hijosClasificacion + [clasificacionId],
+                              hijos: [...todosHijosRama, ...ramaContiene],
                               seleccionar: val!,
                             );
                           },
                           title: Text(
-                              '📁 Clasificación: ${clasificacionId.split("-")[1]}'),
+                              'Tipo de sistema: ${ramaId.split("-")[1]}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          activeColor: const Color(0xFFE94742),
                           controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: EdgeInsets.only(left: 12),
+                          contentPadding: EdgeInsets.zero,
                         ),
-                        children: clasificacionEntry.value.entries
-                            .map((frecuenciaEntry) {
-                          final frecuenciaId = frecuenciaEntry.key;
-                          final encuestasLista = frecuenciaEntry.value;
-                          final hijosFrecuencia = <String>[];
+                        children:
+                            ramaEntry.value.entries.map((clasificacionEntry) {
+                          final clasificacionId = clasificacionEntry.key;
+                          final hijosClasificacion = <String>[];
 
-                          for (var encuesta in encuestasLista) {
-                            hijosFrecuencia.add(encuesta['id']);
-                            encuesta['preguntas']
-                                .asMap()
-                                .forEach((i, pregunta) {
-                              hijosFrecuencia.add('${encuesta['id']}_$i');
-                            });
-                          }
+                          clasificacionEntry.value
+                              .forEach((frecuencia, encuestasList) {
+                            hijosClasificacion.add(frecuencia);
+                            for (var encuesta in encuestasList) {
+                              hijosClasificacion.add(encuesta['id']);
+                              encuesta['preguntas']
+                                  .asMap()
+                                  .forEach((i, pregunta) {
+                                hijosClasificacion.add('${encuesta['id']}_$i');
+                              });
+                            }
+                          });
 
-                          return ExpansionTile(
-                            title: CheckboxListTile(
-                              value: estanTodosSeleccionados(hijosFrecuencia),
-                              onChanged: (val) {
-                                actualizarSeleccionJerarquica(
-                                  hijos: hijosFrecuencia + [frecuenciaId],
-                                  seleccionar: val!,
-                                );
-                              },
-                              title: Text(
-                                  '⏱ Periodo: ${frecuenciaId.split("-")[1]}'),
-                              controlAffinity: ListTileControlAffinity.leading,
-                              contentPadding: EdgeInsets.only(left: 24),
-                            ),
-                            children: encuestasLista.map((encuesta) {
-                              final encuestaId = encuesta['id'];
-                              final preguntasIds =
-                                  (encuesta['preguntas'] as List)
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: ExpansionTile(
+                              shape: Border.all(color: Colors.transparent),
+                              tilePadding: EdgeInsets.zero,
+                              title: CheckboxListTile(
+                                value:
+                                    estanTodosSeleccionados(hijosClasificacion),
+                                onChanged: (val) {
+                                  actualizarSeleccionJerarquica(
+                                    hijos:
+                                        hijosClasificacion + [clasificacionId],
+                                    seleccionar: val!,
+                                  );
+                                },
+                                title: Text(
+                                    'Clasificación: ${clasificacionId.split("-")[1]}',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800])),
+                                activeColor: const Color(0xFFE94742),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: const EdgeInsets.only(left: 0),
+                              ),
+                              children: clasificacionEntry.value.entries
+                                  .map((frecuenciaEntry) {
+                                final frecuenciaId = frecuenciaEntry.key;
+                                final encuestasLista = frecuenciaEntry.value;
+                                final hijosFrecuencia = <String>[];
+
+                                for (var encuesta in encuestasLista) {
+                                  hijosFrecuencia.add(encuesta['id']);
+                                  encuesta['preguntas']
                                       .asMap()
-                                      .keys
-                                      .map((i) => '${encuestaId}_$i')
-                                      .toList();
+                                      .forEach((i, pregunta) {
+                                    hijosFrecuencia.add('${encuesta['id']}_$i');
+                                  });
+                                }
 
-                              return ExpansionTile(
-                                title: CheckboxListTile(
-                                  value: seleccionados.contains(encuestaId) &&
-                                      estanTodosSeleccionados(preguntasIds),
-                                  onChanged: (val) {
-                                    actualizarSeleccionJerarquica(
-                                      hijos: [encuestaId, ...preguntasIds],
-                                      seleccionar: val!,
-                                    );
-                                  },
-                                  title: Text(
-                                      '📋 Encuesta: ${encuesta['nombre']}'),
-                                  controlAffinity:
-                                      ListTileControlAffinity.leading,
-                                  contentPadding: EdgeInsets.only(left: 36),
-                                ),
-                                children: [
-                                  ...List<Widget>.from(
-                                    (encuesta['preguntas'] as List)
-                                        .asMap()
-                                        .entries
-                                        .map((entry) {
-                                      final i = entry.key;
-                                      final pregunta = entry.value;
-                                      final preguntaId = '${encuestaId}_$i';
-                                      return CheckboxListTile(
-                                        value:
-                                            seleccionados.contains(preguntaId),
-                                        onChanged: (val) {
-                                          setState(() {
-                                            if (val!) {
-                                              seleccionados.add(preguntaId);
-                                            } else {
-                                              seleccionados.remove(preguntaId);
-                                            }
-                                          });
-                                        },
-                                        title: Text(
-                                            '❓ ${pregunta['titulo']} (${pregunta['categoria']})'),
-                                        subtitle: Text(
-                                            'Opciones: ${(pregunta['opciones'] as List).join(', ')}'),
-                                        controlAffinity:
-                                            ListTileControlAffinity.leading,
-                                        contentPadding:
-                                            EdgeInsets.only(left: 48),
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 16.0),
+                                  child: ExpansionTile(
+                                    shape:
+                                        Border.all(color: Colors.transparent),
+                                    tilePadding: EdgeInsets.zero,
+                                    title: CheckboxListTile(
+                                      value: estanTodosSeleccionados(
+                                          hijosFrecuencia),
+                                      onChanged: (val) {
+                                        actualizarSeleccionJerarquica(
+                                          hijos:
+                                              hijosFrecuencia + [frecuenciaId],
+                                          seleccionar: val!,
+                                        );
+                                      },
+                                      title: Text(
+                                          'Periodo: ${frecuenciaId.split("-")[1]}',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700])),
+                                      activeColor: const Color(0xFFE94742),
+                                      controlAffinity:
+                                          ListTileControlAffinity.leading,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    children: encuestasLista.map((encuesta) {
+                                      final encuestaId = encuesta['id'];
+                                      final preguntasIds =
+                                          (encuesta['preguntas'] as List)
+                                              .asMap()
+                                              .keys
+                                              .map((i) => '${encuestaId}_$i')
+                                              .toList();
+
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 16.0),
+                                        child: ExpansionTile(
+                                          shape: Border.all(
+                                              color: Colors.transparent),
+                                          tilePadding: EdgeInsets.zero,
+                                          title: CheckboxListTile(
+                                            value: seleccionados
+                                                    .contains(encuestaId) &&
+                                                estanTodosSeleccionados(
+                                                    preguntasIds),
+                                            onChanged: (val) {
+                                              actualizarSeleccionJerarquica(
+                                                hijos: [
+                                                  encuestaId,
+                                                  ...preguntasIds
+                                                ],
+                                                seleccionar: val!,
+                                              );
+                                            },
+                                            title: Text(
+                                                'Encuesta: ${encuesta['nombre']}',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w500)),
+                                            activeColor:
+                                                const Color(0xFFE94742),
+                                            controlAffinity:
+                                                ListTileControlAffinity.leading,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                          children: [
+                                            ...List<Widget>.from(
+                                              (encuesta['preguntas'] as List)
+                                                  .asMap()
+                                                  .entries
+                                                  .map((entry) {
+                                                final i = entry.key;
+                                                final pregunta = entry.value;
+                                                final preguntaId =
+                                                    '${encuestaId}_$i';
+                                                return CheckboxListTile(
+                                                  value: seleccionados
+                                                      .contains(preguntaId),
+                                                  onChanged: (val) {
+                                                    setState(() {
+                                                      if (val!) {
+                                                        seleccionados
+                                                            .add(preguntaId);
+                                                      } else {
+                                                        seleccionados
+                                                            .remove(preguntaId);
+                                                      }
+                                                    });
+                                                  },
+                                                  title: Text(
+                                                      '${pregunta['titulo']}',
+                                                      style: const TextStyle(
+                                                          fontSize: 13)),
+                                                  subtitle: Text(
+                                                      'Cat: ${pregunta['categoria']}',
+                                                      style: const TextStyle(
+                                                          fontSize: 11)),
+                                                  activeColor:
+                                                      const Color(0xFFE94742),
+                                                  controlAffinity:
+                                                      ListTileControlAffinity
+                                                          .leading,
+                                                  contentPadding:
+                                                      const EdgeInsets.only(
+                                                          left: 16),
+                                                );
+                                              }),
+                                            )
+                                          ],
+                                        ),
                                       );
-                                    }),
-                                  )
-                                ],
-                              );
-                            }).toList(),
+                                    }).toList(),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
                           );
                         }).toList(),
-                      );
-                    }).toList(),
+                      ),
+                    ),
                   );
                 }),
               ],

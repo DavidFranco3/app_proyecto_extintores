@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
+import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import 'dart:io';
 import 'package:open_file/open_file.dart';
@@ -87,30 +88,30 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       if (response['status'] == 200) {
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Correo enviado",
-          message: "El PDF fue enviado exitosamente al correo del cliente",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "Correo enviado",
+            message: "El PDF fue enviado exitosamente al correo del cliente",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error al enviar el correo",
-          message: "Hubo un problema al enviar el PDF por correo",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error al enviar el correo",
+            message: "Hubo un problema al enviar el PDF por correo",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (error) {
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Oops...",
-        message: error.toString(),
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Oops...",
+          message: error.toString(),
+          backgroundColor: Colors.red,
+        );
       }
     } finally {
       isLoading = false;
@@ -190,30 +191,30 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       if (response['status'] == 200) {
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "ZIP enviado",
-          message: "Se ha enviado correctamente el zip al email $email",
-          backgroundColor: Colors.green,
-        );
+            context: context,
+            title: "ZIP enviado",
+            message: "Se ha enviado correctamente el zip al email $email",
+            backgroundColor: Colors.green,
+          );
         }
       } else {
         if (mounted) {
           showCustomFlushbar(
-          context: context,
-          title: "Error al enviar el ZIP",
-          message: "Ha ocurrido un problema al enviar el ZIP al email $email",
-          backgroundColor: Colors.red,
-        );
+            context: context,
+            title: "Error al enviar el ZIP",
+            message: "Ha ocurrido un problema al enviar el ZIP al email $email",
+            backgroundColor: Colors.red,
+          );
         }
       }
     } catch (e) {
       if (mounted) {
         showCustomFlushbar(
-        context: context,
-        title: "Error al enviar el ZIP",
-        message: "Error: ${e.toString()}",
-        backgroundColor: Colors.red,
-      );
+          context: context,
+          title: "Error al enviar el ZIP",
+          message: "Error: ${e.toString()}",
+          backgroundColor: Colors.red,
+        );
       }
     } finally {
       isLoading = false;
@@ -298,11 +299,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                 }).toList(),
                 columnas: columnas,
                 accionesBuilder: (Map<String, dynamic> row) {
-                  return PopupMenuButton<String>(
-                    icon: FaIcon(
-                      FontAwesomeIcons.bars,
-                      color: Color.fromARGB(255, 27, 40, 223),
-                    ), // Icono del menú
+                  return PremiumTableActions(
                     onSelected: (String value) {
                       if (value == 'eliminar') {
                         openEliminarModal(row['_originalRow']);
@@ -312,9 +309,6 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                         handleSendEmail(row['_originalRow']);
                       } else if (value == 'guardarPdf') {
                         PdfGenerator.guardarPDF(row['_originalRow']);
-                      } else if (value == 'enviarPdfBackend') {
-                        PdfGenerator.enviarPdfAlBackend(
-                            context, row['_originalRow']);
                       } else if (value == 'enviarPdfBackend') {
                         PdfGenerator.enviarPdfAlBackend(
                             context, row['_originalRow']);
@@ -333,8 +327,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                         openEditarEncuestaPage(row['_originalRow']);
                       }
                     },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
+                    items: <PopupMenuEntry<String>>[
                       PopupMenuItem<String>(
                         value: 'eliminar',
                         child: Row(
@@ -345,7 +338,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Eliminar'),
+                            const Text('Eliminar'),
                           ],
                         ),
                       ),
@@ -359,7 +352,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF Reporte IPM'),
+                            const Text('Guardar PDF Reporte IPM'),
                           ],
                         ),
                       ),
@@ -369,11 +362,11 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                           children: [
                             FaIcon(
                               FontAwesomeIcons.envelope,
-                              color: Color.fromRGBO(255, 152, 0, 1),
+                              color: const Color.fromRGBO(255, 152, 0, 1),
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar PDF Reporte IPM'),
+                            const Text('Enviar PDF Reporte IPM'),
                           ],
                         ),
                       ),
@@ -387,7 +380,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF Certificado'),
+                            const Text('Guardar PDF Certificado'),
                           ],
                         ),
                       ),
@@ -397,11 +390,11 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                           children: [
                             FaIcon(
                               FontAwesomeIcons.envelope,
-                              color: Color.fromRGBO(255, 152, 0, 1),
+                              color: const Color.fromRGBO(255, 152, 0, 1),
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar PDF Certificado'),
+                            const Text('Enviar PDF Certificado'),
                           ],
                         ),
                       ),
@@ -415,7 +408,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF Evidencia'),
+                            const Text('Guardar PDF Evidencia'),
                           ],
                         ),
                       ),
@@ -429,7 +422,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Guardar PDF R. Problemas'),
+                            const Text('Guardar PDF R. Problemas'),
                           ],
                         ),
                       ),
@@ -439,11 +432,11 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                           children: [
                             FaIcon(
                               FontAwesomeIcons.envelope,
-                              color: Color.fromRGBO(255, 152, 0, 1),
+                              color: const Color.fromRGBO(255, 152, 0, 1),
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar PDF R. Problemas'),
+                            const Text('Enviar PDF R. Problemas'),
                           ],
                         ),
                       ),
@@ -457,7 +450,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Cargar imagenes'),
+                            const Text('Cargar imagenes'),
                           ],
                         ),
                       ),
@@ -471,7 +464,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Enviar imagenes'),
+                            const Text('Enviar imagenes'),
                           ],
                         ),
                       ),
@@ -485,7 +478,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
                               size: 16,
                             ),
                             SizedBox(width: 8),
-                            Text('Editar encuesta'),
+                            const Text('Editar encuesta'),
                           ],
                         ),
                       ),
@@ -498,6 +491,3 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     );
   }
 }
-
-
-

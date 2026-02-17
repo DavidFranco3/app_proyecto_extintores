@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
+import '../../components/Generales/premium_button.dart';
 import '../../components/Header/header.dart';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import 'package:intl/intl.dart';
@@ -15,7 +16,8 @@ class InspeccionesPantalla2Page extends StatefulWidget {
   final VoidCallback showModal;
   final dynamic data;
 
-  const InspeccionesPantalla2Page({super.key, required this.showModal, required this.data});
+  const InspeccionesPantalla2Page(
+      {super.key, required this.showModal, required this.data});
   @override
   State<InspeccionesPantalla2Page> createState() =>
       _InspeccionesPantalla2PageState();
@@ -137,12 +139,13 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
         'encuesta': item['encuesta'],
         'imagenes': item['imagenes'],
         'comentarios': item['comentarios'],
-        'usuario': item['usuario']['nombre'],
-        'cliente': item['cliente']['nombre'],
-        'imagen_cliente': item['cliente']['imagen'],
-        'firma_usuario': item['usuario']['firma'],
-        'cuestionario': item['cuestionario']['nombre'],
-        'frecuencia': item['cuestionario']['frecuencia']['nombre'],
+        'usuario': item['usuario']?['nombre'] ?? 'Sin usuario',
+        'cliente': item['cliente']?['nombre'] ?? 'Sin cliente',
+        'imagen_cliente': item['cliente']?['imagen'],
+        'firma_usuario': item['usuario']?['firma'],
+        'cuestionario': item['cuestionario']?['nombre'] ?? 'Sin cuestionario',
+        'frecuencia':
+            item['cuestionario']?['frecuencia']?['nombre'] ?? 'Sin frecuencia',
         'usuarios': item['usuario'],
         'estado': item['estado'],
         'createdAt': item['createdAt'],
@@ -185,37 +188,38 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Actividades",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Historial de actividades",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          returnPage, // Abre el modal con el formulario de acciones
-                      icon: Icon(FontAwesomeIcons.arrowLeft),
-                      label: Text("Regresar"),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "Cliente: ${widget.data["nombre"]}",
-                      style: TextStyle(
-                        fontSize: 18,
+                      const SizedBox(height: 16),
+                      PremiumActionButton(
+                        onPressed: returnPage,
+                        label: "Regresar",
+                        icon: FontAwesomeIcons.arrowLeft,
+                        style: PremiumButtonStyle.secondary,
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Cliente: ${widget.data["nombre"]}",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF34495E),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Padding(
@@ -306,5 +310,3 @@ class _InspeccionesPantalla2PageState extends State<InspeccionesPantalla2Page> {
     );
   }
 }
-
-

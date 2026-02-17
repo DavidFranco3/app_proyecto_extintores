@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../Generales/premium_inputs.dart';
 
 import '../../api/encuesta_inspeccion.dart';
 import '../Logs/logs_informativos.dart';
@@ -246,59 +247,83 @@ class _AccionesState extends State<Acciones> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: _nombreController,
-                          decoration: InputDecoration(labelText: 'Nombre'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El nombre es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Detalles de la Encuesta",
+                          icon: FontAwesomeIcons.clipboardList,
                         ),
-                        TextFormField(
-                          controller: _frecuenciaController,
-                          decoration: InputDecoration(labelText: 'Periodo'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La frecuencia es obligatoria'
-                                  : null,
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _nombreController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Nombre de la Encuesta',
+                                  prefixIcon: FontAwesomeIcons.font,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El nombre es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _frecuenciaController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Periodo / Frecuencia',
+                                  prefixIcon: FontAwesomeIcons.clock,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La frecuencia es obligatoria'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _clasificacionController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Clasificación Aplicable',
+                                  prefixIcon: FontAwesomeIcons.layerGroup,
+                                ),
+                                enabled: !isEliminar,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'La clasificación es obligatoria'
+                                        : null,
+                              ),
+                            ],
+                          ),
                         ),
-                        TextFormField(
-                          controller: _clasificacionController,
-                          decoration:
-                              InputDecoration(labelText: 'Clasificación'),
-                          enabled: !isEliminar,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'La clasificación es obligatoria'
-                                  : null,
-                        ),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (widget.accion == 'editar'
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (widget.accion == 'editar'
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),

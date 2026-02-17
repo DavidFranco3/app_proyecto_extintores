@@ -357,20 +357,20 @@ class _EncuestasPageState extends State<EncuestasPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          "Crear actividad",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                            letterSpacing: -0.5,
-                          ),
+                      const Text(
+                        "Crear actividad",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 16),
                       PremiumActionButton(
                         onPressed: openRegistroPage,
                         label: "Registrar",
@@ -417,7 +417,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
                         ),
                         decoratorProps: DropDownDecoratorProps(
                           decoration: InputDecoration(
-                            labelText: "Filtrar por frecuencia",
+                            labelText: "Frecuencia",
                             border: OutlineInputBorder(),
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(
@@ -463,7 +463,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
                         ),
                         decoratorProps: DropDownDecoratorProps(
                           decoration: InputDecoration(
-                            labelText: "Filtrar por clasificación",
+                            labelText: "Clasificación",
                             border: OutlineInputBorder(),
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(

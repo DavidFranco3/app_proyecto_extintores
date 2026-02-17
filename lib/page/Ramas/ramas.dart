@@ -134,20 +134,20 @@ class _RamasPageState extends State<RamasPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          "Tipos de sistemas",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                            letterSpacing: -0.5,
-                          ),
+                      const Text(
+                        "Tipos de sistemas",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 16),
                       PremiumActionButton(
                         onPressed: openRegistroModal,
                         label: "Registrar",

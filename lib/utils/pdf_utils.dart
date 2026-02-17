@@ -54,4 +54,18 @@ class PdfUtils {
       return word[0].toUpperCase() + word.substring(1).toLowerCase();
     }).join(' ');
   }
+
+  /// Removes accents and special characters for PDF compatibility (Helvetica).
+  static String removeAccents(String text) {
+    const withDia = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ';
+    const withoutDia = 'AAAAAAaaaaaaOOOOOOooooooEEEEeeeeCcIIIIiiiiUUUUuuuuyNn';
+
+    String str = text;
+    for (int i = 0; i < withDia.length; i++) {
+      str = str.replaceAll(withDia[i], withoutDia[i]);
+    }
+
+    // Replace other common problematic characters if any
+    return str;
+  }
 }

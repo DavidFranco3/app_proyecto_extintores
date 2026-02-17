@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
-import '../Generales/list_view.dart'; // Asegúrate de que el archivo correcto esté importado
+import '../Generales/list_view.dart';
+import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import './pdf2.dart';
 
@@ -46,36 +47,31 @@ class _TblReporteFinalState extends State<TblReporteFinal> {
                 };
               }).toList(),
               columnas: columnas,
-                              accionesBuilder: (Map<String, dynamic> row) {
-                  return PopupMenuButton<String>(
-                    icon: FaIcon(
-                      FontAwesomeIcons.bars,
-                      color: Color.fromARGB(255, 27, 40, 223),
-                    ), // Icono del menú
-                    onSelected: (String value) {
-                      if (value == 'guardarPdf3') {
-                        GenerarPdfPage.generarPdf(row['_originalRow']);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
-                      PopupMenuItem<String>(
-                        value: 'guardarPdf3',
-                        child: Row(
-                          children: [
-                            FaIcon(
-                              FontAwesomeIcons.filePdf,
-                              color: Colors.blue,
-                              size: 16,
-                            ),
-                            SizedBox(width: 8),
-                            Text('Guardar PDF 3'),
-                          ],
-                        ),
+              accionesBuilder: (Map<String, dynamic> row) {
+                return PremiumTableActions(
+                  onSelected: (String value) {
+                    if (value == 'guardarPdf3') {
+                      GenerarPdfPage.generarPdf(row['_originalRow']);
+                    }
+                  },
+                  items: <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'guardarPdf3',
+                      child: Row(
+                        children: [
+                          FaIcon(
+                            FontAwesomeIcons.filePdf,
+                            color: Colors.blue,
+                            size: 16,
+                          ),
+                          SizedBox(width: 8),
+                          const Text('Guardar PDF 3'),
+                        ],
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -83,5 +79,3 @@ class _TblReporteFinalState extends State<TblReporteFinal> {
     );
   }
 }
-
-

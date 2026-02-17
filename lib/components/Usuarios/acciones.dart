@@ -18,6 +18,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../Generales/premium_inputs.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -716,137 +717,159 @@ class _AccionesState extends State<Acciones> {
                       mainAxisSize:
                           MainAxisSize.min, // Evita que ocupe todo el modal
                       children: [
-                        TextFormField(
-                          controller: _nombreController,
-                          decoration:
-                              const InputDecoration(labelText: 'Nombre'),
-                          enabled: !isEliminar && !_isLoading,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value?.isEmpty ?? true
-                                  ? 'El nombre es obligatorio'
-                                  : null,
+                        const PremiumSectionTitle(
+                          title: "Información Personal",
+                          icon: FontAwesomeIcons.user,
                         ),
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: const InputDecoration(labelText: 'Email'),
-                          enabled: !isEliminar && !_isLoading,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: isEliminar
-                              ? null
-                              : (value) => value != null &&
-                                      !RegExp(r"^[^@]+@[^@]+\.[^@]+")
-                                          .hasMatch(value)
-                                  ? 'Por favor ingresa un email válido'
-                                  : null,
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _nombreController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Nombre Completo',
+                                  prefixIcon: FontAwesomeIcons.userPen,
+                                ),
+                                enabled: !isEliminar && !_isLoading,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value?.isEmpty ?? true
+                                        ? 'El nombre es obligatorio'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _emailController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Correo Electrónico',
+                                  prefixIcon: FontAwesomeIcons.envelope,
+                                ),
+                                enabled: !isEliminar && !_isLoading,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) => value != null &&
+                                            !RegExp(r"^[^@]+@[^@]+\.[^@]+")
+                                                .hasMatch(value)
+                                        ? 'Por favor ingresa un email válido'
+                                        : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _telefonoController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Teléfono de Contacto',
+                                  prefixIcon: FontAwesomeIcons.phone,
+                                ),
+                                enabled: !isEliminar && !_isLoading,
+                                keyboardType: TextInputType.number,
+                                validator: isEliminar
+                                    ? null
+                                    : (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'El teléfono es obligatorio';
+                                        } else if (!RegExp(r'^\d{10}$')
+                                            .hasMatch(value)) {
+                                          return 'El teléfono debe tener 10 dígitos';
+                                        }
+                                        return null;
+                                      },
+                              ),
+                            ],
+                          ),
                         ),
-                        TextFormField(
-                          controller: _telefonoController,
-                          decoration:
-                              const InputDecoration(labelText: 'Teléfono'),
-                          enabled: !isEliminar && !_isLoading,
-                          keyboardType: TextInputType.number,
-                          validator: isEliminar
-                              ? null
-                              : (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'El teléfono es obligatorio';
-                                  } else if (!RegExp(r'^\d{10}$')
-                                      .hasMatch(value)) {
-                                    return 'El teléfono debe tener 10 dígitos';
+                        const PremiumSectionTitle(
+                          title: "Seguridad y Accesos",
+                          icon: FontAwesomeIcons.lock,
+                        ),
+                        PremiumCardField(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _passwordController,
+                                decoration: PremiumInputs.decoration(
+                                  labelText: 'Contraseña',
+                                  prefixIcon: FontAwesomeIcons.key,
+                                ),
+                                enabled: !isEliminar && !_isLoading,
+                                obscureText: true,
+                                validator: (value) {
+                                  if (!isEliminar && !isEditar) {
+                                    return value?.isEmpty ?? true
+                                        ? 'La contraseña es obligatoria'
+                                        : null;
                                   }
                                   return null;
                                 },
-                        ),
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration:
-                              const InputDecoration(labelText: 'Contraseña'),
-                          enabled: !isEliminar && !_isLoading,
-                          obscureText: true,
-                          validator: (value) {
-                            if (!isEliminar && !isEditar) {
-                              return value?.isEmpty ?? true
-                                  ? 'La contraseña es obligatoria'
-                                  : null;
-                            }
-                            return null;
-                          },
-                        ),
-                        DropdownSearch<String>(
-                          key: const Key('rolDropdown'),
-                          enabled: !isEliminar &&
-                              !_isLoading, // Deshabilitado si corresponde
-                          items: (filter, _) {
-                            // Lista de roles filtrada por búsqueda
-                            final roles = [
-                              {'value': '', 'label': 'Selecciona una opción'},
-                              {
-                                'value': 'administrador',
-                                'label': 'Administrador'
-                              },
-                              {'value': 'inspector', 'label': 'Tecnico'},
-                            ];
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownSearch<String>(
+                                key: const Key('rolDropdown'),
+                                enabled: !isEliminar && !_isLoading,
+                                items: (filter, _) {
+                                  final roles = [
+                                    {
+                                      'value': 'administrador',
+                                      'label': 'Administrador'
+                                    },
+                                    {'value': 'inspector', 'label': 'Tecnico'},
+                                  ];
 
-                            return roles
-                                .where((r) => r['label']!
-                                    .toLowerCase()
-                                    .contains(filter.toLowerCase()))
-                                .map((r) => r['value']!)
-                                .toList();
-                          },
-                          selectedItem: _rolController.text.isEmpty
-                              ? null
-                              : _rolController.text,
-                          onChanged: !isEliminar && !_isLoading
-                              ? (String? newValue) {
-                                  setState(() {
-                                    _rolController.text = newValue ?? '';
-                                  });
-                                }
-                              : null,
-                          dropdownBuilder: (context, selectedItem) {
-                            final roles = [
-                              {'value': '', 'label': 'Selecciona una opción'},
-                              {
-                                'value': 'administrador',
-                                'label': 'Administrador'
-                              },
-                              {'value': 'inspector', 'label': 'Tecnico'},
-                            ];
-
-                            final rol = roles.firstWhere(
-                                (r) => r['value'] == selectedItem,
-                                orElse: () => {'label': ''});
-                            return Text(
-                              rol['label'] ?? '',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: selectedItem == ''
-                                      ? Colors.grey
-                                      : Colors.black),
-                            );
-                          },
-                          decoratorProps: DropDownDecoratorProps(
-                            decoration: InputDecoration(
-                              labelText: 'Rol',
-                              border: UnderlineInputBorder(),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                            ),
+                                  return roles
+                                      .where((r) => r['label']!
+                                          .toLowerCase()
+                                          .contains(filter.toLowerCase()))
+                                      .map((r) => r['value']!)
+                                      .toList();
+                                },
+                                itemAsString: (item) => item == 'administrador'
+                                    ? 'Administrador'
+                                    : 'Tecnico',
+                                selectedItem: _rolController.text.isEmpty
+                                    ? null
+                                    : _rolController.text,
+                                onChanged: !isEliminar && !_isLoading
+                                    ? (String? newValue) {
+                                        setState(() {
+                                          _rolController.text = newValue ?? '';
+                                        });
+                                      }
+                                    : null,
+                                dropdownBuilder: (context, selectedItem) {
+                                  return Text(
+                                    selectedItem == 'administrador'
+                                        ? 'Administrador'
+                                        : (selectedItem == 'inspector'
+                                            ? 'Tecnico'
+                                            : 'Selecciona un Rol'),
+                                    style: TextStyle(
+                                      color: selectedItem == null ||
+                                              selectedItem.isEmpty
+                                          ? Colors.grey
+                                          : Colors.black,
+                                      fontSize: 14,
+                                    ),
+                                  );
+                                },
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: 'Rol de Usuario',
+                                    prefixIcon: FontAwesomeIcons.userShield,
+                                  ),
+                                ),
+                                popupProps: const PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  constraints: BoxConstraints(maxHeight: 200),
+                                ),
+                                validator: !isEliminar && !_isLoading
+                                    ? (value) => value == null || value.isEmpty
+                                        ? 'Por favor selecciona un rol'
+                                        : null
+                                    : null,
+                              ),
+                            ],
                           ),
-                          popupProps: PopupProps.menu(
-                            showSearchBox: true,
-                            fit: FlexFit.loose,
-                            constraints: BoxConstraints(maxHeight: 300),
-                          ),
-                          validator: !isEliminar && !_isLoading
-                              ? (value) => value == null || value.isEmpty
-                                  ? 'Por favor selecciona un rol'
-                                  : null
-                              : null,
                         ),
 
                         SizedBox(height: 16),
@@ -895,27 +918,30 @@ class _AccionesState extends State<Acciones> {
                         ],
                         SizedBox(height: 20),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PremiumActionButton(
-                              onPressed: closeRegistroModal,
-                              label: 'Cancelar',
-                              icon: Icons.close,
-                              style: PremiumButtonStyle.secondary,
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: closeRegistroModal,
+                                label: 'Cancelar',
+                                icon: Icons.close,
+                                style: PremiumButtonStyle.secondary,
+                              ),
                             ),
-                            const SizedBox(width: 20),
-                            PremiumActionButton(
-                              onPressed: _onSubmit,
-                              label: buttonLabel,
-                              icon: isEliminar
-                                  ? FontAwesomeIcons.trash
-                                  : (isEditar
-                                      ? FontAwesomeIcons.penToSquare
-                                      : FontAwesomeIcons.floppyDisk),
-                              isLoading: _isLoading,
-                              style: isEliminar
-                                  ? PremiumButtonStyle.danger
-                                  : PremiumButtonStyle.primary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PremiumActionButton(
+                                onPressed: _onSubmit,
+                                label: buttonLabel,
+                                icon: isEliminar
+                                    ? FontAwesomeIcons.trash
+                                    : (isEditar
+                                        ? FontAwesomeIcons.penToSquare
+                                        : FontAwesomeIcons.floppyDisk),
+                                isLoading: _isLoading,
+                                style: isEliminar
+                                    ? PremiumButtonStyle.danger
+                                    : PremiumButtonStyle.primary,
+                              ),
                             ),
                           ],
                         ),
