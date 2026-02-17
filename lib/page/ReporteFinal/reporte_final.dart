@@ -151,30 +151,29 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      const Expanded(
-                        child: Text(
-                          "Reporte de Actividades",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                            letterSpacing: -0.5,
-                          ),
+                      const Text(
+                        "Reporte de Actividades",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 16),
                       PremiumActionButton(
                         onPressed: openRegistroModal,
-                        label: "Registrar",
+                        label: "Registrar Reporte",
                         icon: FontAwesomeIcons.plus,
+                        isFullWidth: true,
                       ),
+                      const Divider(height: 32),
                     ],
                   ),
                 ),
-                const Divider(indent: 20, endIndent: 20, height: 32),
                 Expanded(
                   child: TblReporteFinal(
                     showModal: () {
@@ -186,12 +185,6 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                 ),
               ],
             ),
-      floatingActionButton: showModal
-          ? FloatingActionButton(
-              onPressed: closeModal,
-              child: Icon(Icons.close),
-            )
-          : null,
     );
   }
 }

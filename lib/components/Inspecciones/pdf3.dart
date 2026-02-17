@@ -37,36 +37,54 @@ class GenerarPdfPage4 {
         inspecciones.map((item) => PdfUtils.downloadImage(item['imagen'])));
 
     // --- 3. Build Pages ---
-    for (int i = 0; i < inspecciones.length; i++) {
-      final item = inspecciones[i];
-      final imageBytes = itemImages[i];
-
+    // --- 3. Build Pages ---
+    if (inspecciones.isEmpty) {
       pdf.addPage(pw.Page(
           theme: PdfTheme.theme,
           build: (context) {
             return pw.Column(children: [
               PdfComponents.buildHeader(
                   logoBytes: logoCliente, logoIsoBytes: logoNfpa),
-              pw.SizedBox(height: 20),
-              pw.Text(item['descripcion'] ?? '',
-                  style: PdfTheme.titleStyle, textAlign: pw.TextAlign.center),
-              pw.SizedBox(height: 10),
-              pw.Text(item['calificacion'] ?? '',
-                  style: PdfTheme.subtitleStyle,
-                  textAlign: pw.TextAlign.center),
-              pw.SizedBox(height: 10),
-              pw.Text(item['comentarios'] ?? '',
-                  style: PdfTheme.bodyStyle, textAlign: pw.TextAlign.center),
-              pw.SizedBox(height: 20),
-              if (imageBytes != null && imageBytes.isNotEmpty)
-                pw.Expanded(
-                    child: pw.Center(
-                        child: pw.Image(pw.MemoryImage(imageBytes),
-                            fit: pw.BoxFit.contain))),
+              pw.SizedBox(height: 100),
+              pw.Center(
+                  child: pw.Text("No hay registros de problemas o eficiencias.",
+                      style: PdfTheme.titleStyle)),
               pw.Spacer(),
               PdfComponents.buildFooter(logoAppBytes: logoApp)
             ]);
           }));
+    } else {
+      for (int i = 0; i < inspecciones.length; i++) {
+        final item = inspecciones[i];
+        final imageBytes = itemImages[i];
+
+        pdf.addPage(pw.Page(
+            theme: PdfTheme.theme,
+            build: (context) {
+              return pw.Column(children: [
+                PdfComponents.buildHeader(
+                    logoBytes: logoCliente, logoIsoBytes: logoNfpa),
+                pw.SizedBox(height: 20),
+                pw.Text(item['descripcion'] ?? '',
+                    style: PdfTheme.titleStyle, textAlign: pw.TextAlign.center),
+                pw.SizedBox(height: 10),
+                pw.Text(item['calificacion'] ?? '',
+                    style: PdfTheme.subtitleStyle,
+                    textAlign: pw.TextAlign.center),
+                pw.SizedBox(height: 10),
+                pw.Text(item['comentarios'] ?? '',
+                    style: PdfTheme.bodyStyle, textAlign: pw.TextAlign.center),
+                pw.SizedBox(height: 20),
+                if (imageBytes != null && imageBytes.isNotEmpty)
+                  pw.Expanded(
+                      child: pw.Center(
+                          child: pw.Image(pw.MemoryImage(imageBytes),
+                              fit: pw.BoxFit.contain))),
+                pw.Spacer(),
+                PdfComponents.buildFooter(logoAppBytes: logoApp)
+              ]);
+            }));
+      }
     }
 
     return await pdf.save();
@@ -78,10 +96,14 @@ class GenerarPdfPage4 {
       final outputDirectory = await getExternalStorageDirectory();
 
       if (outputDirectory != null) {
+        final sanitizedCliente = (data["cliente"] ?? "Cliente")
+            .replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
         final fileName =
-            "${data["cliente"]}_${PdfUtils.formatDateShort(DateTime.now())}-Prob.pdf";
+            "${sanitizedCliente}_${PdfUtils.formatDateShort(DateTime.now())}-Prob.pdf";
         final file = File("${outputDirectory.path}/$fileName");
-        await file.writeAsBytes(bytes);
+        await file.writeAsBytes(bytes, flush: true);
+        debugPrint(
+            "PDF (Problemas) Generated: ${file.path}, Size: ${bytes.length} bytes");
         await OpenFile.open(file.path);
       }
     } catch (e) {
@@ -96,8 +118,10 @@ class GenerarPdfPage4 {
       final outputDirectory = await getExternalStorageDirectory();
 
       if (outputDirectory != null) {
+        final sanitizedCliente = (data["cliente"] ?? "Cliente")
+            .replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
         final fileName =
-            "${data["cliente"]}_${PdfUtils.formatDateShort(DateTime.now())}-Prob.pdf";
+            "${sanitizedCliente}_${PdfUtils.formatDateShort(DateTime.now())}-Prob.pdf";
         final file = File("${outputDirectory.path}/$fileName");
         await file.writeAsBytes(bytes);
 

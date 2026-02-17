@@ -125,11 +125,13 @@ class GenerarPdfPage {
 
     // --- 5. Save & Open ---
     final output = await getTemporaryDirectory();
+    final sanitizedCliente =
+        (data["cliente"] ?? "Cliente").replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
     final fileName =
-        "${data["cliente"]}_${PdfUtils.formatDateShort(DateTime.now())}-Prub.pdf";
+        "${sanitizedCliente}_${PdfUtils.formatDateShort(DateTime.now())}-Prub.pdf";
     final filePath = "${output.path}/$fileName";
     final file = File(filePath);
-    await file.writeAsBytes(await pdf.save());
+    await file.writeAsBytes(await pdf.save(), flush: true);
     await OpenFile.open(filePath);
   }
 }

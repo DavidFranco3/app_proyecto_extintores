@@ -7,8 +7,13 @@ import 'package:intl/intl.dart';
 class PdfUtils {
   /// Loads an image from the asset bundle.
   static Future<Uint8List> loadAssetImage(String path) async {
-    final byteData = await rootBundle.load(path);
-    return Uint8List.fromList(byteData.buffer.asUint8List());
+    try {
+      final byteData = await rootBundle.load(path);
+      return Uint8List.fromList(byteData.buffer.asUint8List());
+    } catch (e) {
+      debugPrint('Error loading asset image $path: $e');
+      return Uint8List(0);
+    }
   }
 
   /// Downloads an image from a URL.

@@ -78,10 +78,10 @@ class PdfGenerator {
       firmaFuture, // 5
     ]);
 
-    final logoNfpa = results[0]!;
-    final logoApp = results[1]!;
-    final formulaImg = results[2]!;
-    final certificadoImg = results[3]!;
+    final logoNfpa = results[0] ?? Uint8List(0);
+    final logoApp = results[1] ?? Uint8List(0);
+    final formulaImg = results[2] ?? Uint8List(0);
+    final certificadoImg = results[3] ?? Uint8List(0);
     final logoCliente = results[4] ?? Uint8List(0);
     final firma = results[5] ?? Uint8List(0);
 
@@ -156,7 +156,7 @@ class PdfGenerator {
               pw.SizedBox(height: 10),
               pw.Center(
                 child: pw.Text(
-                  "PRUEBA DE CAUDAL MANGUERA DE 1½ x 30 M (HIDRANTE CLASE II)",
+                  "PRUEBA DE CAUDAL MANGUERA DE 1 1/2 x 30 M (HIDRANTE CLASE II)",
                   style: PdfTheme.titleStyle.copyWith(fontSize: 14),
                   textAlign: pw.TextAlign.center,
                 ),
@@ -187,7 +187,7 @@ class PdfGenerator {
                         style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.TextSpan(
                         text: PdfUtils.removeAccents(
-                            " se realizó una prueba de caudal al sistema contra incendio instalado actualmente en la empresa ${data["cliente"]}, la prueba se realizó en la manguera de 1½ x 30 m más alejada al punto de alimentación del sistema.")),
+                            " se realizó una prueba de caudal al sistema contra incendio instalado actualmente en la empresa ${data["cliente"]}, la prueba se realizó en la manguera de 1 1/2 x 30 m más alejada al punto de alimentación del sistema.")),
                   ],
                 ),
               ),
@@ -214,7 +214,7 @@ class PdfGenerator {
                             "el cual divide el caudal en cuatro salidas para posteriormente reducir el diámetro de cada descarga "),
                     pw.TextSpan(
                         text:
-                            "a un orificio de ½ de diámetro con el objetivo de hacer mediciones más precisas y exactas."),
+                            "a un orificio de 1/2 de diámetro con el objetivo de hacer mediciones más precisas y exactas."),
                   ],
                 ),
               ),
@@ -334,13 +334,13 @@ class PdfGenerator {
                             _paddedText('Caudal\n(gpm)', bold: true),
                           ]),
                       // Rows
-                      _buildDataRow('1', '0.95', '½', '$val3 (Figura 3)',
+                      _buildDataRow('1', '0.95', '1/2', '$val3 (Figura 3)',
                           formatDouble(caudal1)),
-                      _buildDataRow('1', '0.95', '½', '$val4 (Figura 4)',
+                      _buildDataRow('1', '0.95', '1/2', '$val4 (Figura 4)',
                           formatDouble(caudal2)),
-                      _buildDataRow('1', '0.95', '½', '$val5 (Figura 5)',
+                      _buildDataRow('1', '0.95', '1/2', '$val5 (Figura 5)',
                           formatDouble(caudal3)),
-                      _buildDataRow('1', '0.95', '½', '$val6 (Figura 6)',
+                      _buildDataRow('1', '0.95', '1/2', '$val6 (Figura 6)',
                           formatDouble(caudal4)),
                       // Total
                       pw.TableRow(
@@ -550,10 +550,12 @@ class PdfGenerator {
 
       final outputDirectory = await getExternalStorageDirectory();
       if (outputDirectory != null) {
+        final sanitizedCliente = (data["cliente"] ?? "Cliente")
+            .replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
         final filePath =
-            "${outputDirectory.path}/${data["cliente"]}_$dateStr-Cer.pdf";
+            "${outputDirectory.path}/${sanitizedCliente}_$dateStr-Cer.pdf";
         final file = File(filePath);
-        await file.writeAsBytes(bytes);
+        await file.writeAsBytes(bytes, flush: true);
         debugPrint("PDF Saved: $filePath");
         await OpenFile.open(filePath);
       }
@@ -570,8 +572,10 @@ class PdfGenerator {
       final outputDirectory = await getExternalStorageDirectory();
 
       if (outputDirectory != null) {
+        final sanitizedCliente = (data["cliente"] ?? "Cliente")
+            .replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
         final filePath =
-            "${outputDirectory.path}/${data["cliente"]}_$dateStr-Cer.pdf";
+            "${outputDirectory.path}/${sanitizedCliente}_$dateStr-Cer.pdf";
         final file = File(filePath);
         await file.writeAsBytes(bytes);
 

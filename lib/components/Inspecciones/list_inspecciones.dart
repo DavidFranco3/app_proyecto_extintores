@@ -52,13 +52,21 @@ class _TblInspeccionesState extends State<TblInspecciones> {
         throw Exception("La URL del archivo es inválida.");
       }
 
-      var dio = Dio();
+      var dio = Dio(BaseOptions(
+        connectTimeout: const Duration(milliseconds: 120000), // 120 seconds
+        receiveTimeout: const Duration(milliseconds: 120000), // 120 seconds
+      ));
 
       // Obtener la ruta de la carpeta de documentos de la aplicación
-      Directory appDocDir = await getApplicationDocumentsDirectory();
+      // Usar almacenamiento externo para que el visor de PDF pueda acceder al archivo
+      Directory? appDocDir = await getExternalStorageDirectory();
+      // Fallback a documents si external no está disponible (raro en Android moderno para este uso)
+      appDocDir ??= await getApplicationDocumentsDirectory();
 
+      String sanitizedCliente =
+          (row["cliente"] ?? "Cliente").replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
       String filePath =
-          "${appDocDir.path}/${row["cliente"]}_$fechaFormateada-IPM.pdf";
+          "${appDocDir.path}/${sanitizedCliente}_$fechaFormateada-IPM.pdf";
 
       debugPrint("Descargando archivo en: $filePath");
 

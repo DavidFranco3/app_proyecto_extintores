@@ -39,15 +39,25 @@ class _AccionesState extends State<Acciones> {
   @override
   void initState() {
     super.initState();
-    debugPrint(widget.data);
+    debugPrint(widget.data.toString());
     _usuarioController = TextEditingController();
     _clienteController = TextEditingController();
     _encuestaController = TextEditingController();
 
     if (widget.accion == 'editar' || widget.accion == 'eliminar') {
-      _usuarioController.text = widget.data['usuario'] ?? '';
-      _clienteController.text = widget.data['cliente'] ?? '';
-      _encuestaController.text = widget.data['cuestionario'] ?? '';
+      var usuarioData = widget.data['usuario'];
+      var clienteData = widget.data['cliente'];
+      var encuestaData = widget.data['cuestionario'] ?? widget.data['encuesta'];
+
+      _usuarioController.text = usuarioData is Map
+          ? (usuarioData['nombre'] ?? '')
+          : (usuarioData?.toString() ?? '');
+      _clienteController.text = clienteData is Map
+          ? (clienteData['nombre'] ?? '')
+          : (clienteData?.toString() ?? '');
+      _encuestaController.text = encuestaData is Map
+          ? (encuestaData['nombre'] ?? '')
+          : (encuestaData?.toString() ?? '');
     }
 
     Future.delayed(Duration(seconds: 1), () {

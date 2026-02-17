@@ -59,15 +59,16 @@ class PdfComponents {
               style: PdfTheme.smallStyle,
             ),
           ),
-        pw.Align(
-          alignment: pw.Alignment.bottomRight,
-          child: pw.Image(
-            pw.MemoryImage(logoAppBytes),
-            width: 150,
-            height: 40,
-            fit: pw.BoxFit.contain,
+        if (logoAppBytes.isNotEmpty)
+          pw.Align(
+            alignment: pw.Alignment.bottomRight,
+            child: pw.Image(
+              pw.MemoryImage(logoAppBytes),
+              width: 150,
+              height: 40,
+              fit: pw.BoxFit.contain,
+            ),
           ),
-        ),
       ],
     );
   }
