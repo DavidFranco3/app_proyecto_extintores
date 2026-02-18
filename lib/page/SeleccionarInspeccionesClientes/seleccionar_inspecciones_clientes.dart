@@ -311,7 +311,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
                         labelText: "Cliente",
                         prefixIcon: FontAwesomeIcons.user,
                       ),
-                      value: clienteSeleccionado,
+                      initialValue: clienteSeleccionado,
                       items:
                           dataClientes.map<DropdownMenuItem<String>>((cliente) {
                         return DropdownMenuItem<String>(

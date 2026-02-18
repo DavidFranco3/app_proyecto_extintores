@@ -1,10 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
-
-import '../../api/usuarios.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/usuarios_controller.dart';
 import '../../components/Usuarios/list_usuarios.dart';
 import '../../components/Usuarios/acciones.dart';
 import '../../components/Load/load.dart';
@@ -20,91 +17,12 @@ class UsuariosPage extends StatefulWidget {
 }
 
 class _UsuariosPageState extends State<UsuariosPage> {
-  bool loading = true;
-  List<Map<String, dynamic>> dataUsuarios = [];
-  bool showModal = false;
-
   @override
   void initState() {
     super.initState();
-    cargarUsuarios();
-  }
-
-  Future<void> cargarUsuarios() async {
-    final conectado = await verificarConexion();
-    if (conectado) {
-      debugPrint("Conectado a internet");
-      await getUsuariosDesdeAPI();
-    } else {
-      debugPrint("Sin conexión, cargando usuarios desde Hive...");
-      await getUsuariosDesdeHive();
-    }
-  }
-
-  Future<bool> verificarConexion() async {
-    final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion.contains(ConnectivityResult.none)) return false;
-    return await InternetConnection().hasInternetAccess;
-  }
-
-  Future<void> getUsuariosDesdeAPI() async {
-    try {
-      final usuariosService = UsuariosService();
-      final List<dynamic> response = await usuariosService.listarUsuarios();
-
-      if (response.isNotEmpty) {
-        final formateadas = formatModelUsuarios(response);
-
-        final box = Hive.box('usuariosBox');
-        await box.put('usuarios', formateadas);
-
-        if (mounted) {
-          setState(() {
-            dataUsuarios = formateadas;
-            loading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            dataUsuarios = [];
-            loading = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Error al obtener los usuarios: $e");
-      if (mounted) {
-        setState(() {
-          loading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> getUsuariosDesdeHive() async {
-    final box = Hive.box('usuariosBox');
-    final List<dynamic>? guardados = box.get('usuarios');
-
-    if (guardados != null) {
-      if (mounted) {
-        setState(() {
-          dataUsuarios = guardados
-              .map<Map<String, dynamic>>(
-                  (item) => Map<String, dynamic>.from(item as Map))
-              .where((item) => item['estado'] == "true")
-              .toList();
-          loading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          dataUsuarios = [];
-          loading = false;
-        });
-      }
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UsuariosController>().cargarUsuarios();
+    });
   }
 
   void openRegistroModal() {
@@ -115,7 +33,8 @@ class _UsuariosPageState extends State<UsuariosPage> {
           showModal: () {
             if (mounted) Navigator.pop(context);
           },
-          onCompleted: cargarUsuarios,
+          onCompleted: () =>
+              context.read<UsuariosController>().cargarUsuarios(),
           accion: "registrar",
           data: null,
         ),
@@ -123,80 +42,61 @@ class _UsuariosPageState extends State<UsuariosPage> {
     );
   }
 
-  void closeModal() {
-    setState(() {
-      showModal = false;
-    });
-  }
-
-  List<Map<String, dynamic>> formatModelUsuarios(List<dynamic> data) {
-    return data.map((item) {
-      return {
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'email': item['email'],
-        'telefono': item['telefono'],
-        'tipo': item['tipo'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      };
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Usuarios"),
-      body: loading
-          ? Load()
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Usuarios",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2C3E50),
-                          letterSpacing: -0.5,
-                        ),
+      body: Consumer<UsuariosController>(
+        builder: (context, controller, child) {
+          if (controller.loading && controller.dataUsuarios.isEmpty) {
+            return Load();
+          }
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Usuarios",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color:
+                            Theme.of(context).textTheme.headlineMedium?.color ??
+                                const Color(0xFF2C3E50),
+                        letterSpacing: -0.5,
                       ),
-                      const SizedBox(height: 16),
-                      PremiumActionButton(
-                        onPressed: openRegistroModal,
-                        label: "Registrar",
-                        icon: FontAwesomeIcons.plus,
+                    ),
+                    const SizedBox(height: 16),
+                    PremiumActionButton(
+                      onPressed: openRegistroModal,
+                      label: "Registrar",
+                      icon: FontAwesomeIcons.plus,
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(indent: 20, endIndent: 20, height: 32),
+              Expanded(
+                child: controller.dataUsuarios.isEmpty
+                    ? const Center(child: Text("No hay usuarios disponibles."))
+                    : TblUsuarios(
+                        showModal: () {
+                          if (mounted) Navigator.pop(context);
+                        },
+                        usuarios: controller.dataUsuarios,
+                        onCompleted: () => controller.cargarUsuarios(),
                       ),
-                    ],
-                  ),
-                ),
-                const Divider(indent: 20, endIndent: 20, height: 32),
-                Expanded(
-                  child: dataUsuarios.isEmpty
-                      ? const Center(
-                          child: Text("No hay usuarios disponibles."))
-                      : TblUsuarios(
-                          showModal: () {
-                            if (mounted) Navigator.pop(context);
-                          },
-                          usuarios: dataUsuarios,
-                          onCompleted: cargarUsuarios,
-                        ),
-                ),
-              ],
-            ),
-      floatingActionButton: showModal
-          ? FloatingActionButton(
-              onPressed: closeModal,
-              child: Icon(Icons.close),
-            )
-          : null,
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

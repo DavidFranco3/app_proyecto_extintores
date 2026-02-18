@@ -96,12 +96,12 @@ Future<void> logsInformativos(
 
     final response = await LogsService().registraLog(dataTemp);
     debugPrint(
-        'Respuesta del registro de log: ${response.statusCode}, ${response.body}');
+        'Respuesta del registro de log: ${response.statusCode}, ${response.data}');
 
     if (response.statusCode == 200) {
       debugPrint('Log registrado correctamente');
     } else {
-      debugPrint('Error en el registro del log: ${response.body}');
+      debugPrint('Error en el registro del log: ${response.data}');
     }
   } catch (e) {
     debugPrint('Error al registrar log informativo: $e');
@@ -154,14 +154,14 @@ Future<void> logsInformativosLogout(String mensaje) async {
 
     final response = await LogsService().registraLog(dataTemp);
     debugPrint(
-        'Respuesta del registro de log en logout: ${response.statusCode}, ${response.body}');
+        'Respuesta del registro de log en logout: ${response.statusCode}, ${response.data}');
 
     if (response.statusCode == 200) {
       // Log registrado correctamente, proceder a hacer logout
       debugPrint('Log registrado correctamente, cerrando sesión...');
       await AuthService().logoutApi();
     } else {
-      debugPrint('Error en el registro del log de logout: ${response.body}');
+      debugPrint('Error en el registro del log de logout: ${response.data}');
     }
   } catch (e) {
     debugPrint('Error al registrar log informativo en logout: $e');

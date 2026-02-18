@@ -1,41 +1,22 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../utils/constants.dart';
+import '../api/api_client.dart';
 import 'endpoints.dart';
-import 'auth.dart';
-
-final authService = AuthService();
 
 class UsuariosService {
+  final _api = ApiClient().dio;
+
   // Listar usuarios
   Future<List<dynamic>> listarUsuarios() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarUsuario'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(endpointListarUsuario);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error listando usuarios: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener los usuarios: $e");
+      debugPrint("Error listando usuarios: $e");
       return [];
     }
   }
@@ -43,130 +24,98 @@ class UsuariosService {
   // Registrar usuario
   Future<Map<String, dynamic>> registraUsuarios(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarUsuario'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
-  }
-
-  // Obtener datos del usuario por ID
-  Future<http.Response> obtenerUsuario(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerUsuarios/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    return response;
-  }
-
-  Future<Map<String, dynamic>?> obtenerUsuario2(String id) async {
-    final token = await authService.getTokenApi();
     try {
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointObtenerUsuarios/$id'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // Decodificar la respuesta JSON y asignar a un Map
-        return jsonDecode(
-            response.body); // Esto devuelve un Map<String, dynamic>
-      } else {
-        debugPrint('Error: ${response.statusCode}');
-        return null; // En caso de error, retorna null
-      }
+      final response = await _api.post(endpointRegistrarUsuario, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
     } catch (e) {
-      debugPrint('Error al obtener el usuario: $e');
-      return null; // En caso de error, retorna null
+      debugPrint("Error registrando usuario: $e");
+      return {'status': 500, 'message': e.toString()};
     }
   }
 
-  // Obtener datos del usuario por email
-  Future<http.Response> obtenerUsuarioEmail(String email) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerUsuariosEmail/$email'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    return response;
+  // Obtener usuario por ID (devuelve Response para compatibilidad si es necesario o simplificado)
+  Future<dynamic> obtenerUsuario(String id) async {
+    try {
+      final response = await _api.get('$endpointObtenerUsuarios/$id');
+      return response.data;
+    } catch (e) {
+      debugPrint("Error obteniendo usuario: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> obtenerUsuario2(String id) async {
+    try {
+      final response = await _api.get('$endpointObtenerUsuarios/$id');
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Error obteniendo usuario2: $e");
+      return null;
+    }
+  }
+
+  // Obtener usuario por email
+  Future<dynamic> obtenerUsuarioEmail(String email) async {
+    try {
+      final response = await _api.get('$endpointObtenerUsuariosEmail/$email');
+      return response.data;
+    } catch (e) {
+      debugPrint("Error obteniendo usuario por email: $e");
+      return null;
+    }
   }
 
   // Actualizar usuario
   Future<Map<String, dynamic>> actualizarUsuario(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarUsuario/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarUsuario/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando usuario: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   // Eliminar usuario
   Future<Map<String, dynamic>> eliminarUsuario(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarUsuario/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.delete('$endpointEliminarUsuario/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error eliminando usuario: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   // Deshabilitar usuario
   Future<Map<String, dynamic>> actualizaDeshabilitarUsuario(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarUsuario/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointDeshabilitarUsuario/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando usuario: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 }

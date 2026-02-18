@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/theme_controller.dart';
 import '../../page/Clasificaciones/clasificaciones.dart';
 import '../../page/Frecuencias/frecuencias.dart';
 import '../../page/TiposExtintores/tipos_extintores.dart';
@@ -242,6 +244,37 @@ class _MenuLateralState extends State<MenuLateral> {
                   _buildListTile(context, Icons.insights_outlined, 'Gráficas',
                       const GraficaInspeccionesPage()),
                 ],
+                const Divider(),
+                _buildSectionHeader('PREFERENCIAS'),
+                Consumer<ThemeController>(
+                  builder: (context, themeController, child) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: SwitchListTile(
+                        secondary: Icon(
+                          themeController.isDarkMode
+                              ? Icons.dark_mode_outlined
+                              : Icons.light_mode_outlined,
+                          color: themeController.isDarkMode
+                              ? Colors.amber
+                              : Colors.blueGrey[700],
+                        ),
+                        title: const Text(
+                          'Modo Oscuro',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        value: themeController.isDarkMode,
+                        activeThumbColor: const Color(0xFFE94742),
+                        onChanged: (value) {
+                          themeController.toggleTheme(value);
+                        },
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -251,8 +284,7 @@ class _MenuLateralState extends State<MenuLateral> {
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
             title: const Text('Cerrar sesión',
-                style: TextStyle(
-                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontWeight: FontWeight.bold)),
             onTap: _logout,
           ),
         ],

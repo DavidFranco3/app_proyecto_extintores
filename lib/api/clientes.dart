@@ -1,35 +1,19 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
-import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
-import 'auth.dart';
-
-final authService = AuthService();
+import '../api/api_client.dart';
+import 'endpoints.dart';
+import 'models/cliente_model.dart';
 
 class ClientesService {
+  final _api = ApiClient().dio;
+
   // Listar clientes
-  Future<List<dynamic>> listarClientes() async {
+  Future<List<ClienteModel>> listarClientes() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarClientes'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final response = await _api.get(endpointListarClientes);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        final List<dynamic> data = response.data;
+        return data.map((json) => ClienteModel.fromJson(json)).toList();
       } else {
         debugPrint("Error: Código de estado ${response.statusCode}");
         return [];
@@ -43,98 +27,77 @@ class ClientesService {
   // Registrar cliente
   Future<Map<String, dynamic>> registrarClientes(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarClientes'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.post(endpointRegistrarClientes, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error al registrar cliente: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   // Obtener cliente por ID
   Future<Map<String, dynamic>> obtenerClientes(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerClientes/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      return {'success': false, 'message': 'Error al obtener cliente'};
+    try {
+      final response = await _api.get('$endpointObtenerClientes/$id');
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        return {'success': false, 'message': 'Error al obtener cliente'};
+      }
+    } catch (e) {
+      debugPrint("Error al obtener cliente: $e");
+      return {'success': false, 'message': e.toString()};
     }
   }
 
   // Actualizar cliente
   Future<Map<String, dynamic>> actualizarClientes(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarClientes/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarClientes/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error al actualizar cliente: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   // Eliminar cliente
   Future<Map<String, dynamic>> eliminarClientes(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarClientes/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Cliente eliminado'};
-    } else {
-      return {'success': false, 'message': 'Error al eliminar cliente'};
+    try {
+      final response = await _api.delete('$endpointEliminarClientes/$id');
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Cliente eliminado'};
+      } else {
+        return {'success': false, 'message': 'Error al eliminar cliente'};
+      }
+    } catch (e) {
+      debugPrint("Error al eliminar cliente: $e");
+      return {'success': false, 'message': e.toString()};
     }
   }
 
   // Deshabilitar cliente
   Future<Map<String, dynamic>> deshabilitarClientes(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarClientes/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointDeshabilitarClientes/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error al deshabilitar cliente: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 }

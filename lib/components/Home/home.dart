@@ -1,21 +1,18 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
+
 import '../Menu/menu_lateral.dart';
 import '../Header/header.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../components/Load/load.dart';
-import '../../api/inspecciones.dart';
-import '../../api/inspecciones_proximas.dart';
+import '../Generales/premium_inputs.dart';
+import '../../controllers/home_controller.dart';
 import '../../page/InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import '../../page/InspeccionesProximas/inspecciones_proximas.dart';
-import '../../api/tokens.dart';
-import '../../api/notificaciones.dart';
-import '../../api/auth.dart';
-import '../../api/usuarios.dart';
-import 'dart:async';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../page/Clientes/clientes.dart';
+import '../../page/Extintores/extintores.dart';
+import '../../page/SeleccionarInspeccionesClientes/seleccionar_inspecciones_clientes.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,537 +22,363 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool loading = true;
-  List<Map<String, dynamic>> dataInspecciones = [];
-  List<Map<String, dynamic>> dataInspeccionesProximas = [];
-  List<Map<String, dynamic>> dataInspeccionesProximas2 = [];
-  List<Map<String, dynamic>> dataTokens = [];
-  String nombreUsuario = "Usuario";
-
   @override
   void initState() {
     super.initState();
-    _cargarDatosIniciales();
-  }
-
-  Future<void> _cargarDatosIniciales() async {
-    await Future.wait([
-      getInspecciones(),
-      getInspeccionesProximas(),
-      getTokens(),
-      _obtenerNombreUsuario(),
-    ]);
-    if (mounted) {
-      setState(() {
-        loading = false;
-      });
-    }
-  }
-
-  Future<void> _obtenerNombreUsuario() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final authService = AuthService();
-      final usuarioService = UsuariosService();
-
-      // Intentar obtener del caché primero
-      String? nombre = prefs.getString('nombreUsuario');
-      if (nombre != null) {
-        setState(() => nombreUsuario = nombre);
-      }
-
-      final tieneInternet = await verificarConexion();
-      if (tieneInternet) {
-        final token = await authService.getTokenApi();
-        if (token != null) {
-          final idUsuario = authService.obtenerIdUsuarioLogueado(token);
-          final user = await usuarioService.obtenerUsuario2(idUsuario);
-          if (user != null && user['nombre'] != null) {
-            if (mounted) {
-              setState(() => nombreUsuario = user['nombre']);
-            }
-            await prefs.setString('nombreUsuario', user['nombre']);
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint("Error obteniendo nombre de usuario: $e");
-    }
-  }
-
-  Future<bool> verificarConexion() async {
-    final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion.contains(ConnectivityResult.none)) return false;
-    return await InternetConnection().hasInternetAccess;
-  }
-
-  // ---------------- TOKENS ----------------
-  Future<void> getTokens() async {
-    final conectado = await verificarConexion();
-
-    if (conectado) {
-      await getTokensDesdeAPI();
-    } else {
-      await getTokensDesdeHive();
-    }
-  }
-
-  Future<void> getTokensDesdeAPI() async {
-    try {
-      final tokensService = TokensService();
-      final List<dynamic> response = await tokensService.listarTokens();
-
-      final List<dynamic> filteredResponse = response.where((item) {
-        return item['usuario']['tipo'] == 'inspector';
-      }).toList();
-
-      // Guardar en Hive
-      final box = Hive.box('tokensBox');
-      await box.put('tokens', filteredResponse);
-
+    // Iniciar carga de datos al entrar al Home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        setState(() {
-          dataTokens = formatModelTokens(filteredResponse);
-        });
+        context.read<HomeController>().init();
       }
-    } catch (e) {
-      debugPrint("Error al obtener los tokens: $e");
-    }
-  }
-
-  Future<void> getTokensDesdeHive() async {
-    try {
-      final box = Hive.box('tokensBox');
-      final guardados = box.get('tokens');
-
-      if (guardados is List && mounted) {
-        setState(() {
-          dataTokens = formatModelTokens(
-            guardados.map((e) => Map<String, dynamic>.from(e)).toList(),
-          );
-        });
-      }
-    } catch (e) {
-      debugPrint("Error leyendo tokens desde Hive: $e");
-    }
-  }
-
-  // ---------------- INSPECCIONES ----------------
-  Future<void> getInspecciones() async {
-    final conectado = await verificarConexion();
-
-    if (conectado) {
-      await getInspeccionesDesdeAPI();
-    } else {
-      await getInspeccionesDesdeHive();
-    }
-  }
-
-  Future<void> getInspeccionesDesdeAPI() async {
-    try {
-      final inspeccionesService = InspeccionesService();
-      final List<dynamic> response =
-          await inspeccionesService.listarInspecciones();
-
-      // Guardar en Hive
-      final box = Hive.box('inspeccionesBox');
-      await box.put('inspecciones', response);
-
-      if (mounted) {
-        setState(() {
-          dataInspecciones = formatModelInspecciones(response);
-        });
-      }
-    } catch (e) {
-      debugPrint("Error al obtener inspecciones: $e");
-    }
-  }
-
-  Future<void> getInspeccionesDesdeHive() async {
-    try {
-      final box = Hive.box('inspeccionesBox');
-      final guardados = box.get('inspecciones');
-
-      if (guardados is List && mounted) {
-        setState(() {
-          dataInspecciones = formatModelInspecciones(
-            guardados.map((e) => Map<String, dynamic>.from(e)).toList(),
-          );
-        });
-      }
-    } catch (e) {
-      debugPrint("Error leyendo inspecciones desde Hive: $e");
-    }
-  }
-
-  // ---------------- INSPECCIONES PRÓXIMAS ----------------
-  Future<void> getInspeccionesProximas() async {
-    final conectado = await verificarConexion();
-
-    if (conectado) {
-      await getInspeccionesProximasDesdeAPI();
-    } else {
-      await getInspeccionesProximasDesdeHive();
-    }
-  }
-
-  Future<void> getInspeccionesProximasDesdeAPI() async {
-    try {
-      final service = InspeccionesProximasService();
-      final List<dynamic> response = await service.listarInspeccionesProximas();
-
-      final formattedData = formatModelInspeccionesProximas(response);
-
-      // Guardar en Hive
-      final box = Hive.box('inspeccionesProximasBox');
-      await box.put('inspeccionesProximas', formattedData);
-
-      // Filtrado de próximas 3 días
-      final fechaActual = DateTime.now();
-      final inspeccionesFiltradas = formattedData.where((item) {
-        final proximaFecha = DateTime.parse(item['proximaInspeccion']);
-        return proximaFecha.difference(fechaActual).inDays <= 3 &&
-            proximaFecha.isAfter(fechaActual);
-      }).toList();
-
-      if (mounted) {
-        setState(() {
-          dataInspeccionesProximas = formattedData;
-          dataInspeccionesProximas2 = inspeccionesFiltradas;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error al obtener inspecciones próximas: $e");
-    }
-  }
-
-  Future<void> getInspeccionesProximasDesdeHive() async {
-    try {
-      final box = Hive.box('inspeccionesProximasBox');
-      final guardados = box.get('inspeccionesProximas');
-
-      if (guardados is List && mounted) {
-        final lista =
-            guardados.map((e) => Map<String, dynamic>.from(e)).toList();
-
-        final fechaActual = DateTime.now();
-        final inspeccionesFiltradas = lista.where((item) {
-          final proximaFecha = DateTime.parse(item['proximaInspeccion']);
-          return proximaFecha.difference(fechaActual).inDays <= 3 &&
-              proximaFecha.isAfter(fechaActual);
-        }).toList();
-
-        setState(() {
-          dataInspeccionesProximas = lista;
-          dataInspeccionesProximas2 = inspeccionesFiltradas;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error leyendo inspecciones próximas desde Hive: $e");
-    }
-  }
-
-  // Función para formatear los datos de las inspecciones
-  List<Map<String, dynamic>> formatModelTokens(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'idUsuario': item['idUsuario'],
-        'token': item['token'],
-        'usuario': item['usuario']?['nombre'] ?? 'Sin usuario',
-        'tipo': item['usuario']?['tipo'] ?? 'Sin tipo',
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
-  }
-
-  // Función para formatear los datos de las inspecciones
-  List<Map<String, dynamic>> formatModelInspecciones(List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'idUsuario': item['idUsuario'],
-        'idCliente': item['idCliente'],
-        'idEncuesta': item['idEncuesta'],
-        'encuesta': item['encuesta'],
-        'imagenes': item['imagenes'],
-        'comentarios': item['comentarios'],
-        'usuario': item['usuario']?['nombre'] ?? 'Sin usuario',
-        'cliente': item['cliente']?['nombre'] ?? 'Sin cliente',
-        'cuestionario': item['cuestionario']?['nombre'] ?? 'Sin cuestionario',
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
-  }
-
-  // Función para formatear los datos de las inspeccionesProximas
-  List<Map<String, dynamic>> formatModelInspeccionesProximas(
-      List<dynamic> data) {
-    List<Map<String, dynamic>> dataTemp = [];
-    for (var item in data) {
-      dataTemp.add({
-        'id': item['_id'],
-        'idFrecuencia': item['idFrecuencia'],
-        'idEncuesta': item['idEncuesta'],
-        'cuestionario': item['cuestionario']?['nombre'] ?? 'Sin nombre',
-        'frecuencia': item['frecuencia']?['nombre'] ?? 'Sin frecuencia',
-        'proximaInspeccion': item['nuevaInspeccion'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
-      });
-    }
-    return dataTemp;
-  }
-
-  Timer? _notificationTimer; // Para evitar múltiples timers
-
-// ✅ Enviar solicitud HTTP al backend de forma eficiente
-  Future<void> enviarNotificacionAlBackend() async {
-    final notificacionesService = NotificacionesService();
-    List<Future<void>> requests = [];
-
-    for (var tokenData in dataTokens) {
-      for (var inspeccionData in dataInspeccionesProximas2) {
-        final formData = {
-          "titulo": "Recordatorio de inspección",
-          "token": tokenData["token"],
-          "mensaje":
-              "Se debe realizar la inspección de ${inspeccionData["cuestionario"]["nombre"]}"
-        };
-
-        // Agregar la solicitud a la lista para ejecutarlas en paralelo
-        requests.add(notificacionesService.enviarNotificacion(formData));
-      }
-    }
-
-    try {
-      await Future.wait(requests); // Ejecutar todas las solicitudes en paralelo
-    } catch (e) {
-      debugPrint("Error al enviar notificaciones: $e");
-    }
-  }
-
-// ✅ Programar la llamada al backend cada 24 horas evitando múltiples timers
-  void scheduleDailyNotification() {
-    if (_notificationTimer != null && _notificationTimer!.isActive) {
-      return; // Evita que se cree otro timer si ya hay uno activo
-    }
-
-    _notificationTimer = Timer.periodic(Duration(hours: 24), (_) async {
-      await enviarNotificacionAlBackend();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<HomeController>();
+
     return Scaffold(
-      appBar: Header(),
-      drawer: MenuLateral(currentPage: "Inicio"),
-      body: loading
-          ? Load()
-          : SingleChildScrollView(
-              physics: BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Bienvenida
-                    Text(
-                      "Hola, $nombreUsuario 👋",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+      appBar: const Header(),
+      drawer: const MenuLateral(currentPage: "Inicio"),
+      body: controller.loading
+          ? _buildSkeleton(context)
+          : RefreshIndicator(
+              onRefresh: controller.cargarDatos,
+              color: Theme.of(context).primaryColor,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: <Widget>[
+                      // 1. Bienvenida
+                      const SizedBox(height: 10),
+                      Text(
+                        "Hola, ${controller.nombreUsuario} 👋",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      "Aquí tienes el resumen de tus actividades.",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    SizedBox(height: 20),
-
-                    // 2. Tarjetas de Resumen (Metrics)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSummaryCard(
-                            title: "Hechas",
-                            count: dataInspecciones.length.toString(),
-                            icon: FontAwesomeIcons.clipboardCheck,
-                            color: const Color.fromARGB(255, 3, 4, 6),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      InspeccionesPantalla1Page(),
-                                ),
-                              );
-                            },
+                      const SizedBox(height: 5),
+                      Center(
+                        child: Text(
+                          "Aquí tienes el resumen de tus actividades.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(context).hintColor,
                           ),
                         ),
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: _buildSummaryCard(
-                            title: "Próximas",
-                            count: dataInspeccionesProximas.length.toString(),
-                            icon: FontAwesomeIcons.calendarCheck,
-                            color: const Color.fromARGB(255, 114, 113, 25),
-                            onTap: () {
-                              Navigator.push(
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 0. Status Sync Widget
+                      if (controller.pendingOperations > 0)
+                        _buildSyncStatus(context, controller.pendingOperations),
+
+                      const PremiumSectionTitle(
+                        title: "Acciones Rápidas",
+                        icon: FontAwesomeIcons.bolt,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildQuickActions(context),
+
+                      const SizedBox(height: 25),
+
+                      // 2. Tarjetas de Resumen (Metrics)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: PremiumMetricCard(
+                              title: "Hechas",
+                              count:
+                                  controller.dataInspecciones.length.toString(),
+                              icon: FontAwesomeIcons.clipboardCheck,
+                              color: Theme.of(context).colorScheme.secondary,
+                              onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      InspeccionesProximasPage(),
-                                ),
-                              );
-                            },
+                                    builder: (context) =>
+                                        const InspeccionesPantalla1Page()),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: 25),
-
-                    // 3. Título Próximas a Vencer
-                    Text(
-                      "Próximas a Vencer (3 días)",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: PremiumMetricCard(
+                              title: "Próximas",
+                              count: controller.dataInspeccionesProximas.length
+                                  .toString(),
+                              icon: FontAwesomeIcons.calendarCheck,
+                              color: const Color(0xFF727119),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const InspeccionesProximasPage()),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 15),
 
-                    // 4. Lista de Próximas
-                    dataInspeccionesProximas2.isEmpty
-                        ? Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(FontAwesomeIcons.calendarXmark,
-                                    color: Colors.grey, size: 40),
-                                SizedBox(height: 10),
-                                Text(
-                                  "No hay inspecciones próximas",
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: dataInspeccionesProximas2.length,
-                            itemBuilder: (context, index) {
-                              final item = dataInspeccionesProximas2[index];
-                              return Card(
-                                elevation: 2,
-                                margin: EdgeInsets.only(bottom: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor:
-                                        const Color.fromARGB(255, 114, 113, 25)
-                                            .withValues(alpha: 0.2),
-                                    child: FaIcon(
-                                      FontAwesomeIcons.clock,
-                                      color: const Color.fromARGB(
-                                          255, 114, 113, 25),
-                                      size: 20,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    item['cuestionario'] ?? 'Sin nombre',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Text(
-                                    "Vence: ${item['proximaInspeccion'].toString().split(' ')[0]}",
-                                  ),
-                                  trailing: Icon(Icons.arrow_forward_ios,
-                                      size: 16, color: Colors.grey),
-                                  onTap: () {
-                                    // Navegar a detalle si es necesario
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                    SizedBox(height: 30),
-                  ],
+                      const SizedBox(height: 25),
+
+                      const PremiumSectionTitle(
+                        title: "Próximas a Vencer (3 días)",
+                        icon: FontAwesomeIcons.calendarDay,
+                      ),
+                      const SizedBox(height: 8),
+
+                      // 4. Lista de Próximas
+                      if (controller.dataInspeccionesProximas2.isEmpty)
+                        const PremiumEmptyState(
+                          message:
+                              "No hay inspecciones próximas en los siguientes 3 días.",
+                          icon: FontAwesomeIcons.calendarXmark,
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount:
+                              controller.dataInspeccionesProximas2.length,
+                          itemBuilder: (context, index) {
+                            final item =
+                                controller.dataInspeccionesProximas2[index];
+                            return _buildProximaCard(context, item);
+                          },
+                        ),
+
+                      const SizedBox(height: 25),
+
+                      const PremiumSectionTitle(
+                        title: "Actividad Reciente",
+                        icon: FontAwesomeIcons.clockRotateLeft,
+                      ),
+                      const SizedBox(height: 8),
+                      if (controller.recentLogs.isEmpty)
+                        const PremiumEmptyState(
+                          message: "No hay actividad reciente registrada.",
+                          icon: FontAwesomeIcons.fileLines,
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: controller.recentLogs.length,
+                          itemBuilder: (context, index) {
+                            final log = controller.recentLogs[index];
+                            return _buildLogCard(context, log);
+                          },
+                        ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ),
               ),
             ),
     );
   }
 
-  Widget _buildSummaryCard({
-    required String title,
-    required String count,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 140,
-        padding: EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.4),
-              blurRadius: 8,
-              offset: Offset(0, 4),
+  Widget _buildSyncStatus(BuildContext context, int pending) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sync_problem, color: Colors.orange),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Sincronización Pendiente",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  "$pending operaciones guardadas localmente.",
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ],
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          PremiumActionIcon(
+            label: "Clientes",
+            icon: FontAwesomeIcons.building,
+            color: Colors.blue,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const ClientesPage())),
+          ),
+          const SizedBox(width: 20),
+          PremiumActionIcon(
+            label: "Extintores",
+            icon: FontAwesomeIcons.fireExtinguisher,
+            color: Colors.red,
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ExtintoresPage())),
+          ),
+          const SizedBox(width: 20),
+          PremiumActionIcon(
+            label: "Nueva Insp.",
+            icon: FontAwesomeIcons.circlePlus,
+            color: Colors.green,
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ClienteInspeccionesApp())),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProximaCard(BuildContext context, Map<String, dynamic> item) {
+    return PremiumCardField(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF727119).withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const FaIcon(
+            FontAwesomeIcons.clock,
+            color: Color(0xFF727119),
+            size: 18,
+          ),
         ),
+        title: Text(
+          item['cuestionario'] ?? 'Sin nombre',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          "Vence: ${item['proximaInspeccion'].toString().split(' ')[0]}",
+          style: TextStyle(color: Theme.of(context).hintColor),
+        ),
+        trailing:
+            const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+        onTap: () {},
+      ),
+    );
+  }
+
+  Widget _buildLogCard(BuildContext context, Map<String, dynamic> log) {
+    return PremiumCardField(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        dense: true,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            FontAwesomeIcons.circleExclamation,
+            size: 14,
+            color: Colors.blueGrey,
+          ),
+        ),
+        title: Text(
+          log['descripcion'] ?? 'Acción',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          "${log['usuario'] is Map ? (log['usuario']['nombre'] ?? 'Usuario') : (log['usuario'] ?? 'Usuario')} • ${DateFormat('dd/MM HH:mm').format(DateTime.parse(log['createdAt']).toLocal())}",
+          style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Theme.of(context).brightness == Brightness.dark
+          ? Colors.grey[800]!
+          : Colors.grey[300]!,
+      highlightColor: Theme.of(context).brightness == Brightness.dark
+          ? Colors.grey[700]!
+          : Colors.grey[100]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.white, size: 30),
-            Spacer(),
-            Text(
-              count,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 10),
+            Container(width: 200, height: 30, color: Colors.white),
+            const SizedBox(height: 10),
+            Container(width: 250, height: 15, color: Colors.white),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                  3,
+                  (index) => Column(
+                        children: [
+                          Container(
+                              width: 60,
+                              height: 60,
+                              decoration: const BoxDecoration(
+                                  color: Colors.white, shape: BoxShape.circle)),
+                          const SizedBox(height: 10),
+                          Container(width: 50, height: 10, color: Colors.white),
+                        ],
+                      )),
             ),
-            SizedBox(height: 5),
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 16,
-              ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Expanded(
+                    child: Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20)))),
+                const SizedBox(width: 15),
+                Expanded(
+                    child: Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20)))),
+              ],
             ),
+            const SizedBox(height: 30),
+            ...List.generate(
+                3,
+                (index) => Container(
+                      height: 70,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16)),
+                    )),
           ],
         ),
       ),

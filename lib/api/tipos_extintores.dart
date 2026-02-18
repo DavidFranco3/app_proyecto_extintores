@@ -1,41 +1,24 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../utils/constants.dart';
-import './endpoints.dart';
-import 'auth.dart';
-
-final authService = AuthService();
+import '../api/api_client.dart';
+import 'endpoints.dart';
+import 'package:dio/dio.dart';
 
 class TiposExtintoresService {
+  final _api = ApiClient().dio;
+
   // Listar tipos de extintores
   Future<List<dynamic>> listarTiposExtintores() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarTiposExtintores'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(endpointListarTiposExtintores);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint(
+            "Error listando tipos de extintores: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener los tipos de extintores: $e");
+      debugPrint("Error listando tipos de extintores: $e");
       return [];
     }
   }
@@ -43,90 +26,87 @@ class TiposExtintoresService {
   // Registra tipos de extintores
   Future<Map<String, dynamic>> registraTiposExtintores(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarTiposExtintores'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.post(endpointRegistrarTiposExtintores, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error registrando tipo de extintor: $e");
+      return {
+        'body': e.toString(),
+        'status': 500,
+      };
+    }
   }
 
   // Para obtener todos los datos de tipos de extintores
   Future<Map<String, dynamic>> obtenerTiposExtintores(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerTiposExtintores/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.get('$endpointObtenerTiposExtintores/$id');
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error obteniendo tipo de extintor: $e");
+      return {
+        'body': e.toString(),
+        'status': 500,
+      };
+    }
   }
 
   // Actualizar tipos de extintores
   Future<Map<String, dynamic>> actualizarTiposExtintores(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarTiposExtintores/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarTiposExtintores/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando tipo de extintor: $e");
+      return {
+        'body': e.toString(),
+        'status': 500,
+      };
+    }
   }
 
   // Eliminar tipos de extintores
-  Future<http.Response> eliminarTiposExtintores(
+  Future<Response> eliminarTiposExtintores(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarTiposExtintores/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return response;
+    try {
+      final response =
+          await _api.delete('$endpointEliminarTiposExtintores/$id', data: data);
+      return response;
+    } catch (e) {
+      debugPrint("Error eliminando tipo de extintor: $e");
+      rethrow;
+    }
   }
 
   // Deshabilitar tipos de extintores
   Future<Map<String, dynamic>> actualizaDeshabilitarTiposExtintores(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarTiposExtintores/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api
+          .put('$endpointDeshabilitarTiposExtintores/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando tipo de extintor: $e");
+      return {
+        'body': e.toString(),
+        'status': 500,
+      };
+    }
   }
 }

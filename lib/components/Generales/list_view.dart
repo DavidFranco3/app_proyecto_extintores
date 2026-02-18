@@ -114,7 +114,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
           Icon(
             isSearching ? Icons.search_off : Icons.inbox_outlined,
             size: 64,
-            color: Colors.grey[400],
+            color: Theme.of(context).hintColor.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -122,7 +122,10 @@ class _DataTableCustomState extends State<DataTableCustom> {
                 ? 'No se encontraron registros para "$_searchQuery"'
                 : 'No hay datos disponibles',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 18,
+              color: Theme.of(context).hintColor,
+            ),
           ),
           if (isSearching) ...[
             const SizedBox(height: 24),
@@ -142,7 +145,8 @@ class _DataTableCustomState extends State<DataTableCustom> {
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.blueAccent.withOpacity(0.3)),
+                  side: BorderSide(
+                      color: Colors.blueAccent.withValues(alpha: 0.3)),
                 ),
               ),
             ),
@@ -153,19 +157,22 @@ class _DataTableCustomState extends State<DataTableCustom> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  offset: const Offset(0, 4),
+                  blurRadius: 12,
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -190,10 +197,15 @@ class _DataTableCustomState extends State<DataTableCustom> {
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderSide: isDark
+                          ? BorderSide(
+                              color: Colors.white.withValues(alpha: 0.1))
+                          : BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
@@ -258,17 +270,23 @@ class _DataTableCustomState extends State<DataTableCustom> {
   }
 
   Widget _buildRowCard(Map<String, dynamic> row) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  offset: const Offset(0, 4),
+                  blurRadius: 10,
+                ),
+              ],
+        border: isDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.05))
+            : null,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -300,10 +318,10 @@ class _DataTableCustomState extends State<DataTableCustom> {
                       if (widget.columnas.isNotEmpty)
                         Text(
                           row[widget.columnas.first['name']]?.toString() ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Colors.black87,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                         ),
                       if (widget.columnas.length > 1)
@@ -311,7 +329,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
                           row[widget.columnas[1]['name']]?.toString() ?? '',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).hintColor,
                           ),
                         ),
                     ],
@@ -339,7 +357,9 @@ class _DataTableCustomState extends State<DataTableCustom> {
                             col['name'].toString().toUpperCase(),
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: Colors.grey[500],
+                              color: Theme.of(context)
+                                  .hintColor
+                                  .withValues(alpha: 0.8),
                               fontSize: 10,
                               letterSpacing: 0.5,
                             ),
@@ -347,10 +367,11 @@ class _DataTableCustomState extends State<DataTableCustom> {
                           const SizedBox(height: 4),
                           Text(
                             row[col['name']]?.toString() ?? 'N/A',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium?.color,
                             ),
                           ),
                         ],
@@ -371,7 +392,8 @@ class _DataTableCustomState extends State<DataTableCustom> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.grey[400],
+                        color:
+                            Theme.of(context).hintColor.withValues(alpha: 0.5),
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -387,27 +409,34 @@ class _DataTableCustomState extends State<DataTableCustom> {
   }
 
   Widget _buildPaginationFooter(int totalPages, int totalItems) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  offset: const Offset(0, 4),
+                  blurRadius: 12,
+                ),
+              ],
+        border: isDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.05))
+            : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             'Total: $totalItems',
-            style:
-                TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).hintColor,
+                fontWeight: FontWeight.bold),
           ),
           Row(
             children: [

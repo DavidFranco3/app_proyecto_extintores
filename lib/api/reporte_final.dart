@@ -1,140 +1,101 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
-import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
-import 'auth.dart';
-
-final authService = AuthService();
+import '../api/api_client.dart';
+import 'endpoints.dart';
 
 class ReporteFinalService {
-  // Listar ramas
+  final _api = ApiClient().dio;
+
+  // Listar reporte final
   Future<List<dynamic>> listarReporteFinal() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarReporteFinal'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(endpointListarReporteFinal);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error listando reporte final: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener las ramas: $e");
+      debugPrint("Error al obtener los reportes: $e");
       return [];
     }
   }
 
-  // Registrar rama
+  // Registrar reporte final
   Future<Map<String, dynamic>> registrarReporteFinal(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarReporteFinal'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
-  }
-
-  // Obtener rama por ID
-  Future<Map<String, dynamic>> obtenerReporteFinal(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerReporteFinal/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      return {'success': false, 'message': 'Error al obtener rama'};
+    try {
+      final response =
+          await _api.post(endpointRegistrarReporteFinal, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error registrando reporte final: $e");
+      return {'status': 500, 'message': e.toString()};
     }
   }
 
-  // Actualizar rama
+  // Obtener reporte final por ID
+  Future<Map<String, dynamic>> obtenerReporteFinal(String id) async {
+    try {
+      final response = await _api.get('$endpointObtenerReporteFinal/$id');
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        return {'success': false, 'message': 'Error al obtener reporte'};
+      }
+    } catch (e) {
+      debugPrint("Error obteniendo reporte final: $e");
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // Actualizar reporte final
   Future<Map<String, dynamic>> actualizarReporteFinal(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarReporteFinal/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
-  }
-
-  // Eliminar rama
-  Future<Map<String, dynamic>> eliminarReporteFinal(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarReporteFinal/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Rama eliminado'};
-    } else {
-      return {'success': false, 'message': 'Error al eliminar rama'};
+    try {
+      final response =
+          await _api.put('$endpointActualizarReporteFinal/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando reporte final: $e");
+      return {'status': 500, 'message': e.toString()};
     }
   }
 
-  // Deshabilitar rama
+  // Eliminar reporte final
+  Future<Map<String, dynamic>> eliminarReporteFinal(String id) async {
+    try {
+      final response = await _api.delete('$endpointEliminarReporteFinal/$id');
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Reporte eliminado'};
+      } else {
+        return {'success': false, 'message': 'Error al eliminar reporte'};
+      }
+    } catch (e) {
+      debugPrint("Error eliminando reporte final: $e");
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // Deshabilitar reporte final
   Future<Map<String, dynamic>> deshabilitarReporteFinal(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarReporteFinal/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointDeshabilitarReporteFinal/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando reporte final: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 }

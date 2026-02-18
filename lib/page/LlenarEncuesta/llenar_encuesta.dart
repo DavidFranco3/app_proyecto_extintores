@@ -1639,21 +1639,9 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                               ? null
                                                               : Radio<String>(
                                                                   value: opcion,
-                                                                  groupValue:
-                                                                      pregunta
-                                                                          .respuesta,
                                                                   activeColor:
                                                                       const Color(
                                                                           0xFF1E88E5),
-                                                                  onChanged:
-                                                                      (value) {
-                                                                    setState(
-                                                                        () {
-                                                                      pregunta.respuesta =
-                                                                          value ??
-                                                                              '';
-                                                                    });
-                                                                  },
                                                                 ),
                                                         );
                                                       },
@@ -1873,7 +1861,8 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                   prefixIcon:
                                                       FontAwesomeIcons.star,
                                                 ),
-                                                value: calificacionSeleccionada,
+                                                initialValue:
+                                                    calificacionSeleccionada,
                                                 items: [
                                                   "Crítico",
                                                   "No crítico",
@@ -2197,8 +2186,8 @@ class EncuestaPageState extends State<EncuestaPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withOpacity(0.0),
-                            Colors.white.withOpacity(0.9),
+                            Colors.white.withValues(alpha: 0.0),
+                            Colors.white.withValues(alpha: 0.9),
                             Colors.white,
                           ],
                         ),

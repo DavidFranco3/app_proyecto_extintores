@@ -1,139 +1,99 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
-import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
-import 'auth.dart';
-
-final authService = AuthService();
+import '../api/api_client.dart';
+import 'endpoints.dart';
 
 class RamasService {
+  final _api = ApiClient().dio;
+
   // Listar ramas
   Future<List<dynamic>> listarRamas() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarRamas'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(endpointListarRamas);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error listando ramas: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener las ramas: $e");
+      debugPrint("Error listando ramas: $e");
       return [];
     }
   }
 
   // Registrar rama
   Future<Map<String, dynamic>> registrarRamas(Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarRamas'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.post(endpointRegistrarRamas, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error registrando rama: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   // Obtener rama por ID
   Future<Map<String, dynamic>> obtenerRamas(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerRamas/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      return {'success': false, 'message': 'Error al obtener rama'};
+    try {
+      final response = await _api.get('$endpointObtenerRamas/$id');
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        return {'success': false, 'message': 'Error al obtener rama'};
+      }
+    } catch (e) {
+      debugPrint("Error obteniendo rama: $e");
+      return {'success': false, 'message': e.toString()};
     }
   }
 
   // Actualizar rama
   Future<Map<String, dynamic>> actualizarRamas(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarRamas/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarRamas/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando rama: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   // Eliminar rama
   Future<Map<String, dynamic>> eliminarRamas(String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarRamas/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return {'success': true, 'message': 'Rama eliminado'};
-    } else {
-      return {'success': false, 'message': 'Error al eliminar rama'};
+    try {
+      final response = await _api.delete('$endpointEliminarRamas/$id');
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Rama eliminada'};
+      } else {
+        return {'success': false, 'message': 'Error al eliminar rama'};
+      }
+    } catch (e) {
+      debugPrint("Error eliminando rama: $e");
+      return {'success': false, 'message': e.toString()};
     }
   }
 
   // Deshabilitar rama
   Future<Map<String, dynamic>> deshabilitarRamas(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarRamas/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointDeshabilitarRamas/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando rama: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 }

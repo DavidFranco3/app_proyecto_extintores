@@ -575,7 +575,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                   child: DropdownButtonFormField<String>(
                     key: ValueKey(
                         clienteController.text), // 👈 esto obliga a reconstruir
-                    value: clienteController.text.isEmpty
+                    initialValue: clienteController.text.isEmpty
                         ? null
                         : clienteController.text,
                     decoration: PremiumInputs.decoration(

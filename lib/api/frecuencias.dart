@@ -1,123 +1,92 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../utils/constants.dart';
+import '../api/api_client.dart';
 import 'endpoints.dart';
-import 'auth.dart';
-
-final authService = AuthService();
 
 class FrecuenciasService {
+  final _api = ApiClient().dio;
+
   Future<List<dynamic>> listarFrecuencias() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarFrecuencias'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(endpointListarFrecuencias);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error listando frecuencias: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener las frecuencias: $e");
+      debugPrint("Error listando frecuencias: $e");
       return [];
     }
   }
 
   Future<Map<String, dynamic>> registraFrecuencias(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarFrecuencias'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.post(endpointRegistrarFrecuencias, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error registrando frecuencia: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
-  Future<http.Response> obtenerFrecuencias(String params) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerFrecuencias/$params'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    return response;
+  Future<dynamic> obtenerFrecuencias(String params) async {
+    try {
+      final response = await _api.get('$endpointObtenerFrecuencias/$params');
+      return response.data;
+    } catch (e) {
+      debugPrint("Error obteniendo frecuencia: $e");
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>> actualizarFrecuencias(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarFrecuencias/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarFrecuencias/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando frecuencia: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
-  Future<http.Response> eliminarFrecuencias(
+  Future<Map<String, dynamic>> eliminarFrecuencias(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarFrecuencias/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return response;
+    try {
+      final response =
+          await _api.delete('$endpointEliminarFrecuencias/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error eliminando frecuencia: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   Future<Map<String, dynamic>> actualizaDeshabilitarFrecuencias(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarFrecuencias/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointDeshabilitarFrecuencias/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando frecuencia: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 }

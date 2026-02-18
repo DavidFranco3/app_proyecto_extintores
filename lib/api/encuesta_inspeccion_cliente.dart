@@ -1,41 +1,22 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'endpoints.dart'; // Importa el archivo donde definiste los endpoints
-import '../utils/constants.dart'; // Importa el archivo donde definiste los endpoints
-import 'auth.dart';
-
-final authService = AuthService();
+import '../api/api_client.dart';
+import 'endpoints.dart';
 
 class EncuestaInspeccionClienteService {
-// Listar encuesta de Inspección
+  final _api = ApiClient().dio;
+
+  // Listar encuesta de Inspección
   Future<List<dynamic>> listarEncuestaInspeccionCliente() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarEncuestaInspeccionCliente'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(endpointListarEncuestaInspeccionCliente);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint("Error listando encuestas cliente: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando encuestas cliente: $e");
       return [];
     }
   }
@@ -43,32 +24,17 @@ class EncuestaInspeccionClienteService {
   Future<List<dynamic>> listarEncuestaInspeccionClientePorRama(
       String idRama, String idFrecuencia, String idClasificacion) async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse(
-            '$apiHost$endpointListarEncuestaInspeccionRamaCliente/$idRama/$idFrecuencia/$idClasificacion'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(
+          '$endpointListarEncuestaInspeccionRamaCliente/$idRama/$idFrecuencia/$idClasificacion');
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint(
+            "Error listando encuestas cliente por rama: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando encuestas cliente por rama: $e");
       return [];
     }
   }
@@ -79,154 +45,117 @@ class EncuestaInspeccionClienteService {
       String idClasificacion,
       String idCliente) async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse(
-            '$apiHost$endpointListarEncuestaInspeccionRamaPorCliente/$idRama/$idFrecuencia/$idClasificacion/$idCliente'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
+      final response = await _api.get(
+          '$endpointListarEncuestaInspeccionRamaPorCliente/$idRama/$idFrecuencia/$idClasificacion/$idCliente');
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
+        return response.data is List ? response.data : [];
       } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
+        debugPrint(
+            "Error listando encuestas cliente por rama por cliente: ${response.statusCode}");
         return [];
       }
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando encuestas cliente por rama por cliente: $e");
       return [];
     }
   }
 
-// Registrar encuesta de Inspección
+  // Registrar encuesta de Inspección
   Future<Map<String, dynamic>> registraEncuestaInspeccionCliente(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarEncuestaInspeccionCliente'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api
+          .post(endpointRegistrarEncuestaInspeccionCliente, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error registrando encuesta cliente: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
-// Obtener encuesta de Inspección por ID
+  // Obtener encuesta de Inspección por ID
   Future<Map<String, dynamic>> obtenerEncuestaInspeccionCliente(
       String id) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerEncuestaInspeccionCliente/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load encuesta de Inspección');
+    try {
+      final response =
+          await _api.get('$endpointObtenerEncuestaInspeccionCliente/$id');
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to load encuesta de Inspección');
+      }
+    } catch (e) {
+      debugPrint("Error obteniendo encuesta cliente: $e");
+      rethrow;
     }
   }
 
   Future<List<dynamic>> obtenerEncuestaInspeccionClienteEncuestas(
       String idCliente) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse(
-          '$apiHost$endpointObtenerEncuestaInspeccionClienteEncuestas/$idCliente'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return List<dynamic>.from(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load encuesta de Inspección');
+    try {
+      final response = await _api
+          .get('$endpointObtenerEncuestaInspeccionClienteEncuestas/$idCliente');
+      if (response.statusCode == 200) {
+        return List<dynamic>.from(response.data);
+      } else {
+        throw Exception('Failed to load encuesta de Inspección');
+      }
+    } catch (e) {
+      debugPrint("Error obteniendo encuestas del cliente: $e");
+      rethrow;
     }
   }
 
-// Actualizar encuesta de Inspección
+  // Actualizar encuesta de Inspección
   Future<Map<String, dynamic>> actualizarEncuestaInspeccionCliente(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarEncuestaInspeccionCliente/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
-  }
-
-// Eliminar encuesta de Inspección
-  Future<Map<String, dynamic>> eliminarEncuestaInspeccionCliente(
-      String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarEncuestaInspeccionCliente/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to delete encuesta de Inspección');
+    try {
+      final response = await _api
+          .put('$endpointActualizarEncuestaInspeccionCliente/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando encuesta cliente: $e");
+      return {'status': 500, 'message': e.toString()};
     }
   }
 
-// Deshabilitar encuesta de Inspección
+  // Eliminar encuesta de Inspección
+  Future<Map<String, dynamic>> eliminarEncuestaInspeccionCliente(
+      String id, Map<String, dynamic> data) async {
+    try {
+      final response = await _api
+          .delete('$endpointEliminarEncuestaInspeccionCliente/$id', data: data);
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to delete encuesta de Inspección');
+      }
+    } catch (e) {
+      debugPrint("Error eliminando encuesta cliente: $e");
+      rethrow;
+    }
+  }
+
+  // Deshabilitar encuesta de Inspección
   Future<Map<String, dynamic>> deshabilitarEncuestaInspeccionCliente(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarEncuestaInspeccionCliente/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.put(
+          '$endpointDeshabilitarEncuestaInspeccionCliente/$id',
+          data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando encuesta cliente: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 }

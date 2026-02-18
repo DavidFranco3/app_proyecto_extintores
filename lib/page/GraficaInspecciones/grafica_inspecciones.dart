@@ -202,7 +202,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                         labelText: "Seleccionar Encuesta",
                         prefixIcon: FontAwesomeIcons.clipboardList,
                       ),
-                      value: selectedEncuestaId,
+                      initialValue: selectedEncuestaId,
                       items:
                           dataEncuestas.map<DropdownMenuItem<String>>((item) {
                         return DropdownMenuItem<String>(

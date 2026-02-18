@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
-
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 class PdfUtils {
@@ -23,9 +22,13 @@ class PdfUtils {
 
     final correctedUrl = url.replaceAll("dl=0", "dl=1");
     try {
-      final response = await http.get(Uri.parse(correctedUrl));
-      if (response.statusCode == 200) {
-        return response.bodyBytes;
+      final dio = Dio();
+      final response = await dio.get<List<int>>(
+        correctedUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        return Uint8List.fromList(response.data!);
       }
     } catch (e) {
       debugPrint('Error downloading image: $e');

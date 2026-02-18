@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../api/models/cliente_model.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
@@ -7,25 +8,22 @@ import '../Generales/formato_fecha.dart';
 
 class TblClientes extends StatefulWidget {
   final VoidCallback showModal;
-  final List<Map<String, dynamic>> clientes;
+  final List<ClienteModel> clientes;
   final Function onCompleted;
 
-  const TblClientes(
-      {super.key,
-      required this.showModal,
-      required this.clientes,
-      required this.onCompleted});
+  const TblClientes({
+    super.key,
+    required this.showModal,
+    required this.clientes,
+    required this.onCompleted,
+  });
 
   @override
   State<TblClientes> createState() => _TblClientesState();
 }
 
 class _TblClientesState extends State<TblClientes> {
-  bool showModal = false;
-  Widget? contentModal;
-  String? titulosModal;
-
-  void openEditarModal(Map<String, dynamic> row) {
+  void openEditarModal(ClienteModel row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -33,11 +31,11 @@ class _TblClientesState extends State<TblClientes> {
           return Scaffold(
             body: Acciones(
               showModal: () {
-                if (mounted) Navigator.pop(context); // Cierra la página actual
+                if (mounted) Navigator.pop(context);
               },
               onCompleted: widget.onCompleted,
               accion: "editar",
-              data: row,
+              data: row.toJson(),
             ),
           );
         },
@@ -45,7 +43,7 @@ class _TblClientesState extends State<TblClientes> {
     );
   }
 
-  void openEliminarModal(Map<String, dynamic> row) {
+  void openEliminarModal(ClienteModel row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -53,11 +51,11 @@ class _TblClientesState extends State<TblClientes> {
           return Scaffold(
             body: Acciones(
               showModal: () {
-                if (mounted) Navigator.pop(context); // Cierra la página actual
+                if (mounted) Navigator.pop(context);
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",
-              data: row,
+              data: row.toJson(),
             ),
           );
         },
@@ -86,36 +84,27 @@ class _TblClientesState extends State<TblClientes> {
             child: DataTableCustom(
               datos: widget.clientes.asMap().entries.map((entry) {
                 int index = totalRegistros - entry.key;
-                Map<String, dynamic> row = entry.value;
+                ClienteModel client = entry.value;
                 return {
-                  'Registro': index, // Muestra "Registro 1", "Registro 2", etc.
-                  'Nombre': row['nombre'],
-                  'Email': row['correo'],
-                  'Teléfono': row['telefono'],
-                  'Dirección': "C " +
-                      row['calle'] +
-                      " " +
-                      row['nExterior'] +
-                      " LOC " +
-                      row['colonia'] +
-                      " " +
-                      row['cPostal'] +
-                      " " +
-                      row['municipio'] +
-                      " , " +
-                      row['estadoDom'],
-                  'Creado el': formatDate(row['createdAt'] ?? ''),
-                  '_originalRow': row,
+                  'Registro': index,
+                  'Nombre': client.nombre,
+                  'Email': client.correo,
+                  'Teléfono': client.telefono,
+                  'Dirección':
+                      "C ${client.calle} ${client.nExterior} LOC ${client.colonia} ${client.cPostal} ${client.municipio} , ${client.estadoDom}",
+                  'Creado el': formatDate(client.createdAt),
+                  '_originalRow': client,
                 };
               }).toList(),
               columnas: columnas,
               accionesBuilder: (Map<String, dynamic> row) {
+                final client = row['_originalRow'] as ClienteModel;
                 return PremiumTableActions(
                   onSelected: (String value) {
                     if (value == 'editar') {
-                      openEditarModal(row['_originalRow']);
+                      openEditarModal(client);
                     } else if (value == 'eliminar') {
-                      openEliminarModal(row['_originalRow']);
+                      openEliminarModal(client);
                     }
                   },
                   items: <PopupMenuEntry<String>>[

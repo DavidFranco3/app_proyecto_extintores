@@ -1,13 +1,14 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import '../utils/constants.dart';
 
 class CloudinaryService {
-  Future<String?> subirArchivoCloudinary(String imagePath, String carpeta, {int calidad = 65}) async {
-    final uri = Uri.parse(apiCloudinary);
+  final _dio =
+      Dio(); // Specific dio for cloudinary if needed, or use the global one
+
+  Future<String?> subirArchivoCloudinary(String imagePath, String carpeta,
+      {int calidad = 65}) async {
     final file = File(imagePath);
 
     if (!await file.exists()) {
@@ -15,35 +16,31 @@ class CloudinaryService {
       return null;
     }
 
-    final request = http.MultipartRequest('POST', uri);
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(imagePath,
+            contentType: DioMediaType('image', 'jpeg')),
+        'upload_preset': 'cancun',
+        'public_id':
+            '$carpeta/${DateTime.now().millisecondsSinceEpoch}_${file.uri.pathSegments.last}',
+        'folder': carpeta,
+        'cloud_name': 'omarlestrella',
+        'quality': calidad.toString(),
+      });
 
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        'file',
-        file.path,
-        contentType: MediaType('image', 'jpeg'),
-      ),
-    );
+      final response = await _dio.post(apiCloudinary, data: formData);
 
-    request.fields['upload_preset'] = 'cancun';
-    request.fields['public_id'] =
-        '$carpeta/${DateTime.now().millisecondsSinceEpoch}_${file.uri.pathSegments.last}';
-    request.fields['folder'] = carpeta;
-    request.fields['cloud_name'] = 'omarlestrella';
-    request.fields['quality'] = calidad.toString();
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      return responseData['secure_url']; // Aquí ya devuelves el URL directamente
-    } else {
-      debugPrint('Error al subir imagen a Cloudinary: ${response.statusCode}');
-      debugPrint('Respuesta: ${response.body}');
+      if (response.statusCode == 200) {
+        return response.data['secure_url'];
+      } else {
+        debugPrint(
+            'Error al subir imagen a Cloudinary: ${response.statusCode}');
+        debugPrint('Respuesta: ${response.data}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Excepción al subir a Cloudinary: $e');
       return null;
     }
   }
 }
-
-

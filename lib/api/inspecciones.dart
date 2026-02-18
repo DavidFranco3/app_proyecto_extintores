@@ -1,371 +1,210 @@
 ﻿import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../utils/constants.dart';
-import './endpoints.dart';
-import 'dart:io';
-import 'auth.dart';
-
-final authService = AuthService();
+import '../api/api_client.dart';
+import 'endpoints.dart';
+import 'package:dio/dio.dart';
 
 class InspeccionesService {
+  final _api = ApiClient().dio;
+
   Future<List<dynamic>> listarInspecciones() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarInspecciones'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
+      final response = await _api.get(endpointListarInspecciones);
+      return response.data is List ? response.data : [];
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando inspecciones: $e");
       return [];
     }
   }
 
   Future<List<dynamic>> listarInspeccionesAbiertas() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarInspeccionesAbiertas'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
+      final response = await _api.get(endpointListarInspeccionesAbiertas);
+      return response.data is List ? response.data : [];
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando inspecciones abiertas: $e");
       return [];
     }
   }
 
   Future<List<dynamic>> listarInspeccionesCerradas() async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarInspeccionesCerradas'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
+      final response = await _api.get(endpointListarInspeccionesCerradas);
+      return response.data is List ? response.data : [];
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando inspecciones cerradas: $e");
       return [];
     }
   }
 
   Future<List<dynamic>> listarInspeccionesPorCliente(String idCliente) async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarInspeccionesCliente/$idCliente'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
+      final response =
+          await _api.get('$endpointListarInspeccionesCliente/$idCliente');
+      return response.data is List ? response.data : [];
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando inspecciones por cliente: $e");
       return [];
     }
   }
 
   Future<List<dynamic>> listarInspeccionesResultados(String idEncuesta) async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse(
-            '$apiHost$endpointListarInspeccionesResultadosEncuestas/$idEncuesta'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
+      final response = await _api
+          .get('$endpointListarInspeccionesResultadosEncuestas/$idEncuesta');
+      return response.data is List ? response.data : [];
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando resultados de inspecciones: $e");
       return [];
     }
   }
 
   Future<List<dynamic>> listarInspeccionesDatos(String id) async {
     try {
-      final token = await authService.getTokenApi();
-      final response = await http.get(
-        Uri.parse('$apiHost$endpointListarInspeccionesDatosEncuestas/$id'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List) {
-          return data; // Retornar la lista directamente
-        } else {
-          debugPrint("Error: La respuesta no es una lista.");
-          return [];
-        }
-      } else {
-        debugPrint("Error: Código de estado ${response.statusCode}");
-        return [];
-      }
+      final response =
+          await _api.get('$endpointListarInspeccionesDatosEncuestas/$id');
+      return response.data is List ? response.data : [];
     } catch (e) {
-      debugPrint("Error al obtener las inspecciones: $e");
+      debugPrint("Error listando datos de inspecciones: $e");
       return [];
     }
   }
 
   Future<Map<String, dynamic>> registraInspecciones(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointRegistrarInspecciones'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.post(endpointRegistrarInspecciones, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error registrando inspección: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
-  Future<http.Response> obtenerInspecciones(String params) async {
-    final token = await authService.getTokenApi();
-    final response = await http.get(
-      Uri.parse('$apiHost$endpointObtenerInspecciones/$params'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    return response;
+  Future<dynamic> obtenerInspecciones(String params) async {
+    try {
+      final response = await _api.get('$endpointObtenerInspecciones/$params');
+      return response.data;
+    } catch (e) {
+      debugPrint("Error obteniendo inspección: $e");
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>> actualizarInspecciones(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarInspecciones/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarInspecciones/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando inspección: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   Future<Map<String, dynamic>> actualizarImagenesInspecciones(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointActualizarImagenesFinales/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointActualizarImagenesFinales/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error actualizando imágenes de inspección: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
-  Future<http.Response> eliminarInspecciones(
+  Future<Map<String, dynamic>> eliminarInspecciones(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.delete(
-      Uri.parse('$apiHost$endpointEliminarInspecciones/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return response;
+    try {
+      final response =
+          await _api.delete('$endpointEliminarInspecciones/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error eliminando inspección: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   Future<Map<String, dynamic>> actualizaDeshabilitarInspecciones(
       String id, Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.put(
-      Uri.parse('$apiHost$endpointDeshabilitarInspecciones/$id'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response =
+          await _api.put('$endpointDeshabilitarInspecciones/$id', data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error deshabilitando inspección: $e");
+      return {'status': 500, 'message': e.toString()};
+    }
   }
 
   Future<Map<String, dynamic>> sendEmail(String id) async {
-    final token = await authService.getTokenApi();
-    final String apiUrl = '$apiHost$endpointEnviarPdf/$id';
-
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    return {
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.get('$endpointEnviarPdf/$id');
+      return {
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error enviando email: $e");
+      return {'status': 500};
+    }
   }
 
   Future<Map<String, dynamic>> sendEmail2(String id, String pdfFilePath) async {
-    final token = await authService.getTokenApi();
-    final String apiUrl = '$apiHost$endpointEnviarPdf2/$id';
-
     try {
-      // Leer el archivo PDF como bytes desde el sistema de archivos
-      final pdfFile = File(pdfFilePath); // Ruta donde se guarda el archivo PDF
-      final bytes = await pdfFile.readAsBytes(); // Leemos el archivo como bytes
+      final formData = FormData.fromMap({
+        'id': id,
+        'pdf': await MultipartFile.fromFile(pdfFilePath,
+            filename: 'documento.pdf'),
+      });
 
-      // Crear la solicitud POST con el archivo y el ID
-      final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
-        ..headers.addAll({
-          'Content-Type': 'multipart/form-data',
-          'Authorization': 'Bearer $token', // Añadir el token en el header
-        })
-        // Agregar el archivo PDF
-        ..files.add(http.MultipartFile.fromBytes('pdf', bytes,
-            filename: 'documento.pdf'))
-        // Agregar el ID como un campo del formulario
-        ..fields['id'] = id;
+      final response =
+          await _api.post('$endpointEnviarPdf2/$id', data: formData);
 
-      // Enviar la solicitud
-      final response = await request.send();
-
-      if (response.statusCode == 200) {
-        return {
-          'status': response.statusCode,
-          'message': 'PDF enviado exitosamente',
-        };
-      } else {
-        return {
-          'status': response.statusCode,
-          'message': 'Error al enviar el PDF: ${response.statusCode}',
-        };
-      }
-    } catch (e) {
       return {
-        'status': 500, // Error interno si ocurre alguna excepción
+        'status': response.statusCode,
+        'message': response.statusCode == 200
+            ? 'PDF enviado exitosamente'
+            : 'Error al enviar el PDF: ${response.statusCode}',
+      };
+    } catch (e) {
+      debugPrint("Error enviando email(2): $e");
+      return {
+        'status': 500,
         'message': 'Error al enviar el PDF: $e',
       };
     }
   }
 
   String urlDownloadPDF(String id) {
-    return '$apiHost$endpointDescargarPdf/$id';
+    return '${_api.options.baseUrl}$endpointDescargarPdf/$id';
   }
 
   Future<Map<String, dynamic>> urlDownloadZIP(String id, String email) async {
-    final String apiUrl = '$apiHost$endpointEnviarZip/$id/$email';
-
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    );
-
-    return {
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.get('$endpointEnviarZip/$id/$email');
+      return {
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      debugPrint("Error enviando ZIP: $e");
+      return {'status': 500};
+    }
   }
 }

@@ -364,7 +364,7 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                   const SizedBox(height: 24),
                   const PremiumSectionTitle(
                     title: "Agregar Nuevo Campo",
-                    icon: FontAwesomeIcons.plusCircle,
+                    icon: FontAwesomeIcons.circlePlus,
                   ),
                   PremiumCardField(
                     child: Column(

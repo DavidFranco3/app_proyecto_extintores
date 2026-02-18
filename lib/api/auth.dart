@@ -1,29 +1,30 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'package:jwt_decoder/jwt_decoder.dart'; // Reemplazamos jwt_decode por jwt_decoder
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../utils/constants.dart';
 import 'endpoints.dart';
+import 'api_client.dart';
 
 class AuthService {
+  final _api = ApiClient().dio;
+
   // Validar inicio de sesión
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async {
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointLoginAdministrador'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: jsonEncode(data),
-    );
+    try {
+      final response = await _api.post(
+        endpointLoginAdministrador,
+        data: data,
+      );
 
-    if (response.statusCode == 200) {
-      // Guardar el token en almacenamiento
-      String token = jsonDecode(response.body)['token'];
-      await setTokenApi(token);
-      return {'success': true, 'token': token};
-    } else {
-      return {'success': false, 'message': 'Error al iniciar sesión'};
+      if (response.statusCode == 200) {
+        // Guardar el token en almacenamiento. Dio ya decodifica el JSON.
+        String token = response.data['token'];
+        await setTokenApi(token);
+        return {'success': true, 'token': token};
+      } else {
+        return {'success': false, 'message': 'Error al iniciar sesión'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error al iniciar sesión: $e'};
     }
   }
 

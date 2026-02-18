@@ -1,27 +1,22 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'auth.dart';
+import '../api/api_client.dart';
 import 'endpoints.dart';
-import '../utils/constants.dart';
-
-final authService = AuthService();
 
 class NotificacionesService {
+  final _api = ApiClient().dio;
+
   Future<Map<String, dynamic>> enviarNotificacion(
       Map<String, dynamic> data) async {
-    final token = await authService.getTokenApi();
-    final response = await http.post(
-      Uri.parse('$apiHost$endpointEnviarNotificacion'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(data),
-    );
-    return {
-      'body': jsonDecode(response.body),
-      'status': response.statusCode, // Retorna la respuesta del servidor
-    };
+    try {
+      final response = await _api.post(endpointEnviarNotificacion, data: data);
+      return {
+        'body': response.data,
+        'status': response.statusCode,
+      };
+    } catch (e) {
+      return {
+        'body': e.toString(),
+        'status': 500,
+      };
+    }
   }
 }
