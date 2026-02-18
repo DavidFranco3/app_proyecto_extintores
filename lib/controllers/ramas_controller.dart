@@ -25,19 +25,47 @@ class RamasController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    await updateCache('ramasBox', 'ramas', dataRamas);
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempRecord = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataRamas.insert(0, tempRecord);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'ramas/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _ramasService.registrarRamas(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarRamas();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataRamas.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataRamas[index] = {...dataRamas[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'ramas/actualizar/$id',
       method: 'PUT',
@@ -50,6 +78,11 @@ class RamasController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataRamas.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'ramas/eliminar/$id',
       method: 'DELETE',
@@ -61,6 +94,14 @@ class RamasController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataRamas.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataRamas[index] = {...dataRamas[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'ramas/deshabilitar/$id',
       method: 'PUT',
@@ -100,6 +141,7 @@ class RamasController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Rama synced: ${action.id}");
+        await cargarRamas(); // Refresh cache with server data
       }
     }
   }

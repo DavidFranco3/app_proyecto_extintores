@@ -1070,10 +1070,14 @@ class _AccionesState extends State<Acciones> {
                                     Text(
                                   selectedItem ?? "",
                                   style: TextStyle(
-                                      fontSize: 14,
-                                      color: selectedItem == null
-                                          ? Colors.grey
-                                          : Colors.black),
+                                    fontSize: 14,
+                                    color: selectedItem == null
+                                        ? Colors.grey
+                                        : Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                  ),
                                 ),
                                 decoratorProps: DropDownDecoratorProps(
                                   decoration: PremiumInputs.decoration(
@@ -1081,8 +1085,27 @@ class _AccionesState extends State<Acciones> {
                                     prefixIcon: FontAwesomeIcons.map,
                                   ),
                                 ),
-                                popupProps:
-                                    const PopupProps.menu(showSearchBox: true),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  itemBuilder: (context, item, isSelected,
+                                      isItemDisabled) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Text(
+                                        item,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                                 validator: isEliminar
                                     ? null
                                     : (value) => value == null || value.isEmpty
@@ -1123,10 +1146,14 @@ class _AccionesState extends State<Acciones> {
                                     Text(
                                   selectedItem ?? "",
                                   style: TextStyle(
-                                      fontSize: 14,
-                                      color: selectedItem == null
-                                          ? Colors.grey
-                                          : Colors.black),
+                                    fontSize: 14,
+                                    color: selectedItem == null
+                                        ? Colors.grey
+                                        : Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                  ),
                                 ),
                                 decoratorProps: DropDownDecoratorProps(
                                   decoration: PremiumInputs.decoration(
@@ -1134,8 +1161,27 @@ class _AccionesState extends State<Acciones> {
                                     prefixIcon: FontAwesomeIcons.city,
                                   ),
                                 ),
-                                popupProps:
-                                    const PopupProps.menu(showSearchBox: true),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  itemBuilder: (context, item, isSelected,
+                                      isItemDisabled) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Text(
+                                        item,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                                 validator: isEliminar
                                     ? null
                                     : (value) => value == null || value.isEmpty

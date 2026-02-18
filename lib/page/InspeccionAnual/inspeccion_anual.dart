@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../api/clientes.dart';
+import '../../api/models/cliente_model.dart';
 import '../../api/inspeccion_anual.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -125,30 +126,35 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
   }
 
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
-    return data
-        .map((item) => {
-              'id': item['_id'],
-              'nombre': item['nombre'],
-              'imagen': item['imagen'],
-              'correo': item['correo'],
-              'telefono': item['telefono'],
-              'calle': item['direccion']['calle'],
-              'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-                  ? item['direccion']['nExterior']
-                  : 'S/N',
-              'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-                  ? item['direccion']['nInterior']
-                  : 'S/N',
-              'colonia': item['direccion']['colonia'],
-              'estadoDom': item['direccion']['estadoDom'],
-              'municipio': item['direccion']['municipio'],
-              'cPostal': item['direccion']['cPostal'],
-              'referencia': item['direccion']['referencia'],
-              'estado': item['estado'],
-              'createdAt': item['createdAt'],
-              'updatedAt': item['updatedAt'],
-            })
-        .toList();
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      final Map<String, dynamic> raw = (item is ClienteModel)
+          ? item.toJson()
+          : Map<String, dynamic>.from(item as Map);
+
+      dataTemp.add({
+        'id': raw['_id'],
+        'nombre': raw['nombre'],
+        'correo': raw['correo'],
+        'telefono': raw['telefono'],
+        'calle': raw['direccion']['calle'],
+        'nExterior': raw['direccion']['nExterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nExterior']
+            : 'S/N',
+        'nInterior': raw['direccion']['nInterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nInterior']
+            : 'S/N',
+        'colonia': raw['direccion']['colonia'],
+        'estadoDom': raw['direccion']['estadoDom'],
+        'municipio': raw['direccion']['municipio'],
+        'cPostal': raw['direccion']['cPostal'],
+        'referencia': raw['direccion']['referencia'],
+        'estado': raw['estado']?.toString() ?? 'true',
+        'createdAt': raw['createdAt'],
+        'updatedAt': raw['updatedAt'],
+      });
+    }
+    return dataTemp;
   }
 
   void _agregarPregunta() {
@@ -308,8 +314,9 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        DropdownSearch<String>(
+                        DropdownSearch<Map<String, dynamic>>(
                           key: const Key('clienteDropdown'),
+                          compareFn: (item, sItem) => item['id'] == sItem['id'],
                           enabled: dataClientes.isNotEmpty,
                           items: (filter, _) {
                             return dataClientes
@@ -317,45 +324,56 @@ class _InspeccionAnualPageState extends State<InspeccionAnualPage> {
                                     .toString()
                                     .toLowerCase()
                                     .contains(filter.toLowerCase()))
-                                .map((c) => c['id'].toString())
                                 .toList();
                           },
-                          itemAsString: (String? id) {
-                            if (id == null) return "";
-                            final cliente = dataClientes.firstWhere(
-                                (c) => c['id'].toString() == id,
-                                orElse: () => {'nombre': ''});
-                            return cliente['nombre']?.toString() ?? "";
-                          },
+                          itemAsString: (item) =>
+                              item['nombre']?.toString() ?? "",
                           selectedItem: clienteController.text.isEmpty
                               ? null
-                              : clienteController.text,
+                              : dataClientes.firstWhere(
+                                  (c) =>
+                                      c['id'].toString() ==
+                                      clienteController.text,
+                                  orElse: () => {}),
                           onChanged: dataClientes.isEmpty
                               ? null
-                              : (String? newValue) {
+                              : (Map<String, dynamic>? newValue) {
                                   setState(() {
-                                    clienteController.text = newValue!;
+                                    clienteController.text = newValue!['id'];
                                   });
                                 },
-                          dropdownBuilder: (context, selectedItem) {
-                            final cliente = dataClientes.firstWhere(
-                                (c) => c['id'].toString() == selectedItem,
-                                orElse: () => {'nombre': ''});
-                            return Text(
-                              cliente['nombre'] != '' ? cliente['nombre'] : "",
-                              style: const TextStyle(fontSize: 14),
-                            );
-                          },
+                          dropdownBuilder: (context, selectedItem) => Text(
+                            selectedItem?['nombre'] ?? "",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium?.color,
+                            ),
+                          ),
                           decoratorProps: DropDownDecoratorProps(
                             decoration: PremiumInputs.decoration(
                               labelText: 'Cliente',
                               prefixIcon: FontAwesomeIcons.buildingUser,
                             ),
                           ),
-                          popupProps: const PopupProps.menu(
+                          popupProps: PopupProps.menu(
                             showSearchBox: true,
                             fit: FlexFit.loose,
-                            constraints: BoxConstraints(maxHeight: 300),
+                            itemBuilder:
+                                (context, item, isSelected, isItemDisabled) =>
+                                    Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Text(
+                                item['nombre'] ?? "",
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],

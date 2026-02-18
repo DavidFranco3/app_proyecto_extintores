@@ -283,8 +283,11 @@ class _MenuLateralState extends State<MenuLateral> {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-            title: const Text('Cerrar sesión',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text('Cerrar sesión',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                )),
             onTap: _logout,
           ),
         ],
@@ -339,7 +342,7 @@ class _MenuLateralState extends State<MenuLateral> {
       child: Text(
         title,
         style: TextStyle(
-            color: Colors.grey[500],
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
             fontSize: 11,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5),
@@ -354,12 +357,16 @@ class _MenuLateralState extends State<MenuLateral> {
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading:
-            Icon(icon, color: isSelected ? Colors.white : Colors.blueGrey[700]),
+        leading: Icon(icon,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant),
         title: Text(
           title,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.blueGrey[800],
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             fontSize: 15,
           ),
@@ -382,12 +389,15 @@ class _MenuLateralState extends State<MenuLateral> {
       BuildContext context, IconData icon, String title, List<Widget> children,
       {bool initiallyExpanded = false}) {
     return ExpansionTile(
-      leading: Icon(icon, color: Colors.blueGrey[700]),
+      leading:
+          Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
       title: Text(title,
           style: TextStyle(
-              color: Colors.blueGrey[800],
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w500,
               fontSize: 15)),
+      iconColor: Theme.of(context).colorScheme.primary,
+      textColor: Theme.of(context).colorScheme.primary,
       initiallyExpanded: initiallyExpanded,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       childrenPadding: const EdgeInsets.only(left: 10),
@@ -406,12 +416,19 @@ class _MenuLateralState extends State<MenuLateral> {
         leading: Icon(
           icon,
           size: 20,
-          color: isSelected ? Colors.white : Colors.blueGrey[400],
+          color: isSelected
+              ? Colors.white
+              : Theme.of(context)
+                  .colorScheme
+                  .onSurfaceVariant
+                  .withValues(alpha: 0.7),
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.blueGrey[600],
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),

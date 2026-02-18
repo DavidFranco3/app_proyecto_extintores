@@ -6,6 +6,7 @@ import '../../api/frecuencias.dart';
 import '../../api/auth.dart';
 import '../../api/ramas.dart';
 import '../../api/clientes.dart';
+import '../../api/models/cliente_model.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
 import '../../api/inspecciones_proximas.dart';
@@ -21,6 +22,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
 import '../../components/Generales/flushbar_helper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -43,11 +45,16 @@ class EncuestaEditarPage extends StatefulWidget {
   State<EncuestaEditarPage> createState() => _EncuestaEditarPageState();
 }
 
-final GlobalKey<DropdownSearchState<String>> clienteKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> ramaKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> clasificacionKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> frecuenciaKey = GlobalKey();
-final GlobalKey<DropdownSearchState<String>> encuestaKey = GlobalKey();
+final GlobalKey<DropdownSearchState<Map<String, dynamic>>> clienteKey =
+    GlobalKey();
+final GlobalKey<DropdownSearchState<Map<String, dynamic>>> ramaKey =
+    GlobalKey();
+final GlobalKey<DropdownSearchState<Map<String, dynamic>>> clasificacionKey =
+    GlobalKey();
+final GlobalKey<DropdownSearchState<Map<String, dynamic>>> frecuenciaKey =
+    GlobalKey();
+final GlobalKey<DropdownSearchState<Map<String, dynamic>>> encuestaKey =
+    GlobalKey();
 
 class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
   List<Pregunta> preguntas = [];
@@ -463,26 +470,30 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
+      final Map<String, dynamic> raw = (item is ClienteModel)
+          ? item.toJson()
+          : Map<String, dynamic>.from(item as Map);
+
       dataTemp.add({
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'correo': item['correo'],
-        'telefono': item['telefono'],
-        'calle': item['direccion']['calle'],
-        'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-            ? item['direccion']['nExterior']
+        'id': raw['_id'],
+        'nombre': raw['nombre'],
+        'correo': raw['correo'],
+        'telefono': raw['telefono'],
+        'calle': raw['direccion']['calle'],
+        'nExterior': raw['direccion']['nExterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nExterior']
             : 'S/N',
-        'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-            ? item['direccion']['nInterior']
+        'nInterior': raw['direccion']['nInterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nInterior']
             : 'S/N',
-        'colonia': item['direccion']['colonia'],
-        'estadoDom': item['direccion']['estadoDom'],
-        'municipio': item['direccion']['municipio'],
-        'cPostal': item['direccion']['cPostal'],
-        'referencia': item['direccion']['referencia'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
+        'colonia': raw['direccion']['colonia'],
+        'estadoDom': raw['direccion']['estadoDom'],
+        'municipio': raw['direccion']['municipio'],
+        'cPostal': raw['direccion']['cPostal'],
+        'referencia': raw['direccion']['referencia'],
+        'estado': raw['estado']?.toString() ?? 'true',
+        'createdAt': raw['createdAt'],
+        'updatedAt': raw['updatedAt'],
       });
     }
     return dataTemp;
@@ -1155,33 +1166,28 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                           children: [
                             // Dropdown para Cliente
                             Expanded(
-                              child: DropdownSearch<String>(
+                              child: DropdownSearch<Map<String, dynamic>>(
                                 key: clienteKey,
+                                compareFn: (item, sItem) =>
+                                    item['id'] == sItem['id'],
                                 items: (filter, _) {
                                   return dataClientes
                                       .where((c) => c['nombre']
                                           .toString()
                                           .toLowerCase()
                                           .contains(filter.toLowerCase()))
-                                      .map((c) => c['nombre'].toString())
                                       .toList();
                                 },
+                                itemAsString: (item) =>
+                                    item['nombre'].toString(),
                                 selectedItem: selectedClienteId != null
                                     ? dataClientes.firstWhere(
                                         (c) => c['id'] == selectedClienteId,
-                                        orElse: () =>
-                                            <String, dynamic>{'nombre': null},
-                                      )['nombre'] as String?
+                                        orElse: () => {})
                                     : null,
-                                onChanged: (String? newValue) {
+                                onChanged: (Map<String, dynamic>? newValue) {
                                   setState(() {
-                                    if (newValue != null) {
-                                      selectedClienteId =
-                                          dataClientes.firstWhere((c) =>
-                                              c['nombre'] == newValue)['id'];
-                                    } else {
-                                      selectedClienteId = null;
-                                    }
+                                    selectedClienteId = newValue?['id'];
                                   });
 
                                   if (selectedClienteId != null &&
@@ -1198,67 +1204,68 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 },
                                 dropdownBuilder: (context, selectedItem) =>
                                     Text(
-                                  selectedItem ?? "",
+                                  selectedItem?['nombre'] ?? "",
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: "Cliente",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                          color: Color(0xFF3498DB), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Color(0xFFF8F9FA),
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
                                   ),
                                 ),
-                                popupProps:
-                                    PopupProps.menu(showSearchBox: true),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: "Cliente",
+                                    prefixIcon: FontAwesomeIcons.userTag,
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  itemBuilder: (context, item, isSelected,
+                                          isItemDisabled) =>
+                                      Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    child: Text(
+                                      item['nombre'],
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                             SizedBox(width: 10),
                             // Dropdown para Tipo de Sistema
                             Expanded(
-                              child: DropdownSearch<String>(
+                              child: DropdownSearch<Map<String, dynamic>>(
                                 key: ramaKey,
+                                compareFn: (item, sItem) =>
+                                    item['id'] == sItem['id'],
                                 items: (filter, _) {
                                   return dataRamas
                                       .where((r) => r['nombre']
                                           .toString()
                                           .toLowerCase()
                                           .contains(filter.toLowerCase()))
-                                      .map((r) => r['nombre'].toString())
                                       .toList();
                                 },
+                                itemAsString: (item) =>
+                                    item['nombre'].toString(),
                                 selectedItem: selectedRamaId != null
                                     ? dataRamas.firstWhere(
                                         (r) => r['id'] == selectedRamaId,
-                                        orElse: () =>
-                                            <String, dynamic>{'nombre': null},
-                                      )['nombre'] as String?
+                                        orElse: () => {})
                                     : null,
-                                onChanged: (String? newValue) {
+                                onChanged: (Map<String, dynamic>? newValue) {
                                   setState(() {
-                                    if (newValue != null) {
-                                      selectedRamaId = dataRamas.firstWhere(
-                                          (r) => r['nombre'] == newValue)['id'];
-                                    } else {
-                                      selectedRamaId = null;
-                                    }
+                                    selectedRamaId = newValue?['id'];
                                   });
 
                                   if (selectedClienteId != null &&
@@ -1275,36 +1282,41 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 },
                                 dropdownBuilder: (context, selectedItem) =>
                                     Text(
-                                  selectedItem ?? "",
+                                  selectedItem?['nombre'] ?? "",
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: "Tipo de Sistema",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                          color: Color(0xFF3498DB), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Color(0xFFF8F9FA),
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
                                   ),
                                 ),
-                                popupProps:
-                                    PopupProps.menu(showSearchBox: true),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: "Tipo de Sistema",
+                                    prefixIcon: FontAwesomeIcons.layerGroup,
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  itemBuilder: (context, item, isSelected,
+                                          isItemDisabled) =>
+                                      Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    child: Text(
+                                      item['nombre'],
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1315,34 +1327,29 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                           children: [
                             // Dropdown para Clasificación
                             Expanded(
-                              child: DropdownSearch<String>(
+                              child: DropdownSearch<Map<String, dynamic>>(
                                 key: clasificacionKey,
+                                compareFn: (item, sItem) =>
+                                    item['id'] == sItem['id'],
                                 items: (filter, _) {
                                   return dataClasificaciones
                                       .where((c) => c['nombre']
                                           .toString()
                                           .toLowerCase()
                                           .contains(filter.toLowerCase()))
-                                      .map((c) => c['nombre'].toString())
                                       .toList();
                                 },
+                                itemAsString: (item) =>
+                                    item['nombre'].toString(),
                                 selectedItem: selectedIdClasificacion != null
                                     ? dataClasificaciones.firstWhere(
                                         (c) =>
                                             c['id'] == selectedIdClasificacion,
-                                        orElse: () =>
-                                            <String, dynamic>{'nombre': null},
-                                      )['nombre'] as String?
+                                        orElse: () => {})
                                     : null,
-                                onChanged: (String? newValue) {
+                                onChanged: (Map<String, dynamic>? newValue) {
                                   setState(() {
-                                    if (newValue != null) {
-                                      selectedIdClasificacion =
-                                          dataClasificaciones.firstWhere((c) =>
-                                              c['nombre'] == newValue)['id'];
-                                    } else {
-                                      selectedIdClasificacion = null;
-                                    }
+                                    selectedIdClasificacion = newValue?['id'];
                                   });
 
                                   if (selectedRamaId != null &&
@@ -1359,68 +1366,68 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 },
                                 dropdownBuilder: (context, selectedItem) =>
                                     Text(
-                                  selectedItem ?? "",
+                                  selectedItem?['nombre'] ?? "",
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: "Clasificación",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                          color: Color(0xFF3498DB), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Color(0xFFF8F9FA),
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
                                   ),
                                 ),
-                                popupProps:
-                                    PopupProps.menu(showSearchBox: true),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: "Clasificación",
+                                    prefixIcon: FontAwesomeIcons.tags,
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  itemBuilder: (context, item, isSelected,
+                                          isItemDisabled) =>
+                                      Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    child: Text(
+                                      item['nombre'],
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                             SizedBox(width: 10),
                             // Dropdown para Frecuencia
                             Expanded(
-                              child: DropdownSearch<String>(
+                              child: DropdownSearch<Map<String, dynamic>>(
                                 key: frecuenciaKey,
+                                compareFn: (item, sItem) =>
+                                    item['id'] == sItem['id'],
                                 items: (filter, _) {
                                   return dataFrecuencias
                                       .where((f) => f['nombre']
                                           .toString()
                                           .toLowerCase()
                                           .contains(filter.toLowerCase()))
-                                      .map((f) => f['nombre'].toString())
                                       .toList();
                                 },
+                                itemAsString: (item) =>
+                                    item['nombre'].toString(),
                                 selectedItem: selectedFrecuenciaId != null
                                     ? dataFrecuencias.firstWhere(
                                         (f) => f['id'] == selectedFrecuenciaId,
-                                        orElse: () =>
-                                            <String, dynamic>{'nombre': null},
-                                      )['nombre'] as String?
+                                        orElse: () => {})
                                     : null,
-                                onChanged: (String? newValue) {
+                                onChanged: (Map<String, dynamic>? newValue) {
                                   setState(() {
-                                    if (newValue != null) {
-                                      selectedFrecuenciaId =
-                                          dataFrecuencias.firstWhere((f) =>
-                                              f['nombre'] == newValue)['id'];
-                                    } else {
-                                      selectedFrecuenciaId = null;
-                                    }
+                                    selectedFrecuenciaId = newValue?['id'];
                                   });
 
                                   if (selectedRamaId != null &&
@@ -1437,36 +1444,41 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                 },
                                 dropdownBuilder: (context, selectedItem) =>
                                     Text(
-                                  selectedItem ?? "",
+                                  selectedItem?['nombre'] ?? "",
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    labelText: "Periodo",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide:
-                                          BorderSide(color: Color(0xFFE0E0E0)),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                          color: Color(0xFF3498DB), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Color(0xFFF8F9FA),
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
                                   ),
                                 ),
-                                popupProps:
-                                    PopupProps.menu(showSearchBox: true),
+                                decoratorProps: DropDownDecoratorProps(
+                                  decoration: PremiumInputs.decoration(
+                                    labelText: "Periodo",
+                                    prefixIcon: FontAwesomeIcons.clock,
+                                  ),
+                                ),
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true,
+                                  fit: FlexFit.loose,
+                                  itemBuilder: (context, item, isSelected,
+                                          isItemDisabled) =>
+                                      Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    child: Text(
+                                      item['nombre'],
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1475,8 +1487,9 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                         SizedBox(height: 10),
 
 // Dropdown para Encuesta
-                        DropdownSearch<String>(
+                        DropdownSearch<Map<String, dynamic>>(
                           key: encuestaKey,
+                          compareFn: (item, sItem) => item['id'] == sItem['id'],
                           enabled: dataEncuestas.isNotEmpty,
                           items: (filter, _) {
                             return dataEncuestas
@@ -1484,58 +1497,57 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                     .toString()
                                     .toLowerCase()
                                     .contains(filter.toLowerCase()))
-                                .map((e) => e['nombre'].toString())
                                 .toList();
                           },
+                          itemAsString: (item) => item['nombre'].toString(),
                           selectedItem: selectedEncuestaId != null
                               ? dataEncuestas.firstWhere(
                                   (e) => e['id'] == selectedEncuestaId,
-                                  orElse: () =>
-                                      <String, dynamic>{'nombre': null},
-                                )['nombre'] as String?
+                                  orElse: () => {})
                               : null,
-                          onChanged: (String? newValue) {
+                          onChanged: (Map<String, dynamic>? newValue) {
                             if (newValue == null) return;
                             setState(() {
-                              selectedEncuestaId = dataEncuestas.firstWhere(
-                                  (e) => e['nombre'] == newValue)['id'];
+                              selectedEncuestaId = newValue['id'];
                               currentPage = 0;
-                              selectedIdFrecuencia = dataEncuestas.firstWhere(
-                                  (e) =>
-                                      e['nombre'] == newValue)['idFrecuencia'];
+                              selectedIdFrecuencia = newValue['idFrecuencia'];
                             });
                             actualizarPreguntas(selectedEncuestaId!);
                           },
                           dropdownBuilder: (context, selectedItem) => Text(
-                            selectedItem ?? "",
+                            selectedItem?['nombre'] ?? "",
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          decoratorProps: DropDownDecoratorProps(
-                            decoration: InputDecoration(
-                              labelText: "Actividad",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Color(0xFFE0E0E0)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Color(0xFFE0E0E0)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                    color: Color(0xFF3498DB), width: 2),
-                              ),
-                              filled: true,
-                              fillColor: Color(0xFFF8F9FA),
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium?.color,
                             ),
                           ),
-                          popupProps: PopupProps.menu(showSearchBox: true),
+                          decoratorProps: DropDownDecoratorProps(
+                            decoration: PremiumInputs.decoration(
+                              labelText: "Actividad",
+                              prefixIcon: FontAwesomeIcons.fileContract,
+                            ),
+                          ),
+                          popupProps: PopupProps.menu(
+                            showSearchBox: true,
+                            fit: FlexFit.loose,
+                            itemBuilder:
+                                (context, item, isSelected, isItemDisabled) =>
+                                    Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Text(
+                                item['nombre'],
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                         if (selectedEncuestaId != null && preguntas.isNotEmpty)
                           SizedBox(
@@ -1709,48 +1721,56 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                           },
                                           dropdownBuilder:
                                               (context, selectedItem) => Text(
-                                            selectedItem ?? "",
+                                            selectedItem ??
+                                                "Seleccionar Calificación",
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                                fontSize: 14,
-                                                color: selectedItem == null
-                                                    ? Colors.grey
-                                                    : Colors.black),
+                                              fontSize: 14,
+                                              color: selectedItem == null
+                                                  ? Colors.grey
+                                                  : Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.color,
+                                            ),
                                           ),
                                           decoratorProps:
                                               DropDownDecoratorProps(
-                                            decoration: InputDecoration(
+                                            decoration:
+                                                PremiumInputs.decoration(
                                               labelText: "Calificación",
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                borderSide: BorderSide(
-                                                    color: Color(0xFFE0E0E0)),
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                borderSide: BorderSide(
-                                                    color: Color(0xFFE0E0E0)),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                borderSide: BorderSide(
-                                                    color: Color(0xFF3498DB),
-                                                    width: 2),
-                                              ),
-                                              filled: true,
-                                              fillColor: Color(0xFFF8F9FA),
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 12),
+                                              prefixIcon: FontAwesomeIcons.star,
                                             ),
                                           ),
                                           popupProps: PopupProps.menu(
                                             showSearchBox: true,
                                             fit: FlexFit.loose,
+                                            itemBuilder: (context, item,
+                                                isDisabled, isSelected) {
+                                              return Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12),
+                                                child: Text(
+                                                  item,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: isSelected
+                                                        ? Theme.of(context)
+                                                            .primaryColor
+                                                        : (Theme.of(context)
+                                                                    .brightness ==
+                                                                Brightness.dark
+                                                            ? Colors.white
+                                                            : Colors.black87),
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.bold
+                                                        : FontWeight.normal,
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                             constraints:
                                                 BoxConstraints(maxHeight: 300),
                                           ),
@@ -1905,18 +1925,21 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                               children: [
                                                 Text("Orientación: "),
                                                 SizedBox(width: 10),
-                                                DropdownButton<String>(
-                                                  value: _orientacion,
-                                                  items: [
-                                                    DropdownMenuItem(
-                                                        value: 'horizontal',
-                                                        child:
-                                                            Text('Horizontal')),
-                                                    DropdownMenuItem(
-                                                        value: 'vertical',
-                                                        child:
-                                                            Text('Vertical')),
-                                                  ],
+                                                DropdownSearch<String>(
+                                                  items: (filter, _) => [
+                                                    'horizontal',
+                                                    'vertical'
+                                                  ]
+                                                      .where((o) => o
+                                                          .toLowerCase()
+                                                          .contains(filter
+                                                              .toLowerCase()))
+                                                      .toList(),
+                                                  itemAsString: (item) =>
+                                                      item == 'horizontal'
+                                                          ? 'Horizontal'
+                                                          : 'Vertical',
+                                                  selectedItem: _orientacion,
                                                   onChanged: (value) {
                                                     setState(() {
                                                       _orientacion = value!;
@@ -1925,6 +1948,55 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
                                                       _imageVertical2 = null;
                                                     });
                                                   },
+                                                  dropdownBuilder:
+                                                      (context, selectedItem) =>
+                                                          Text(
+                                                    selectedItem == 'horizontal'
+                                                        ? 'Horizontal'
+                                                        : 'Vertical',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color,
+                                                    ),
+                                                  ),
+                                                  popupProps: PopupProps.menu(
+                                                    fit: FlexFit.loose,
+                                                    itemBuilder: (context,
+                                                        item,
+                                                        isDisabled,
+                                                        isSelected) {
+                                                      return Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 16,
+                                                                vertical: 12),
+                                                        child: Text(
+                                                          item == 'horizontal'
+                                                              ? 'Horizontal'
+                                                              : 'Vertical',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: isSelected
+                                                                ? Theme.of(
+                                                                        context)
+                                                                    .primaryColor
+                                                                : (Theme.of(context)
+                                                                            .brightness ==
+                                                                        Brightness
+                                                                            .dark
+                                                                    ? Colors
+                                                                        .white
+                                                                    : Colors
+                                                                        .black87),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
                                                 ),
                                               ],
                                             ),

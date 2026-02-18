@@ -808,18 +808,15 @@ class _AccionesState extends State<Acciones> {
                                 enabled: !isEliminar && !_isLoading,
                                 items: (filter, _) {
                                   final roles = [
-                                    {
-                                      'value': 'administrador',
-                                      'label': 'Administrador'
-                                    },
-                                    {'value': 'inspector', 'label': 'Tecnico'},
+                                    'administrador',
+                                    'inspector',
                                   ];
-
                                   return roles
-                                      .where((r) => r['label']!
+                                      .where((r) => (r == 'administrador'
+                                              ? 'Administrador'
+                                              : 'Tecnico')
                                           .toLowerCase()
                                           .contains(filter.toLowerCase()))
-                                      .map((r) => r['value']!)
                                       .toList();
                                 },
                                 itemAsString: (item) => item == 'administrador'
@@ -836,17 +833,22 @@ class _AccionesState extends State<Acciones> {
                                       }
                                     : null,
                                 dropdownBuilder: (context, selectedItem) {
+                                  String roleName = '';
+                                  if (selectedItem == 'administrador') {
+                                    roleName = 'Administrador';
+                                  } else if (selectedItem == 'inspector') {
+                                    roleName = 'Tecnico';
+                                  }
                                   return Text(
-                                    selectedItem == 'administrador'
-                                        ? 'Administrador'
-                                        : (selectedItem == 'inspector'
-                                            ? 'Tecnico'
-                                            : 'Selecciona un Rol'),
+                                    roleName,
                                     style: TextStyle(
                                       color: selectedItem == null ||
                                               selectedItem.isEmpty
                                           ? Colors.grey
-                                          : Colors.black,
+                                          : Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
                                       fontSize: 14,
                                     ),
                                   );
@@ -857,10 +859,33 @@ class _AccionesState extends State<Acciones> {
                                     prefixIcon: FontAwesomeIcons.userShield,
                                   ),
                                 ),
-                                popupProps: const PopupProps.menu(
+                                popupProps: PopupProps.menu(
                                   showSearchBox: true,
                                   fit: FlexFit.loose,
-                                  constraints: BoxConstraints(maxHeight: 200),
+                                  itemBuilder: (context, item, isSelected,
+                                      isItemDisabled) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Text(
+                                        item == 'administrador'
+                                            ? 'Administrador'
+                                            : 'Tecnico',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isSelected
+                                              ? Theme.of(context).primaryColor
+                                              : Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 validator: !isEliminar && !_isLoading
                                     ? (value) => value == null || value.isEmpty

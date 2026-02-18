@@ -25,7 +25,24 @@ class ClasificacionesController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    await updateCache(
+        'clasificacionesBox', 'clasificaciones', dataClasificaciones);
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempRecord = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataClasificaciones.insert(0, tempRecord);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'clasificaciones/registrar',
       method: 'POST',
@@ -33,12 +50,24 @@ class ClasificacionesController extends BaseController {
       apiCall: () async {
         final res =
             await _clasificacionesService.registrarClasificaciones(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarClasificaciones();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataClasificaciones.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataClasificaciones[index] = {...dataClasificaciones[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'clasificaciones/actualizar/$id',
       method: 'PUT',
@@ -52,6 +81,11 @@ class ClasificacionesController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataClasificaciones.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'clasificaciones/eliminar/$id',
       method: 'DELETE',
@@ -63,6 +97,14 @@ class ClasificacionesController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataClasificaciones.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataClasificaciones[index] = {...dataClasificaciones[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'clasificaciones/deshabilitar/$id',
       method: 'PUT',
@@ -106,6 +148,7 @@ class ClasificacionesController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Clasificación synced: ${action.id}");
+        await cargarClasificaciones(); // Refresh with server data
       }
     }
   }

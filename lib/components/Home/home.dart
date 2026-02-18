@@ -76,10 +76,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 20),
 
-                      // 0. Status Sync Widget
-                      if (controller.pendingOperations > 0)
-                        _buildSyncStatus(context, controller.pendingOperations),
-
                       const PremiumSectionTitle(
                         title: "Acciones Rápidas",
                         icon: FontAwesomeIcons.bolt,
@@ -184,39 +180,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildSyncStatus(BuildContext context, int pending) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.sync_problem, color: Colors.orange),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Sincronización Pendiente",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  "$pending operaciones guardadas localmente.",
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -25,19 +25,47 @@ class FrecuenciasController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    await updateCache('frecuenciasBox', 'frecuencias', dataFrecuencias);
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempRecord = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataFrecuencias.insert(0, tempRecord);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'frecuencias/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _frecuenciasService.registraFrecuencias(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarFrecuencias();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataFrecuencias.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataFrecuencias[index] = {...dataFrecuencias[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'frecuencias/actualizar/$id',
       method: 'PUT',
@@ -50,6 +78,11 @@ class FrecuenciasController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataFrecuencias.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'frecuencias/eliminar/$id',
       method: 'DELETE',
@@ -61,6 +94,14 @@ class FrecuenciasController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataFrecuencias.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataFrecuencias[index] = {...dataFrecuencias[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'frecuencias/deshabilitar/$id',
       method: 'PUT',
@@ -103,6 +144,7 @@ class FrecuenciasController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Frecuencia synced: ${action.id}");
+        await cargarFrecuencias(); // Refresh with server data
       }
     }
   }

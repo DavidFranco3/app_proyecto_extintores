@@ -9,6 +9,7 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
+import '../../components/Generales/premium_inputs.dart';
 
 class EncuestasPage extends StatefulWidget {
   const EncuestasPage({super.key});
@@ -95,8 +96,9 @@ class _EncuestasPageState extends State<EncuestasPage> {
                 child: Column(
                   children: [
                     // Dropdown para Filtrar por Frecuencia
-                    DropdownSearch<String>(
+                    DropdownSearch<Map<String, dynamic>>(
                       key: const Key('frecuenciaDropdown'),
+                      compareFn: (item, sItem) => item['id'] == sItem['id'],
                       enabled: controller.dataFrecuencias.isNotEmpty,
                       items: (filter, _) {
                         return controller.dataFrecuencias
@@ -104,41 +106,68 @@ class _EncuestasPageState extends State<EncuestasPage> {
                                 .toString()
                                 .toLowerCase()
                                 .contains(filter.toLowerCase()))
-                            .map((f) => f['nombre'].toString())
                             .toList();
                       },
-                      selectedItem: controller.selectedFrecuencia,
+                      itemAsString: (f) => f['nombre'].toString(),
+                      selectedItem: controller.dataFrecuencias
+                          .cast<Map<String, dynamic>?>()
+                          .firstWhere(
+                            (f) =>
+                                f?['nombre'] == controller.selectedFrecuencia,
+                            orElse: () => null,
+                          ),
                       onChanged: controller.dataFrecuencias.isEmpty
                           ? null
-                          : (String? value) {
-                              controller.setFrecuencia(value);
+                          : (Map<String, dynamic>? value) {
+                              controller.setFrecuencia(value?['nombre']);
                             },
                       dropdownBuilder: (context, selectedItem) => Text(
-                        selectedItem ?? "",
+                        selectedItem?['nombre'] ?? "Seleccione Frecuencia",
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 14,
                             color: selectedItem == null
                                 ? Colors.grey
-                                : Colors.black),
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color),
                       ),
-                      decoratorProps: const DropDownDecoratorProps(
-                        decoration: InputDecoration(
+                      decoratorProps: DropDownDecoratorProps(
+                        decoration: PremiumInputs.decoration(
                           labelText: "Frecuencia",
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          prefixIcon: FontAwesomeIcons.calendarDay,
                         ),
                       ),
-                      popupProps: const PopupProps.menu(showSearchBox: true),
+                      popupProps: PopupProps.menu(
+                        showSearchBox: true,
+                        fit: FlexFit.loose,
+                        itemBuilder:
+                            (context, item, isSelected, isItemDisabled) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            child: Text(
+                              item['nombre']!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
 
                     const SizedBox(height: 8),
 
                     // Dropdown para Filtrar por Clasificación
-                    DropdownSearch<String>(
+                    DropdownSearch<Map<String, dynamic>>(
                       key: const Key('clasificacionDropdown'),
+                      compareFn: (item, sItem) => item['id'] == sItem['id'],
                       enabled: controller.dataClasificaciones.isNotEmpty,
                       items: (filter, _) {
                         return controller.dataClasificaciones
@@ -146,34 +175,61 @@ class _EncuestasPageState extends State<EncuestasPage> {
                                 .toString()
                                 .toLowerCase()
                                 .contains(filter.toLowerCase()))
-                            .map((c) => c['nombre'].toString())
                             .toList();
                       },
-                      selectedItem: controller.selectedClasificacion,
+                      itemAsString: (c) => c['nombre'].toString(),
+                      selectedItem: controller.dataClasificaciones
+                          .cast<Map<String, dynamic>?>()
+                          .firstWhere(
+                            (c) =>
+                                c?['nombre'] ==
+                                controller.selectedClasificacion,
+                            orElse: () => null,
+                          ),
                       onChanged: controller.dataClasificaciones.isEmpty
                           ? null
-                          : (String? value) {
-                              controller.setClasificacion(value);
+                          : (Map<String, dynamic>? value) {
+                              controller.setClasificacion(value?['nombre']);
                             },
                       dropdownBuilder: (context, selectedItem) => Text(
-                        selectedItem ?? "",
+                        selectedItem?['nombre'] ?? "Seleccione Clasificación",
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 14,
                             color: selectedItem == null
                                 ? Colors.grey
-                                : Colors.black),
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color),
                       ),
-                      decoratorProps: const DropDownDecoratorProps(
-                        decoration: InputDecoration(
+                      decoratorProps: DropDownDecoratorProps(
+                        decoration: PremiumInputs.decoration(
                           labelText: "Clasificación",
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          prefixIcon: FontAwesomeIcons.layerGroup,
                         ),
                       ),
-                      popupProps: const PopupProps.menu(showSearchBox: true),
+                      popupProps: PopupProps.menu(
+                        showSearchBox: true,
+                        fit: FlexFit.loose,
+                        itemBuilder:
+                            (context, item, isSelected, isItemDisabled) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            child: Text(
+                              item['nombre']!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
 
                     const SizedBox(height: 8),

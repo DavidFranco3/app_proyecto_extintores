@@ -26,19 +26,47 @@ class UsuariosController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    await updateCache('usuariosBox', 'usuarios', dataUsuarios);
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempRecord = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataUsuarios.insert(0, tempRecord);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'usuarios/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _service.registraUsuarios(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarUsuarios();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataUsuarios.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataUsuarios[index] = {...dataUsuarios[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'usuarios/actualizar/$id',
       method: 'PUT',
@@ -51,6 +79,11 @@ class UsuariosController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataUsuarios.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'usuarios/eliminar/$id',
       method: 'DELETE',
@@ -62,6 +95,14 @@ class UsuariosController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataUsuarios.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataUsuarios[index] = {...dataUsuarios[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'usuarios/deshabilitar/$id',
       method: 'PUT',
@@ -102,6 +143,7 @@ class UsuariosController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Usuario synced: ${action.id}");
+        await cargarUsuarios(); // Refresh with server data
       }
     }
   }

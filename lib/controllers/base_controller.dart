@@ -131,4 +131,9 @@ abstract class BaseController extends ChangeNotifier {
     // Note: Specific controllers should implement the actual retry logic
     // or we can use a Centralized Sync Service if preferred.
   }
+
+  /// Helper to update a specific cache box
+  Future<void> updateCache(String box, String key, dynamic data) async {
+    await cache.saveData(box, key, data);
+  }
 }

@@ -26,19 +26,51 @@ class InspeccionesController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    // Note: This logic depends on the current clientId being known.
+    // For simplicity, we assume the box manages the list properly.
+    await updateCache('inspeccionesBox', 'inspecciones', dataInspecciones);
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempRecord = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataInspecciones.insert(0, tempRecord);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'inspecciones/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _service.registraInspecciones(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          // Replace temp with real data or just reload
+          if (data['idCliente'] != null)
+            await cargarInspecciones(data['idCliente']);
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataInspecciones.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataInspecciones[index] = {...dataInspecciones[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'inspecciones/actualizar/$id',
       method: 'PUT',
@@ -63,6 +95,11 @@ class InspeccionesController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataInspecciones.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'inspecciones/eliminar/$id',
       method: 'DELETE',
@@ -74,6 +111,14 @@ class InspeccionesController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataInspecciones.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataInspecciones[index] = {...dataInspecciones[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'inspecciones/deshabilitar/$id',
       method: 'PUT',
@@ -93,9 +138,11 @@ class InspeccionesController extends BaseController {
 
     for (var action in inspActions) {
       bool success = false;
+      String? clientId;
       if (action.url == 'inspecciones/registrar') {
         final res = await _service.registraInspecciones(action.body);
         success = res['status'] == 200 || res['status'] == 201;
+        clientId = action.body['idCliente'];
       } else if (action.url.startsWith('inspecciones/actualizar/')) {
         final id = action.url.split('/').last;
         final res = await _service.actualizarInspecciones(id, action.body);
@@ -119,6 +166,7 @@ class InspeccionesController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Inspeccion synced: ${action.id}");
+        if (clientId != null) await cargarInspecciones(clientId);
       }
     }
   }

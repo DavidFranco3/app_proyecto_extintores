@@ -8,6 +8,7 @@ import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../api/clientes.dart';
+import '../../api/models/cliente_model.dart';
 import '../../api/inspecciones.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -16,6 +17,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../components/Generales/premium_button.dart';
 import '../../components/Generales/premium_inputs.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 void main() => runApp(MaterialApp(home: ClienteInspeccionesApp()));
 
@@ -127,12 +129,35 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
   }
 
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
-    return data
-        .map((item) => {
-              'id': item['_id'],
-              'nombre': item['nombre'],
-            })
-        .toList();
+    List<Map<String, dynamic>> dataTemp = [];
+    for (var item in data) {
+      final Map<String, dynamic> raw = (item is ClienteModel)
+          ? item.toJson()
+          : Map<String, dynamic>.from(item as Map);
+
+      dataTemp.add({
+        'id': raw['_id'],
+        'nombre': raw['nombre'],
+        'correo': raw['correo'],
+        'telefono': raw['telefono'],
+        'calle': raw['direccion']['calle'],
+        'nExterior': raw['direccion']['nExterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nExterior']
+            : 'S/N',
+        'nInterior': raw['direccion']['nInterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nInterior']
+            : 'S/N',
+        'colonia': raw['direccion']['colonia'],
+        'estadoDom': raw['direccion']['estadoDom'],
+        'municipio': raw['direccion']['municipio'],
+        'cPostal': raw['direccion']['cPostal'],
+        'referencia': raw['direccion']['referencia'],
+        'estado': raw['estado']?.toString() ?? 'true',
+        'createdAt': raw['createdAt'],
+        'updatedAt': raw['updatedAt'],
+      });
+    }
+    return dataTemp;
   }
 
   Future<void> getInspeccionesDesdeAPI(String idCliente) async {
@@ -306,33 +331,68 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
                   ),
                   const SizedBox(height: 15),
                   PremiumCardField(
-                    child: DropdownButtonFormField<String>(
-                      decoration: PremiumInputs.decoration(
-                        labelText: "Cliente",
-                        prefixIcon: FontAwesomeIcons.user,
-                      ),
-                      initialValue: clienteSeleccionado,
-                      items:
-                          dataClientes.map<DropdownMenuItem<String>>((cliente) {
-                        return DropdownMenuItem<String>(
-                          value: cliente['id'],
-                          child: Text(
-                            cliente['nombre'],
-                            style: const TextStyle(fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (nuevoClienteId) {
+                    child: DropdownSearch<Map<String, dynamic>>(
+                      items: (filter, _) => dataClientes
+                          .where((cliente) => cliente['nombre']
+                              .toString()
+                              .toLowerCase()
+                              .contains(filter.toLowerCase()))
+                          .toList(),
+                      itemAsString: (item) => item['nombre'] ?? '',
+                      compareFn: (item1, item2) => item1['id'] == item2['id'],
+                      selectedItem: clienteSeleccionado != null
+                          ? dataClientes.firstWhere(
+                              (element) => element['id'] == clienteSeleccionado,
+                              orElse: () => {})
+                          : null,
+                      onChanged: (nuevoCliente) {
                         setState(() {
-                          clienteSeleccionado = nuevoClienteId;
+                          clienteSeleccionado = nuevoCliente?['id'];
                           fechaSeleccionada = null;
                         });
-                        if (nuevoClienteId != null) {
-                          cargarInspecciones(nuevoClienteId);
+                        if (nuevoCliente != null) {
+                          cargarInspecciones(nuevoCliente['id']);
                         }
                       },
-                      isExpanded: true,
+                      dropdownBuilder: (context, selectedItem) {
+                        return Text(
+                          selectedItem?['nombre'] ?? "Seleccionar cliente",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: selectedItem == null
+                                ? Colors.grey
+                                : Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
+                      decoratorProps: DropDownDecoratorProps(
+                        decoration: PremiumInputs.decoration(
+                          labelText: "Cliente",
+                          prefixIcon: FontAwesomeIcons.user,
+                        ),
+                      ),
+                      popupProps: PopupProps.menu(
+                        showSearchBox: true,
+                        fit: FlexFit.loose,
+                        itemBuilder:
+                            (context, item, isSelected, isItemDisabled) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            child: Text(
+                              item['nombre'] ?? '',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

@@ -25,19 +25,48 @@ class ExtintoresController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    await updateCache('extintoresBox', 'extintores', dataExtintores);
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempRecord = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'extintor': data['extintor'] ?? 'Desconocido', // Fallback
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataExtintores.insert(0, tempRecord);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'extintores/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _extintoresService.registraExtintores(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarExtintores();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataExtintores.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataExtintores[index] = {...dataExtintores[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'extintores/actualizar/$id',
       method: 'PUT',
@@ -50,6 +79,11 @@ class ExtintoresController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataExtintores.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'extintores/eliminar/$id',
       method: 'DELETE',
@@ -61,6 +95,14 @@ class ExtintoresController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataExtintores.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataExtintores[index] = {...dataExtintores[index], ...data};
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'extintores/deshabilitar/$id',
       method: 'PUT',
@@ -103,6 +145,7 @@ class ExtintoresController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Extintor synced: ${action.id}");
+        await cargarExtintores(); // Refresh cache with server data
       }
     }
   }

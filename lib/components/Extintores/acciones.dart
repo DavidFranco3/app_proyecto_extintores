@@ -623,9 +623,15 @@ class _AccionesState extends State<Acciones> {
 
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
+      final selectedType = dataTiposExtintores.firstWhere(
+        (t) => t['id'].toString() == _idTipoExtintorController.text,
+        orElse: () => {'nombre': 'Desconocido'},
+      );
+
       var formData = {
         'numeroSerie': _numeroSerieController.text,
         'idTipoExtintor': _idTipoExtintorController.text,
+        'extintor': selectedType['nombre'],
         'capacidad': _capacidadController.text,
         'ultimaRecarga': _ultimaRecargaController.text,
       };
@@ -707,7 +713,7 @@ class _AccionesState extends State<Acciones> {
                                         : null,
                               ),
                               const SizedBox(height: 12),
-                              DropdownSearch<String>(
+                              DropdownSearch<Map<String, dynamic>>(
                                 key: const Key('tipoExtintorDropdown'),
                                 enabled: dataTiposExtintores.isNotEmpty &&
                                     !isEliminar,
@@ -717,32 +723,55 @@ class _AccionesState extends State<Acciones> {
                                           .toString()
                                           .toLowerCase()
                                           .contains(filter.toLowerCase()))
-                                      .map((tipo) => tipo['id'].toString())
                                       .toList();
                                 },
-                                selectedItem:
-                                    _idTipoExtintorController.text.isEmpty
-                                        ? null
-                                        : _idTipoExtintorController.text,
+                                compareFn: (item, selectedItem) =>
+                                    item['id'] == selectedItem['id'],
+                                itemAsString: (tipo) =>
+                                    tipo['nombre'].toString(),
+                                selectedItem: dataTiposExtintores.isEmpty
+                                    ? null
+                                    : dataTiposExtintores
+                                        .cast<Map<String, dynamic>?>()
+                                        .firstWhere(
+                                          (tipo) =>
+                                              tipo?['id'].toString() ==
+                                              _idTipoExtintorController.text,
+                                          orElse: () => null,
+                                        ),
                                 onChanged: isEliminar
                                     ? null
-                                    : (String? newValue) {
+                                    : (Map<String, dynamic>? newValue) {
                                         setState(() {
                                           _idTipoExtintorController.text =
-                                              newValue!;
+                                              newValue?['id']?.toString() ?? '';
                                         });
                                       },
                                 dropdownBuilder: (context, selectedItem) {
-                                  final tipo = dataTiposExtintores.firstWhere(
-                                      (t) => t['id'].toString() == selectedItem,
-                                      orElse: () => {'nombre': ''});
+                                  // Fallback to name from widget.data if selectedItem is not yet in list
+                                  String displayName = '';
+                                  if (selectedItem != null) {
+                                    displayName = selectedItem['nombre'] ?? '';
+                                  } else if (widget.data != null &&
+                                      widget.data['tipoExtintor'] != null) {
+                                    displayName = widget.data['tipoExtintor']
+                                            ['nombre'] ??
+                                        '';
+                                  } else if (widget.data != null &&
+                                      widget.data['extintor'] != null) {
+                                    displayName = widget.data['extintor'] ?? '';
+                                  }
+
                                   return Text(
-                                    tipo['nombre'] ?? '',
+                                    displayName,
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: selectedItem == null
+                                      color: displayName.isEmpty
                                           ? Colors.grey
-                                          : Colors.black,
+                                          : Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
                                     ),
                                   );
                                 },
@@ -752,11 +781,35 @@ class _AccionesState extends State<Acciones> {
                                     prefixIcon: FontAwesomeIcons.layerGroup,
                                   ),
                                 ),
-                                popupProps:
-                                    const PopupProps.menu(showSearchBox: true),
+                                popupProps: PopupProps.menu(
+                                  fit: FlexFit.loose,
+                                  showSearchBox: true,
+                                  itemBuilder: (context, item, isSelected,
+                                      isItemDisabled) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Text(
+                                        item['nombre'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isSelected
+                                              ? Theme.of(context).primaryColor
+                                              : Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                                 validator: isEliminar
                                     ? null
-                                    : (value) => value == null || value.isEmpty
+                                    : (value) => value == null
                                         ? 'El tipo de extintor es obligatorio'
                                         : null,
                               ),

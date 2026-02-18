@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '../../api/clientes.dart';
+import '../../api/models/cliente_model.dart';
 import '../../components/InspeccionesPantalla1/list_inspecciones_pantalla_1.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -119,31 +120,31 @@ class _InspeccionesPantalla1PageState extends State<InspeccionesPantalla1Page> {
   // Función para formatear los datos de las clientes
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
-    int total = data.length; // Obtener el total de elementos
-    for (var i = 0; i < total; i++) {
-      var item = data[i];
+    for (var item in data) {
+      final Map<String, dynamic> raw = (item is ClienteModel)
+          ? item.toJson()
+          : Map<String, dynamic>.from(item as Map);
+
       dataTemp.add({
-        'index': total - i,
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'imagen': item['imagen'],
-        'correo': item['correo'],
-        'telefono': item['telefono'],
-        'calle': item['direccion']['calle'],
-        'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-            ? item['direccion']['nExterior']
+        'id': raw['_id'],
+        'nombre': raw['nombre'],
+        'correo': raw['correo'],
+        'telefono': raw['telefono'],
+        'calle': raw['direccion']['calle'],
+        'nExterior': raw['direccion']['nExterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nExterior']
             : 'S/N',
-        'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-            ? item['direccion']['nInterior']
+        'nInterior': raw['direccion']['nInterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nInterior']
             : 'S/N',
-        'colonia': item['direccion']['colonia'],
-        'estadoDom': item['direccion']['estadoDom'],
-        'municipio': item['direccion']['municipio'],
-        'cPostal': item['direccion']['cPostal'],
-        'referencia': item['direccion']['referencia'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
+        'colonia': raw['direccion']['colonia'],
+        'estadoDom': raw['direccion']['estadoDom'],
+        'municipio': raw['direccion']['municipio'],
+        'cPostal': raw['direccion']['cPostal'],
+        'referencia': raw['direccion']['referencia'],
+        'estado': raw['estado']?.toString() ?? 'true',
+        'createdAt': raw['createdAt'],
+        'updatedAt': raw['updatedAt'],
       });
     }
     return dataTemp;

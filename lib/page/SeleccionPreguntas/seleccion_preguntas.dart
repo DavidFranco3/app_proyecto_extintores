@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../api/encuesta_inspeccion_cliente.dart';
 import '../../api/clientes.dart';
+import '../../api/models/cliente_model.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
@@ -13,6 +14,7 @@ import '../../utils/offline_sync_util.dart';
 import '../../components/Generales/premium_button.dart';
 import '../../components/Generales/premium_inputs.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class EncuestasJerarquicasWidget extends StatefulWidget {
   const EncuestasJerarquicasWidget({super.key});
@@ -318,28 +320,32 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
   List<Map<String, dynamic>> formatModelClientes(List<dynamic> data) {
     List<Map<String, dynamic>> dataTemp = [];
     for (var item in data) {
+      final Map<String, dynamic> raw = (item is ClienteModel)
+          ? item.toJson()
+          : Map<String, dynamic>.from(item as Map);
+
       dataTemp.add({
-        'id': item['_id'],
-        'nombre': item['nombre'],
-        'imagen': item['imagen'],
-        'imagenCloudinary': item['imagenCloudinary'],
-        'correo': item['correo'],
-        'telefono': item['telefono'],
-        'calle': item['direccion']['calle'],
-        'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-            ? item['direccion']['nExterior']
+        'id': raw['_id'],
+        'nombre': raw['nombre'],
+        'imagen': raw['imagen'],
+        'imagenCloudinary': raw['imagenCloudinary'],
+        'correo': raw['correo'],
+        'telefono': raw['telefono'],
+        'calle': raw['direccion']['calle'],
+        'nExterior': raw['direccion']['nExterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nExterior']
             : 'S/N',
-        'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-            ? item['direccion']['nInterior']
+        'nInterior': raw['direccion']['nInterior']?.isNotEmpty ?? false
+            ? raw['direccion']['nInterior']
             : 'S/N',
-        'colonia': item['direccion']['colonia'],
-        'estadoDom': item['direccion']['estadoDom'],
-        'municipio': item['direccion']['municipio'],
-        'cPostal': item['direccion']['cPostal'],
-        'referencia': item['direccion']['referencia'],
-        'estado': item['estado'],
-        'createdAt': item['createdAt'],
-        'updatedAt': item['updatedAt'],
+        'colonia': raw['direccion']['colonia'],
+        'estadoDom': raw['direccion']['estadoDom'],
+        'municipio': raw['direccion']['municipio'],
+        'cPostal': raw['direccion']['cPostal'],
+        'referencia': raw['direccion']['referencia'],
+        'estado': raw['estado']?.toString() ?? 'true',
+        'createdAt': raw['createdAt'],
+        'updatedAt': raw['updatedAt'],
       });
     }
     return dataTemp;
@@ -572,32 +578,69 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                 ),
                 const SizedBox(height: 16),
                 PremiumCardField(
-                  child: DropdownButtonFormField<String>(
-                    key: ValueKey(
-                        clienteController.text), // 👈 esto obliga a reconstruir
-                    initialValue: clienteController.text.isEmpty
-                        ? null
-                        : clienteController.text,
-                    decoration: PremiumInputs.decoration(
-                      labelText: 'Cliente',
-                      prefixIcon: FontAwesomeIcons.userTag,
-                    ),
-                    isExpanded: true,
-                    items: dataClientes.map((cliente) {
-                      return DropdownMenuItem<String>(
-                        value: cliente['id'],
-                        child: Text(cliente['nombre']!),
-                      );
-                    }).toList(),
+                  child: DropdownSearch<Map<String, dynamic>>(
+                    key: ValueKey(clienteController.text),
+                    items: (filter, _) => dataClientes
+                        .where((cliente) => cliente['nombre']!
+                            .toLowerCase()
+                            .contains(filter.toLowerCase()))
+                        .toList(),
+                    itemAsString: (item) => item['nombre']!,
+                    compareFn: (item, sItem) => item['id'] == sItem['id'],
+                    selectedItem: clienteController.text.isNotEmpty
+                        ? dataClientes.firstWhere(
+                            (element) =>
+                                element['id'] == clienteController.text,
+                            orElse: () => {})
+                        : null,
                     onChanged: (newValue) async {
-                      setState(() {
-                        clienteController.text = newValue!;
-                        seleccionados.clear(); // 👉 limpia visualmente primero
-                      });
+                      if (newValue != null) {
+                        setState(() {
+                          clienteController.text = newValue['id']!;
+                          seleccionados
+                              .clear(); // 👉 limpia visualmente primero
+                        });
 
-                      await precargarEncuestasCliente(
-                          newValue!); // 👉 vuelve a llenar 'seleccionados'
+                        await precargarEncuestasCliente(newValue[
+                            'id']!); // 👉 vuelve a llenar 'seleccionados'
+                      }
                     },
+                    dropdownBuilder: (context, selectedItem) {
+                      return Text(
+                        selectedItem?['nombre'] ?? "Seleccionar cliente",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: selectedItem == null
+                              ? Colors.grey
+                              : Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    },
+                    decoratorProps: DropDownDecoratorProps(
+                      decoration: PremiumInputs.decoration(
+                        labelText: 'Cliente',
+                        prefixIcon: FontAwesomeIcons.userTag,
+                      ),
+                    ),
+                    popupProps: PopupProps.menu(
+                      showSearchBox: true,
+                      fit: FlexFit.loose,
+                      itemBuilder: (context, item, isSelected, isItemDisabled) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Text(
+                            item['nombre']!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                     validator: (value) => value == null || value.isEmpty
                         ? 'El cliente es obligatorio'
                         : null,

@@ -417,8 +417,10 @@ class _CrearEncuestaPantalla1ScreenState
                               },
                             ),
                             const SizedBox(height: 12),
-                            DropdownSearch<String>(
+                            DropdownSearch<Map<String, dynamic>>(
                               key: const Key('ramaDropdown'),
+                              compareFn: (item, sItem) =>
+                                  item['id'] == sItem['id'],
                               enabled: dataRamas.isNotEmpty,
                               items: (filter, _) {
                                 return dataRamas
@@ -426,23 +428,34 @@ class _CrearEncuestaPantalla1ScreenState
                                         .toString()
                                         .toLowerCase()
                                         .contains(filter.toLowerCase()))
-                                    .map((tipo) => tipo['nombre'].toString())
                                     .toList();
                               },
-                              selectedItem: widget.ramaController.text.isEmpty
-                                  ? null
-                                  : widget.ramaController.text,
+                              itemAsString: (tipo) => tipo['nombre'].toString(),
+                              selectedItem: dataRamas
+                                  .cast<Map<String, dynamic>?>()
+                                  .firstWhere(
+                                    (tipo) =>
+                                        tipo?['id'].toString() ==
+                                        widget.ramaController.text,
+                                    orElse: () => null,
+                                  ),
                               onChanged: dataRamas.isEmpty
                                   ? null
-                                  : (String? newValue) {
+                                  : (Map<String, dynamic>? newValue) {
                                       setState(() {
-                                        widget.ramaController.text = newValue!;
+                                        widget.ramaController.text =
+                                            newValue?['id']?.toString() ?? '';
                                       });
                                     },
                               dropdownBuilder: (context, selectedItem) => Text(
-                                selectedItem ?? "",
+                                selectedItem?['nombre'] ?? "",
                                 style: TextStyle(
-                                    fontSize: 14, color: Colors.black),
+                                  fontSize: 14,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color,
+                                ),
                               ),
                               decoratorProps: DropDownDecoratorProps(
                                 decoration: PremiumInputs.decoration(
@@ -450,20 +463,38 @@ class _CrearEncuestaPantalla1ScreenState
                                   prefixIcon: FontAwesomeIcons.microchip,
                                 ),
                               ),
-                              popupProps: const PopupProps.menu(
+                              popupProps: PopupProps.menu(
                                 showSearchBox: true,
                                 fit: FlexFit.loose,
-                                constraints: BoxConstraints(maxHeight: 300),
+                                itemBuilder: (context, item, isSelected,
+                                    isItemDisabled) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    child: Text(
+                                      item['nombre']!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                               validator: dataRamas.isEmpty
                                   ? null
-                                  : (value) => value == null || value.isEmpty
+                                  : (value) => value == null
                                       ? 'El tipo de sistema es obligatorio'
                                       : null,
                             ),
                             const SizedBox(height: 12),
-                            DropdownSearch<String>(
+                            DropdownSearch<Map<String, dynamic>>(
                               key: const Key('clasificacionDropdown'),
+                              compareFn: (item, sItem) =>
+                                  item['id'] == sItem['id'],
                               enabled: dataClasificaciones.isNotEmpty,
                               items: (filter, _) {
                                 return dataClasificaciones
@@ -471,25 +502,34 @@ class _CrearEncuestaPantalla1ScreenState
                                         .toString()
                                         .toLowerCase()
                                         .contains(filter.toLowerCase()))
-                                    .map((tipo) => tipo['nombre'].toString())
                                     .toList();
                               },
-                              selectedItem:
-                                  widget.clasificacionController.text.isEmpty
-                                      ? null
-                                      : widget.clasificacionController.text,
+                              itemAsString: (tipo) => tipo['nombre'].toString(),
+                              selectedItem: dataClasificaciones
+                                  .cast<Map<String, dynamic>?>()
+                                  .firstWhere(
+                                    (tipo) =>
+                                        tipo?['id'].toString() ==
+                                        widget.clasificacionController.text,
+                                    orElse: () => null,
+                                  ),
                               onChanged: dataClasificaciones.isEmpty
                                   ? null
-                                  : (String? newValue) {
+                                  : (Map<String, dynamic>? newValue) {
                                       setState(() {
                                         widget.clasificacionController.text =
-                                            newValue!;
+                                            newValue?['id']?.toString() ?? '';
                                       });
                                     },
                               dropdownBuilder: (context, selectedItem) => Text(
-                                selectedItem ?? "",
+                                selectedItem?['nombre'] ?? "",
                                 style: TextStyle(
-                                    fontSize: 14, color: Colors.black),
+                                  fontSize: 14,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color,
+                                ),
                               ),
                               decoratorProps: DropDownDecoratorProps(
                                 decoration: PremiumInputs.decoration(
@@ -497,14 +537,30 @@ class _CrearEncuestaPantalla1ScreenState
                                   prefixIcon: FontAwesomeIcons.layerGroup,
                                 ),
                               ),
-                              popupProps: const PopupProps.menu(
+                              popupProps: PopupProps.menu(
                                 showSearchBox: true,
                                 fit: FlexFit.loose,
-                                constraints: BoxConstraints(maxHeight: 300),
+                                itemBuilder: (context, item, isSelected,
+                                    isItemDisabled) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    child: Text(
+                                      item['nombre']!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                               validator: dataClasificaciones.isEmpty
                                   ? null
-                                  : (value) => value == null || value.isEmpty
+                                  : (value) => value == null
                                       ? 'La clasificación es obligatoria'
                                       : null,
                             ),

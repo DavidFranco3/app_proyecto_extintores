@@ -773,9 +773,16 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                               });
                             },
                             dropdownBuilder: (context, selectedItem) => Text(
-                              selectedItem ?? "",
-                              style:
-                                  TextStyle(fontSize: 14, color: Colors.black),
+                              selectedItem ?? "Seleccione tipo",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: selectedItem == null
+                                    ? Colors.grey
+                                    : Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
+                              ),
                             ),
                             decoratorProps: DropDownDecoratorProps(
                               decoration: PremiumInputs.decoration(
@@ -783,8 +790,26 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                                 prefixIcon: FontAwesomeIcons.listCheck,
                               ),
                             ),
-                            popupProps: const PopupProps.menu(
+                            popupProps: PopupProps.menu(
                               showSearchBox: true,
+                              fit: FlexFit.loose,
+                              itemBuilder:
+                                  (context, item, isSelected, isItemDisabled) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  child: Text(
+                                    item,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.color,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 20),

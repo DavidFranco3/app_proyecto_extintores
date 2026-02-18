@@ -28,19 +28,52 @@ class ClientesController extends BaseController {
     );
   }
 
+  Future<void> _saveToCache() async {
+    await updateCache('clientesBox', 'clientes',
+        dataClientes.map((e) => e.toJson()).toList());
+  }
+
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempClient = ClienteModel.fromJson({
+      ...data,
+      '_id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+    dataClientes.insert(0, tempClient);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'clientes/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _clientesService.registrarClientes(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarClientes();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataClientes.indexWhere((e) => e.id == id);
+    if (index != -1) {
+      final updated = ClienteModel.fromJson({
+        ...dataClientes[index].toJson(),
+        ...data,
+      });
+      dataClientes[index] = updated;
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'clientes/actualizar/$id',
       method: 'PUT',
@@ -53,6 +86,11 @@ class ClientesController extends BaseController {
   }
 
   Future<bool> eliminar(String id) async {
+    // Optimistic Update
+    dataClientes.removeWhere((e) => e.id == id);
+    notifyListeners();
+    await _saveToCache();
+
     return await performOfflineAction(
       url: 'clientes/eliminar/$id',
       method: 'DELETE',
@@ -65,6 +103,18 @@ class ClientesController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataClientes.indexWhere((e) => e.id == id);
+    if (index != -1) {
+      final updated = ClienteModel.fromJson({
+        ...dataClientes[index].toJson(),
+        ...data,
+      });
+      dataClientes[index] = updated;
+      notifyListeners();
+      await _saveToCache();
+    }
+
     return await performOfflineAction(
       url: 'clientes/deshabilitar/$id',
       method: 'PUT',
@@ -105,6 +155,7 @@ class ClientesController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Client synced: ${action.id}");
+        await cargarClientes(); // Refresh cache with server data
       }
     }
   }

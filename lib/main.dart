@@ -207,7 +207,8 @@ Future<void> main() async {
     'operacionesOfflineUsuarios',
     'operacionesOfflineReportes',
     'encuestasPendientes',
-    'operacionesOfflinePreguntas'
+    'operacionesOfflinePreguntas',
+    'offline_queue'
   ];
 
   for (var box in boxes) {

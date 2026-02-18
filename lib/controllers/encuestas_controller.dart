@@ -48,6 +48,10 @@ class EncuestasController extends BaseController {
     );
   }
 
+  Future<void> _saveEncuestasToCache() async {
+    await updateCache('encuestasBox', 'encuestas', dataEncuestas);
+  }
+
   Future<void> cargarFrecuencias() async {
     await fetchData<List<dynamic>>(
       fetchFromApi: () => _frecuenciaService.listarFrecuencias(),
@@ -158,18 +162,42 @@ class EncuestasController extends BaseController {
   }
 
   Future<bool> registrar(Map<String, dynamic> data) async {
+    // Optimistic Update
+    final tempEncuesta = {
+      ...data,
+      'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      'estado': 'true',
+      'isOptimistic': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    dataEncuestas.insert(0, tempEncuesta);
+    filterEncuestas();
+    await _saveEncuestasToCache();
+
     return await performOfflineAction(
       url: 'encuestas/registrar',
       method: 'POST',
       body: data,
       apiCall: () async {
         final res = await _encuestaService.registraEncuestaInspeccion(data);
-        return res['status'] == 200 || res['status'] == 201;
+        if (res['status'] == 200 || res['status'] == 201) {
+          await cargarEncuestas();
+          return true;
+        }
+        return false;
       },
     );
   }
 
   Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataEncuestas.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataEncuestas[index] = {...dataEncuestas[index], ...data};
+      filterEncuestas();
+      await _saveEncuestasToCache();
+    }
+
     return await performOfflineAction(
       url: 'encuestas/actualizar/$id',
       method: 'PUT',
@@ -183,6 +211,11 @@ class EncuestasController extends BaseController {
   }
 
   Future<bool> eliminar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    dataEncuestas.removeWhere((e) => e['id'] == id);
+    filterEncuestas();
+    await _saveEncuestasToCache();
+
     return await performOfflineAction(
       url: 'encuestas/eliminar/$id',
       method: 'DELETE',
@@ -197,6 +230,14 @@ class EncuestasController extends BaseController {
   }
 
   Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    // Optimistic Update
+    final index = dataEncuestas.indexWhere((e) => e['id'] == id);
+    if (index != -1) {
+      dataEncuestas[index] = {...dataEncuestas[index], ...data};
+      filterEncuestas();
+      await _saveEncuestasToCache();
+    }
+
     return await performOfflineAction(
       url: 'encuestas/deshabilitar/$id',
       method: 'PUT',
@@ -240,6 +281,7 @@ class EncuestasController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Encuesta synced: ${action.id}");
+        await cargarEncuestas(); // Refresh cache with server data
       }
     }
   }

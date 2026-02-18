@@ -10,6 +10,7 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../components/Generales/premium_inputs.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 
 class GraficaInspeccionesPage extends StatefulWidget {
   const GraficaInspeccionesPage({super.key});
@@ -197,34 +198,76 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
 
                   // Dropdown para seleccionar la encuesta
                   PremiumCardField(
-                    child: DropdownButtonFormField<String>(
-                      decoration: PremiumInputs.decoration(
-                        labelText: "Seleccionar Encuesta",
-                        prefixIcon: FontAwesomeIcons.clipboardList,
-                      ),
-                      initialValue: selectedEncuestaId,
-                      items:
-                          dataEncuestas.map<DropdownMenuItem<String>>((item) {
-                        return DropdownMenuItem<String>(
-                          value: item['id'].toString(),
-                          child: Text(
-                            "${item['nombre']} - ${item['frecuencia']}",
-                            style: const TextStyle(fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
+                    child: DropdownSearch<Map<String, dynamic>>(
+                      items: (filter, _) => dataEncuestas
+                          .where((encuesta) =>
+                              encuesta['nombre']
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(filter.toLowerCase()) ||
+                              encuesta['frecuencia']
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(filter.toLowerCase()))
+                          .toList(),
+                      itemAsString: (item) =>
+                          "${item['nombre']} - ${item['frecuencia']}",
+                      compareFn: (item1, item2) => item1['id'] == item2['id'],
+                      selectedItem: selectedEncuestaId != null
+                          ? dataEncuestas.firstWhere(
+                              (element) =>
+                                  element['id'].toString() ==
+                                  selectedEncuestaId,
+                              orElse: () => {})
+                          : null,
                       onChanged: loading
                           ? null
-                          : (String? newValue) {
-                              if (newValue != null) {
+                          : (nuevoItem) {
+                              if (nuevoItem != null) {
                                 setState(() {
-                                  selectedEncuestaId = newValue;
+                                  selectedEncuestaId =
+                                      nuevoItem['id'].toString();
                                 });
-                                cargarInspecciones(newValue);
+                                cargarInspecciones(nuevoItem['id'].toString());
                               }
                             },
-                      isExpanded: true,
+                      dropdownBuilder: (context, selectedItem) {
+                        return Text(
+                          selectedItem == null
+                              ? ""
+                              : "${selectedItem['nombre']} - ${selectedItem['frecuencia']}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: selectedItem == null
+                                ? Colors.grey
+                                : Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
+                      decoratorProps: DropDownDecoratorProps(
+                        decoration: PremiumInputs.decoration(
+                          labelText: "Seleccionar Encuesta",
+                          prefixIcon: FontAwesomeIcons.clipboardList,
+                        ),
+                      ),
+                      popupProps: PopupProps.menu(
+                        showSearchBox: true,
+                        fit: FlexFit.loose,
+                        itemBuilder:
+                            (context, item, isSelected, isItemDisabled) =>
+                                Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Text(
+                            "${item['nombre']} - ${item['frecuencia']}",
+                            style: TextStyle(
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
 

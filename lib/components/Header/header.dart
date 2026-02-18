@@ -6,8 +6,6 @@ import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
 import '../../api/usuarios.dart';
 
-import '../../utils/offline_sync_util.dart';
-
 class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({super.key});
 
@@ -80,53 +78,6 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
         color: Colors.white,
       ),
       actions: [
-        // 🔄 Indicador de sincronización offline
-        ValueListenableBuilder<int>(
-          valueListenable: OfflineSyncUtil().pendingCount,
-          builder: (context, count, child) {
-            if (count == 0) return const SizedBox.shrink();
-            return Stack(
-              alignment: Alignment.topRight,
-              children: [
-                IconButton(
-                  icon: const FaIcon(
-                    FontAwesomeIcons.cloudArrowUp,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    OfflineSyncUtil().sincronizarTodo();
-                  },
-                  tooltip: 'Sincronizar pendientes ($count)',
-                ),
-                Positioned(
-                  right: 4,
-                  top: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: Colors.redAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '$count',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
         // 👤 Perfil
         PopupMenuButton<String>(
           icon: const FaIcon(
