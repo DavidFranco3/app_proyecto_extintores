@@ -18,7 +18,14 @@ class ConnectivityService {
     return await _internetConnection.hasInternetAccess;
   }
 
-  // Stream for real-time connectivity changes if needed in the future
+  /// Checks if there is a real internet connection (not just Wi-Fi without signal).
+  Future<bool> get hasRealInternet async =>
+      await _internetConnection.hasInternetAccess;
+
+  /// Stream that emits true when internet is recovered, false when lost.
+  Stream<bool> get onInternetChanged => _internetConnection.onStatusChange
+      .map((status) => status == InternetStatus.connected);
+
   Stream<List<ConnectivityResult>> get onConnectivityChanged =>
       _connectivity.onConnectivityChanged;
 }

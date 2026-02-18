@@ -158,10 +158,7 @@ class HomeController extends BaseController {
 
   Future<void> checkPendingOperations() async {
     try {
-      final list = cache.getData<List<dynamic>>(
-              'operacionesOfflineInspecciones', 'operaciones') ??
-          [];
-      pendingOperations = list.length;
+      pendingOperations = await queue.queueLength;
       notifyListeners();
     } catch (e) {
       debugPrint("Error checking pending operations: $e");

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../api/usuarios.dart';
 import 'base_controller.dart';
 
@@ -23,6 +24,86 @@ class UsuariosController extends BaseController {
       },
       formatToCache: (data) => _formatModel(data),
     );
+  }
+
+  Future<bool> registrar(Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'usuarios/registrar',
+      method: 'POST',
+      body: data,
+      apiCall: () async {
+        final res = await _service.registraUsuarios(data);
+        return res['status'] == 200 || res['status'] == 201;
+      },
+    );
+  }
+
+  Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'usuarios/actualizar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res = await _service.actualizarUsuario(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> eliminar(String id) async {
+    return await performOfflineAction(
+      url: 'usuarios/eliminar/$id',
+      method: 'DELETE',
+      apiCall: () async {
+        final res = await _service.eliminarUsuario(id, {});
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'usuarios/deshabilitar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res = await _service.actualizaDeshabilitarUsuario(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  @override
+  Future<void> syncPendingActions() async {
+    final actions = await queue.getPendingActions();
+    final userActions =
+        actions.where((a) => a.url.startsWith('usuarios/')).toList();
+
+    for (var action in userActions) {
+      bool success = false;
+      if (action.url == 'usuarios/registrar') {
+        final res = await _service.registraUsuarios(action.body);
+        success = res['status'] == 200 || res['status'] == 201;
+      } else if (action.url.startsWith('usuarios/actualizar/')) {
+        final id = action.url.split('/').last;
+        final res = await _service.actualizarUsuario(id, action.body);
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('usuarios/eliminar/')) {
+        final id = action.url.split('/').last;
+        final res = await _service.eliminarUsuario(id, {});
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('usuarios/deshabilitar/')) {
+        final id = action.url.split('/').last;
+        final res =
+            await _service.actualizaDeshabilitarUsuario(id, action.body);
+        success = res['status'] == 200;
+      }
+
+      if (success) {
+        await queue.removeAction(action.id);
+        debugPrint("✅ Usuario synced: ${action.id}");
+      }
+    }
   }
 
   List<Map<String, dynamic>> _formatModel(List<dynamic> data) {

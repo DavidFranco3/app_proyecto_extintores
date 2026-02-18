@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../api/inspecciones.dart';
 import '../Logs/logs_informativos.dart';
 import '../Generales/flushbar_helper.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Generales/premium_button.dart';
 import '../Load/load.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../Generales/premium_inputs.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/inspecciones_controller.dart';
 
 class Acciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -61,26 +59,12 @@ class _AccionesState extends State<Acciones> {
     }
 
     Future.delayed(Duration(seconds: 1), () {
-      setState(() {
-        _isLoading = false;
-      });
-    });
-
-    sincronizarOperacionesPendientes();
-
-    Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> event) {
-      if (event.any((result) => result != ConnectivityResult.none)) {
-        sincronizarOperacionesPendientes();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     });
-  }
-
-  Future<bool> verificarConexion() async {
-    final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion.contains(ConnectivityResult.none)) return false;
-    return await InternetConnection().hasInternetAccess;
   }
 
   @override
@@ -97,211 +81,53 @@ class _AccionesState extends State<Acciones> {
     widget.onCompleted();
   }
 
-  Future<void> sincronizarOperacionesPendientes() async {
-    final conectado = await verificarConexion();
-    if (!conectado) return;
-
-    final box = Hive.box('operacionesOfflineInspecciones');
-    final operacionesRaw = box.get('operaciones', defaultValue: []);
-
-    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
-        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
-        .toList();
-
-    final inspeccionesService = InspeccionesService();
-    final List<String> operacionesExitosas = [];
-
-    for (var operacion in List.from(operaciones)) {
-      try {
-        if (operacion['accion'] == 'eliminar') {
-          final response = await inspeccionesService
-              .actualizaDeshabilitarInspecciones(
-                  operacion['id'], {'estado': 'false'});
-
-          if (response['status'] == 200) {
-            final inspeccionesBox = Hive.box('inspeccionesBox');
-            final actualesRaw =
-                inspeccionesBox.get('inspecciones', defaultValue: []);
-
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
-            if (index != -1) {
-              actuales[index] = {
-                ...actuales[index],
-                'estado': 'false',
-                'updatedAt': DateTime.now().toString(),
-              };
-              await inspeccionesBox.put('inspecciones', actuales);
-            }
-          }
-
-          operacionesExitosas.add(operacion['operacionId']);
-        }
-      } catch (e) {
-        debugPrint('Error sincronizando operación: $e');
-      }
-    }
-
-    // 🔥 Si TODAS las operaciones se sincronizaron correctamente, limpia por completo:
-    if (operacionesExitosas.length == operaciones.length) {
-      await box.put('operaciones', []);
-      debugPrint("✔ Todas las operaciones sincronizadas. Limpieza completa.");
-    } else {
-      // 🔄 Si alguna falló, conserva solo las pendientes
-      final nuevasOperaciones = operaciones
-          .where((op) => !operacionesExitosas.contains(op['operacionId']))
-          .toList();
-      await box.put('operaciones', nuevasOperaciones);
-      debugPrint(
-          "❗ Algunas operaciones no se sincronizaron, se conservarán localmente.");
-    }
-
-    // ✅ Actualizar lista completa desde API
-    try {
-      final List<dynamic> dataAPI =
-          await inspeccionesService.listarInspecciones();
-
-      final formateadas = dataAPI
-          .map<Map<String, dynamic>>((item) => {
-                'id': item['_id'],
-                'idUsuario': item['idUsuario'],
-                'idCliente': item['idCliente'],
-                'idEncuesta': item['idEncuesta'],
-                'idRama': item['cuestionario']['idRama'],
-                'idClasificacion': item['cuestionario']['idClasificacion'],
-                'idFrecuencia': item['cuestionario']['idFrecuencia'],
-                'idCuestionario': item['cuestionario']['_id'],
-                'encuesta': item['encuesta'],
-                'imagenes': item?['imagenes'] ?? [],
-                'imagenesCloudinary': item?['imagenesCloudinary'] ?? [],
-                'imagenes_finales': item?['imagenesFinales'] ?? [],
-                'imagenes_finales_cloudinary':
-                    item?['imagenesFinalesCloudinary'] ?? [],
-                'comentarios': item['comentarios'],
-                'preguntas': item['encuesta'],
-                'descripcion': item['descripcion'],
-                'usuario': item['usuario']['nombre'],
-                'cliente': item['cliente']['nombre'],
-                'puestoCliente': item['cliente']['puesto'],
-                'responsableCliente': item['cliente']['responsable'],
-                'estadoDom': item['cliente']['direccion']['estadoDom'],
-                'municipio': item['cliente']['direccion']['municipio'],
-                'imagen_cliente': item['cliente']['imagen'],
-                'imagen_cliente_cloudinary': item['cliente']
-                    ['imagenCloudinary'],
-                'firma_usuario': item['usuario']['firma'],
-                'firma_usuario_cloudinary': item['usuario']['firmaCloudinary'],
-                'cuestionario': item['cuestionario']['nombre'],
-                'usuarios': item['usuario'],
-                'inspeccion_eficiencias': item['inspeccionEficiencias'],
-                'estado': item['estado'],
-                'createdAt': item['createdAt'],
-                'updatedAt': item['updatedAt'],
-              })
-          .toList();
-
-      final inspeccionesBox = Hive.box('inspeccionesBox');
-      await inspeccionesBox.put('inspecciones', formateadas);
-    } catch (e) {
-      debugPrint('Error actualizando datos después de sincronización: $e');
-    }
-  }
-
   void _eliminarInspeccion(String id, data) async {
     setState(() {
       _isLoading = true;
     });
 
-    final conectado = await verificarConexion();
+    final controller = context.read<InspeccionesController>();
+    final isOnline = !controller.isOffline;
 
-    var dataTemp = {'estado': "false"};
+    // We use the controller for both online and offline delete logic
+    final wasSent = await controller.deshabilitar(id, {'estado': 'false'});
 
-    if (!conectado) {
-      final box = Hive.box('operacionesOfflineInspecciones');
-      final operaciones = box.get('operaciones', defaultValue: []);
-      operaciones.add({
-        'accion': 'eliminar',
-        'id': id,
-        'data': dataTemp,
-      });
-      await box.put('operaciones', operaciones);
+    setState(() {
+      _isLoading = false;
+    });
 
-      final inspeccionesBox = Hive.box('inspeccionesBox');
-      final actualesRaw = inspeccionesBox.get('inspecciones', defaultValue: []);
-
-      final actuales = (actualesRaw as List)
-          .map<Map<String, dynamic>>(
-              (item) => Map<String, dynamic>.from(item as Map))
-          .toList();
-
-      final index = actuales.indexWhere((element) => element['id'] == id);
-      if (index != -1) {
-        actuales[index] = {
-          ...actuales[index],
-          'estado': 'false',
-          'updatedAt': DateTime.now().toString(),
-        };
-        await inspeccionesBox.put('inspecciones', actuales);
+    if (wasSent) {
+      logsInformativos("Se ha eliminado la inspeccion $id correctamente", {});
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminación exitosa",
+          message: "Se han eliminado correctamente los datos",
+          backgroundColor: Colors.green,
+        );
       }
-
-      setState(() {
-        _isLoading = false;
-      });
-      widget.onCompleted();
-      widget.showModal();
+    } else if (!isOnline) {
       if (mounted) {
         showCustomFlushbar(
           context: context,
           title: "Sin conexión",
-          message:
-              "Inspeccion eliminada localmente y se sincronizará cuando haya internet",
+          message: "Inspeccion eliminada localmente (se sincronizará después)",
           backgroundColor: Colors.orange,
         );
       }
-      return;
-    }
-
-    try {
-      final inspeccionesService = InspeccionesService();
-      var response = await inspeccionesService
-          .actualizaDeshabilitarInspecciones(id, dataTemp);
-
-      if (response['status'] == 200) {
-        setState(() {
-          _isLoading = false;
-        });
-        widget.onCompleted();
-        widget.showModal();
-        logsInformativos(
-            "Se ha eliminado la inspeccion ${data['id']} correctamente", {});
-        if (mounted) {
-          showCustomFlushbar(
-            context: context,
-            title: "Eliminación exitosa",
-            message:
-                "Se han eliminado correctamente los datos de la frecuencia",
-            backgroundColor: Colors.green,
-          );
-        }
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
+    } else {
       if (mounted) {
         showCustomFlushbar(
           context: context,
-          title: "Oops...",
-          message: error.toString(),
+          title: "Error",
+          message: "No se pudo eliminar la inspección",
           backgroundColor: Colors.red,
         );
       }
     }
+
+    widget.onCompleted();
+    widget.showModal();
   }
 
   void _onSubmit() {

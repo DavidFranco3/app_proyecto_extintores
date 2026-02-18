@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../api/encuesta_inspeccion.dart';
 import '../../api/frecuencias.dart';
 import '../../api/clasificaciones.dart';
@@ -154,5 +155,92 @@ class EncuestasController extends BaseController {
               'updatedAt': item['updatedAt'],
             })
         .toList();
+  }
+
+  Future<bool> registrar(Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'encuestas/registrar',
+      method: 'POST',
+      body: data,
+      apiCall: () async {
+        final res = await _encuestaService.registraEncuestaInspeccion(data);
+        return res['status'] == 200 || res['status'] == 201;
+      },
+    );
+  }
+
+  Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'encuestas/actualizar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res =
+            await _encuestaService.actualizarEncuestaInspeccion(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> eliminar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'encuestas/eliminar/$id',
+      method: 'DELETE',
+      body: data,
+      apiCall: () async {
+        final res = await _encuestaService.eliminarEncuestaInspeccion(id, data);
+        return res['status'] == 200 ||
+            res['status'] == 201 ||
+            res['success'] == true;
+      },
+    );
+  }
+
+  Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'encuestas/deshabilitar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res =
+            await _encuestaService.deshabilitarEncuestaInspeccion(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  @override
+  Future<void> syncPendingActions() async {
+    final actions = await queue.getPendingActions();
+    final encActions =
+        actions.where((a) => a.url.startsWith('encuestas/')).toList();
+
+    for (var action in encActions) {
+      bool success = false;
+      if (action.url == 'encuestas/registrar') {
+        final res =
+            await _encuestaService.registraEncuestaInspeccion(action.body);
+        success = res['status'] == 200 || res['status'] == 201;
+      } else if (action.url.startsWith('encuestas/actualizar/')) {
+        final id = action.url.split('/').last;
+        final res = await _encuestaService.actualizarEncuestaInspeccion(
+            id, action.body);
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('encuestas/eliminar/')) {
+        final id = action.url.split('/').last;
+        await _encuestaService.eliminarEncuestaInspeccion(id, action.body);
+        success = true; // Simplificación
+      } else if (action.url.startsWith('encuestas/deshabilitar/')) {
+        final id = action.url.split('/').last;
+        final res = await _encuestaService.deshabilitarEncuestaInspeccion(
+            id, action.body);
+        success = res['status'] == 200;
+      }
+
+      if (success) {
+        await queue.removeAction(action.id);
+        debugPrint("✅ Encuesta synced: ${action.id}");
+      }
+    }
   }
 }

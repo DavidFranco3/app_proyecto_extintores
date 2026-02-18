@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../api/inspecciones.dart';
 import 'base_controller.dart';
 
@@ -8,7 +9,7 @@ class InspeccionesController extends BaseController {
   Future<void> cargarInspecciones(String clientId,
       {String cacheBox = 'inspeccionesBox'}) async {
     await fetchData<List<dynamic>>(
-      fetchFromApi: () => _service.listarInspeccionesDatos(clientId),
+      fetchFromApi: () => _service.listarInspeccionesPorCliente(clientId),
       cacheBox: cacheBox,
       cacheKey: 'inspecciones_$clientId',
       onDataReceived: (data) {
@@ -23,6 +24,103 @@ class InspeccionesController extends BaseController {
       },
       formatToCache: (data) => _formatModel(data),
     );
+  }
+
+  Future<bool> registrar(Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'inspecciones/registrar',
+      method: 'POST',
+      body: data,
+      apiCall: () async {
+        final res = await _service.registraInspecciones(data);
+        return res['status'] == 200 || res['status'] == 201;
+      },
+    );
+  }
+
+  Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'inspecciones/actualizar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res = await _service.actualizarInspecciones(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> actualizarImagenes(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'inspecciones/actualizarImagenes/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res = await _service.actualizarImagenesInspecciones(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> eliminar(String id) async {
+    return await performOfflineAction(
+      url: 'inspecciones/eliminar/$id',
+      method: 'DELETE',
+      apiCall: () async {
+        final res = await _service.eliminarInspecciones(id, {});
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'inspecciones/deshabilitar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res = await _service.actualizaDeshabilitarInspecciones(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  @override
+  Future<void> syncPendingActions() async {
+    final actions = await queue.getPendingActions();
+    final inspActions =
+        actions.where((a) => a.url.startsWith('inspecciones/')).toList();
+
+    for (var action in inspActions) {
+      bool success = false;
+      if (action.url == 'inspecciones/registrar') {
+        final res = await _service.registraInspecciones(action.body);
+        success = res['status'] == 200 || res['status'] == 201;
+      } else if (action.url.startsWith('inspecciones/actualizar/')) {
+        final id = action.url.split('/').last;
+        final res = await _service.actualizarInspecciones(id, action.body);
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('inspecciones/actualizarImagenes/')) {
+        final id = action.url.split('/').last;
+        final res =
+            await _service.actualizarImagenesInspecciones(id, action.body);
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('inspecciones/eliminar/')) {
+        final id = action.url.split('/').last;
+        final res = await _service.eliminarInspecciones(id, {});
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('inspecciones/deshabilitar/')) {
+        final id = action.url.split('/').last;
+        final res =
+            await _service.actualizaDeshabilitarInspecciones(id, action.body);
+        success = res['status'] == 200;
+      }
+
+      if (success) {
+        await queue.removeAction(action.id);
+        debugPrint("✅ Inspeccion synced: ${action.id}");
+      }
+    }
   }
 
   List<Map<String, dynamic>> _formatModel(List<dynamic> data) {

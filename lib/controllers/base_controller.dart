@@ -1,16 +1,49 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../services/connectivity_service.dart';
 import '../services/cache_service.dart';
+import '../services/offline_queue_service.dart';
 
 abstract class BaseController extends ChangeNotifier {
   bool _loading = false;
   bool _isConnected = true;
+  StreamSubscription? _connectivitySubscription;
 
   bool get loading => _loading;
   bool get isOffline => !_isConnected;
 
   final connectivity = ConnectivityService();
   final cache = CacheService();
+  final queue = OfflineQueueService();
+
+  BaseController() {
+    _initConnectivity();
+  }
+
+  void _initConnectivity() async {
+    // Check initial connectivity and sync if online
+    _isConnected = await connectivity.isConnected;
+    if (_isConnected) {
+      syncPendingActions();
+    }
+    notifyListeners();
+
+    _connectivitySubscription =
+        connectivity.onInternetChanged.listen((hasInternet) {
+      _isConnected = hasInternet;
+      if (hasInternet) {
+        debugPrint("🌐 Internet recovered! Triggering sync...");
+        syncPendingActions();
+      }
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
 
   @protected
   void setLoading(bool value) {
@@ -19,12 +52,6 @@ abstract class BaseController extends ChangeNotifier {
   }
 
   /// Generic fetch method implementing the "API with Hive fallback" pattern.
-  /// [fetchFromApi] - Function to call the API service.
-  /// [cacheBox] - Hive box name for caching.
-  /// [cacheKey] - Key within the Hive box.
-  /// [onDataReceived] - Callback to update the controller's state.
-  /// [onCacheLoaded] - Callback to update state from cache.
-  /// [formatToCache] - Optional function to format data before saving to Hive.
   Future<void> fetchData<T>({
     required Future<T> Function() fetchFromApi,
     required String cacheBox,
@@ -56,7 +83,6 @@ abstract class BaseController extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint("❌ Error fetching $cacheKey: $e");
-      // Fallback to cache even on error if it's the first time
       final cachedData = cache.getData(cacheBox, cacheKey);
       if (cachedData != null) {
         onCacheLoaded(cachedData);
@@ -64,5 +90,45 @@ abstract class BaseController extends ChangeNotifier {
     } finally {
       setLoading(false);
     }
+  }
+
+  /// Performs a write action with offline support.
+  /// If offline, it queues the action for later.
+  Future<bool> performOfflineAction({
+    required String url,
+    required String method,
+    dynamic body,
+    required Future<bool> Function() apiCall,
+  }) async {
+    _isConnected = await connectivity.isConnected;
+
+    if (_isConnected) {
+      try {
+        final success = await apiCall();
+        if (success) return true;
+      } catch (e) {
+        debugPrint("❌ API Call failed, queuing action: $e");
+      }
+    }
+
+    // If we reach here, we are either offline or the API call failed
+    await queue.queueAction(
+      url: url,
+      method: method,
+      body: body,
+    );
+    notifyListeners();
+    return false; // Returns false to indicate it was queued, not sent
+  }
+
+  /// Logic to sync pending actions from the queue.
+  /// This should be overridden or extended by specific controllers to handle their specific API calls.
+  Future<void> syncPendingActions() async {
+    final actions = await queue.getPendingActions();
+    if (actions.isEmpty) return;
+
+    debugPrint("🔄 Syncing ${actions.length} pending actions...");
+    // Note: Specific controllers should implement the actual retry logic
+    // or we can use a Centralized Sync Service if preferred.
   }
 }

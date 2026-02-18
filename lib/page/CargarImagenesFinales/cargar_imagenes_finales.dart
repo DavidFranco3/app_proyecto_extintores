@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../api/inspecciones.dart';
+
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
@@ -13,9 +13,8 @@ import 'dart:io';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/inspecciones_controller.dart';
 
 class CargarImagenesFinalesScreen extends StatefulWidget {
   final VoidCallback showModal;
@@ -52,17 +51,10 @@ class _CargarImagenesFinalesScreenState
   void initState() {
     super.initState();
     Future.delayed(Duration(seconds: 1), () {
-      setState(() {
-        loading = false;
-      });
-    });
-    sincronizarOperacionesPendientes();
-
-    Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> event) {
-      if (event.any((result) => result != ConnectivityResult.none)) {
-        sincronizarOperacionesPendientes();
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
       }
     });
   }
@@ -72,235 +64,49 @@ class _CargarImagenesFinalesScreenState
     super.dispose();
   }
 
-  Future<bool> verificarConexion() async {
-    final tipoConexion = await Connectivity().checkConnectivity();
-    if (tipoConexion.contains(ConnectivityResult.none)) return false;
-    return await InternetConnection().hasInternetAccess;
-  }
-
-  Future<void> sincronizarOperacionesPendientes() async {
-    final conectado = await verificarConexion();
-    if (!conectado) return;
-
-    final box = Hive.box('operacionesOfflineInspecciones');
-    final operacionesRaw = box.get('operaciones', defaultValue: []);
-
-    final List<Map<String, dynamic>> operaciones = (operacionesRaw as List)
-        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
-        .toList();
-
-    if (operaciones.isEmpty) return;
-
-    final inspeccionesService = InspeccionesService();
-    final List<int> eliminarIndices = [];
-
-    for (int i = 0; i < operaciones.length; i++) {
-      final operacion = operaciones[i];
-
-      // Inicializar / Incrementar intentos
-      operacion['intentos'] = (operacion['intentos'] ?? 0) + 1;
-
-      try {
-        final response = await inspeccionesService
-            .actualizarImagenesInspecciones(operacion['id'], operacion['data']);
-
-        if (response['status'] == 200) {
-          final inspeccionesBox = Hive.box('inspeccionesBox');
-          final actualesRaw =
-              inspeccionesBox.get('inspecciones', defaultValue: []);
-          final actuales = (actualesRaw as List)
-              .map<Map<String, dynamic>>(
-                  (item) => Map<String, dynamic>.from(item))
-              .toList();
-
-          final index = actuales
-              .indexWhere((element) => element['id'] == operacion['id']);
-          if (index != -1) {
-            actuales[index] = {
-              ...actuales[index],
-              ...operacion['data'],
-              'updatedAt': DateTime.now().toString()
-            };
-            await inspeccionesBox.put('inspecciones', actuales);
-          }
-          eliminarIndices.add(i);
-        } else if (response['status'] >= 400 && response['status'] < 500) {
-          debugPrint(
-              "Error no reintentable (4xx) en sincronización de imágenes: ${response['status']}");
-          eliminarIndices.add(i);
-        } else {
-          debugPrint(
-              "Error de servidor (5xx) en sincronización de imágenes: ${response['status']}");
-          if (operacion['intentos'] >= 5) {
-            debugPrint(
-                "Límite de reintentos alcanzado para sincronización de imágenes.");
-            eliminarIndices.add(i);
-          }
-        }
-      } catch (e) {
-        debugPrint('Error de red sincronizando imágenes: $e');
-        if (operacion['intentos'] >= 5) {
-          debugPrint("Límite de reintentos alcanzado por red en imágenes.");
-          eliminarIndices.add(i);
-        }
-      }
-    }
-
-    // Actualizar el box de Hive
-    final nuevasOperaciones = operaciones
-        .asMap()
-        .entries
-        .where((entry) => !eliminarIndices.contains(entry.key))
-        .map((e) => e.value)
-        .toList();
-
-    await box.put('operaciones', nuevasOperaciones);
-
-    if (eliminarIndices.isNotEmpty) {
-      debugPrint("✔ Sincronización de imágenes finalizada.");
-    }
-
-    // ✅ Actualizar lista completa desde API
-    try {
-      final List<dynamic> dataAPI =
-          await inspeccionesService.listarInspecciones();
-
-      final formateadas = dataAPI
-          .map<Map<String, dynamic>>((item) => {
-                'id': item['_id'],
-                'idUsuario': item['idUsuario'],
-                'idCliente': item['idCliente'],
-                'idEncuesta': item['idEncuesta'],
-                'idRama': item['cuestionario']['idRama'],
-                'idClasificacion': item['cuestionario']['idClasificacion'],
-                'idFrecuencia': item['cuestionario']['idFrecuencia'],
-                'idCuestionario': item['cuestionario']['_id'],
-                'encuesta': item['encuesta'],
-                'imagenes': item?['imagenes'] ?? [],
-                'imagenesCloudinary': item?['imagenesCloudinary'] ?? [],
-                'imagenes_finales': item?['imagenesFinales'] ?? [],
-                'imagenes_finales_cloudinary':
-                    item?['imagenesFinalesCloudinary'] ?? [],
-                'comentarios': item['comentarios'],
-                'preguntas': item['encuesta'],
-                'descripcion': item['descripcion'],
-                'usuario': item['usuario']['nombre'],
-                'cliente': item['cliente']['nombre'],
-                'puestoCliente': item['cliente']['puesto'],
-                'responsableCliente': item['cliente']['responsable'],
-                'estadoDom': item['cliente']['direccion']['estadoDom'],
-                'municipio': item['cliente']['direccion']['municipio'],
-                'imagen_cliente': item['cliente']['imagen'],
-                'imagen_cliente_cloudinary': item['cliente']
-                    ['imagenCloudinary'],
-                'firma_usuario': item['usuario']['firma'],
-                'firma_usuario_cloudinary': item['usuario']['firmaCloudinary'],
-                'cuestionario': item['cuestionario']['nombre'],
-                'usuarios': item['usuario'],
-                'inspeccion_eficiencias': item['inspeccionEficiencias'],
-                'estado': item['estado'],
-                'createdAt': item['createdAt'],
-                'updatedAt': item['updatedAt'],
-              })
-          .toList();
-
-      final inspeccionesBox = Hive.box('inspeccionesBox');
-      await inspeccionesBox.put('inspecciones', formateadas);
-    } catch (e) {
-      debugPrint('Error actualizando datos después de sincronización: $e');
-    }
-  }
-
   void _guardarEncuesta(Map<String, dynamic> data) async {
     setState(() {
       _isLoading = true;
     });
 
-    final conectado = await verificarConexion();
+    final controller = context.read<InspeccionesController>();
+    final isOnline = !controller.isOffline;
 
-    var dataTemp = {
-      'imagenesFinales': data['imagenesFinales'],
-      'imagenesFinalesCloudinary': data['imagenesFinalesCloudinary'],
-    };
+    final wasSent =
+        await controller.actualizarImagenes(widget.data["id"], data);
 
-    if (!conectado) {
-      final box = Hive.box('operacionesOfflineInspecciones');
-      final operaciones = box.get('operaciones', defaultValue: []);
-      operaciones.add({
-        'accion': 'editar',
-        'id': widget.data["id"],
-        'data': dataTemp,
-      });
-      await box.put('operaciones', operaciones);
+    setState(() {
+      _isLoading = false;
+    });
 
-      final inspeccionesBox = Hive.box('inspeccionesBox');
-      final actualesRaw = inspeccionesBox.get('inspecciones', defaultValue: []);
-
-      final actuales = (actualesRaw as List)
-          .map<Map<String, dynamic>>(
-              (item) => Map<String, dynamic>.from(item as Map))
-          .toList();
-
-      final index =
-          actuales.indexWhere((element) => element['id'] == widget.data["id"]);
-      // Actualiza localmente el registro editado
-      if (index != -1) {
-        actuales[index] = {
-          ...actuales[index],
-          ...dataTemp,
-          'updatedAt': DateTime.now().toString(),
-        };
-        await inspeccionesBox.put('inspecciones', actuales);
+    if (wasSent) {
+      returnPrincipalPage();
+      logsInformativos("Se ha actualizado la encuesta correctamente", {});
+      if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Actualización exitosa",
+          message: "Los datos de la encuesta fueron actualizados correctamente",
+          backgroundColor: Colors.green,
+        );
       }
-
-      setState(() {
-        _isLoading = false;
-      });
+    } else if (!isOnline) {
       returnPrincipalPage();
       if (mounted) {
         showCustomFlushbar(
           context: context,
           title: "Sin conexión",
           message:
-              "Encuesta actualizada localmente y se sincronizará cuando haya internet",
+              "Actualizada localmente. Se sincronizará al recuperar internet.",
           backgroundColor: Colors.orange,
         );
       }
-      return;
-    }
-
-    try {
-      final inspeccionesService = InspeccionesService();
-      var response = await inspeccionesService.actualizarImagenesInspecciones(
-          widget.data["id"], dataTemp);
-
-      if (response['status'] == 200) {
-        setState(() {
-          _isLoading = false;
-        });
-        returnPrincipalPage();
-        logsInformativos(
-            "Se ha actualizado la encuesta ${data['nombre']} correctamente",
-            {});
-        if (mounted) {
-          showCustomFlushbar(
-            context: context,
-            title: "Actualización exitosa",
-            message:
-                "Los datos de la encuesta fueron actualizados correctamente",
-            backgroundColor: Colors.green,
-          );
-        }
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
+    } else {
       if (mounted) {
         showCustomFlushbar(
           context: context,
-          title: "Oops...",
-          message: error.toString(),
+          title: "Error",
+          message: "No se pudo actualizar la encuesta",
           backgroundColor: Colors.red,
         );
       }

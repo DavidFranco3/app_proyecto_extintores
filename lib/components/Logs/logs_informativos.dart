@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import '../../api/auth.dart';
-import '../../api/logs.dart';
 import '../../api/usuarios.dart';
+import '../../controllers/logs_controller.dart';
 
 Future<Map<String, dynamic>> _obtenerDatosComunes(String token) async {
   try {
@@ -26,12 +26,13 @@ Future<Map<String, dynamic>> _obtenerDatosComunes(String token) async {
     final email = user['email'];
 
     // Obtener la IP
-    final ipResponse = await LogsService().obtenIP();
+    final logsController = LogsController();
+    final ipResponse = await logsController.obtenIP();
     debugPrint('IP obtenida: $ipResponse');
     final ipTemp = ipResponse;
 
     // Obtener el número de logs
-    final noLogResponse = await LogsService().obtenerNumeroLog();
+    final noLogResponse = await logsController.obtenerNumeroLog();
     debugPrint('Respuesta número de log: $noLogResponse');
     final noLog = noLogResponse['noLog'];
     debugPrint('Número de log obtenido: $noLog');
@@ -94,14 +95,13 @@ Future<void> logsInformativos(
 
     debugPrint('Datos a registrar en el log: $dataTemp');
 
-    final response = await LogsService().registraLog(dataTemp);
-    debugPrint(
-        'Respuesta del registro de log: ${response.statusCode}, ${response.data}');
+    final logsController = LogsController();
+    final wasSent = await logsController.registrar(dataTemp);
 
-    if (response.statusCode == 200) {
+    if (wasSent) {
       debugPrint('Log registrado correctamente');
     } else {
-      debugPrint('Error en el registro del log: ${response.data}');
+      debugPrint('Log encolado localmente');
     }
   } catch (e) {
     debugPrint('Error al registrar log informativo: $e');
@@ -152,16 +152,16 @@ Future<void> logsInformativosLogout(String mensaje) async {
 
     debugPrint('Datos a registrar en el log de logout: $dataTemp');
 
-    final response = await LogsService().registraLog(dataTemp);
-    debugPrint(
-        'Respuesta del registro de log en logout: ${response.statusCode}, ${response.data}');
+    final logsController = LogsController();
+    final wasSent = await logsController.registrar(dataTemp);
 
-    if (response.statusCode == 200) {
+    if (wasSent) {
       // Log registrado correctamente, proceder a hacer logout
       debugPrint('Log registrado correctamente, cerrando sesión...');
       await AuthService().logoutApi();
     } else {
-      debugPrint('Error en el registro del log de logout: ${response.data}');
+      debugPrint('Log encolado localmente, cerrando sesión...');
+      await AuthService().logoutApi();
     }
   } catch (e) {
     debugPrint('Error al registrar log informativo en logout: $e');

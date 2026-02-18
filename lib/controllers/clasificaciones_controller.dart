@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../api/clasificaciones.dart';
 import 'base_controller.dart';
 
@@ -22,6 +23,91 @@ class ClasificacionesController extends BaseController {
       },
       formatToCache: (data) => _formatModelClasificaciones(data),
     );
+  }
+
+  Future<bool> registrar(Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'clasificaciones/registrar',
+      method: 'POST',
+      body: data,
+      apiCall: () async {
+        final res =
+            await _clasificacionesService.registrarClasificaciones(data);
+        return res['status'] == 200 || res['status'] == 201;
+      },
+    );
+  }
+
+  Future<bool> actualizar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'clasificaciones/actualizar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res =
+            await _clasificacionesService.actualizarClasificaciones(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  Future<bool> eliminar(String id) async {
+    return await performOfflineAction(
+      url: 'clasificaciones/eliminar/$id',
+      method: 'DELETE',
+      apiCall: () async {
+        final res = await _clasificacionesService.eliminarClasificaciones(id);
+        return res['success'] == true;
+      },
+    );
+  }
+
+  Future<bool> deshabilitar(String id, Map<String, dynamic> data) async {
+    return await performOfflineAction(
+      url: 'clasificaciones/deshabilitar/$id',
+      method: 'PUT',
+      body: data,
+      apiCall: () async {
+        final res =
+            await _clasificacionesService.deshabilitarClasificaciones(id, data);
+        return res['status'] == 200;
+      },
+    );
+  }
+
+  @override
+  Future<void> syncPendingActions() async {
+    final actions = await queue.getPendingActions();
+    final clasActions =
+        actions.where((a) => a.url.startsWith('clasificaciones/')).toList();
+
+    for (var action in clasActions) {
+      bool success = false;
+      if (action.url == 'clasificaciones/registrar') {
+        final res =
+            await _clasificacionesService.registrarClasificaciones(action.body);
+        success = res['status'] == 200 || res['status'] == 201;
+      } else if (action.url.startsWith('clasificaciones/actualizar/')) {
+        final id = action.url.split('/').last;
+        final res = await _clasificacionesService.actualizarClasificaciones(
+            id, action.body);
+        success = res['status'] == 200;
+      } else if (action.url.startsWith('clasificaciones/eliminar/')) {
+        final id = action.url.split('/').last;
+        final res = await _clasificacionesService.eliminarClasificaciones(id);
+        success = res['success'] == true;
+      } else if (action.url.startsWith('clasificaciones/deshabilitar/')) {
+        final id = action.url.split('/').last;
+        final res = await _clasificacionesService.deshabilitarClasificaciones(
+            id, action.body);
+        success = res['status'] == 200;
+      }
+
+      if (success) {
+        await queue.removeAction(action.id);
+        debugPrint("✅ Clasificación synced: ${action.id}");
+      }
+    }
   }
 
   List<Map<String, dynamic>> _formatModelClasificaciones(List<dynamic> data) {
