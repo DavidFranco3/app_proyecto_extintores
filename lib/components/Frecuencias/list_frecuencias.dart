@@ -1,9 +1,13 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
+import '../Generales/sweet_alert.dart';
+import '../Generales/flushbar_helper.dart';
+import '../../controllers/frecuencias_controller.dart';
 
 class TblFrecuencias extends StatefulWidget {
   final VoidCallback showModal;
@@ -25,19 +29,40 @@ class _TblFrecuenciasState extends State<TblFrecuencias> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEliminarModal(Map<String, dynamic> row) {
-    // Navegar a la página de eliminación en lugar de mostrar un modal
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Acciones(
-          showModal: widget.showModal,
-          onCompleted: widget.onCompleted,
-          accion: "eliminar",
-          data: row,
-        ),
-      ),
+  void openEliminarModal(Map<String, dynamic> row) async {
+    final confirmed = await SweetAlert.show(
+      context: context,
+      title: '¿Estás seguro?',
+      message: 'Esta acción deshabilitará la frecuencia "${row['nombre']}".',
+      confirmLabel: 'Sí, eliminar',
+      cancelLabel: 'Cancelar',
+      icon: FontAwesomeIcons.trashCan,
     );
+
+    if (confirmed == true) {
+      if (!mounted) return;
+
+      final controller = context.read<FrecuenciasController>();
+      final success =
+          await controller.deshabilitar(row['id'], {'estado': 'false'});
+
+      if (success && mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminación exitosa",
+          message: "La frecuencia ha sido deshabilitada correctamente.",
+          backgroundColor: Colors.green,
+        );
+        widget.onCompleted();
+      } else if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message: "No se pudo deshabilitar la frecuencia.",
+          backgroundColor: Colors.red,
+        );
+      }
+    }
   }
 
   void openEditarModal(Map<String, dynamic> row) {

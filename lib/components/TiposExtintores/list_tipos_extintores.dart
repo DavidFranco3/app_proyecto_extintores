@@ -1,9 +1,13 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
+import '../Generales/sweet_alert.dart';
+import '../Generales/flushbar_helper.dart';
+import '../../controllers/tipos_extintores_controller.dart';
 
 class TblTiposExtintores extends StatefulWidget {
   final VoidCallback showModal;
@@ -42,21 +46,41 @@ class _TblTiposExtintoresState extends State<TblTiposExtintores> {
     );
   }
 
-  void openEliminarModal(Map<String, dynamic> row) {
-    // Navegar a la página de eliminación en lugar de mostrar un modal
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Acciones(
-          showModal: () {
-            if (mounted) Navigator.pop(context); // Cierra la pantalla
-          },
-          onCompleted: widget.onCompleted,
-          accion: "eliminar",
-          data: row,
-        ),
-      ),
+  void openEliminarModal(Map<String, dynamic> row) async {
+    final confirmed = await SweetAlert.show(
+      context: context,
+      title: '¿Estás seguro?',
+      message:
+          'Esta acción deshabilitará el tipo de extintor "${row['nombre']}".',
+      confirmLabel: 'Sí, eliminar',
+      cancelLabel: 'Cancelar',
+      icon: FontAwesomeIcons.trashCan,
     );
+
+    if (confirmed == true) {
+      if (!mounted) return;
+
+      final controller = context.read<TiposExtintoresController>();
+      final success =
+          await controller.deshabilitar(row['id'], {'estado': 'false'});
+
+      if (success && mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminación exitosa",
+          message: "El tipo de extintor ha sido deshabilitado correctamente.",
+          backgroundColor: Colors.green,
+        );
+        widget.onCompleted();
+      } else if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message: "No se pudo deshabilitar el tipo de extintor.",
+          backgroundColor: Colors.red,
+        );
+      }
+    }
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../utils/constants.dart';
@@ -24,7 +25,8 @@ class AuthService {
         return {'success': false, 'message': 'Error al iniciar sesión'};
       }
     } catch (e) {
-      return {'success': false, 'message': 'Error al iniciar sesión: $e'};
+      debugPrint("Login error: $e");
+      return {'success': false, 'message': 'Correo o contraseña incorrectos'};
     }
   }
 
@@ -65,8 +67,16 @@ class AuthService {
 
   // Obtener el usuario logueado a partir del token
   String obtenerIdUsuarioLogueado(String token) {
-    Map<String, dynamic> decodedToken =
-        JwtDecoder.decode(token); // Usando jwt_decoder
-    return decodedToken['_'];
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      return (decodedToken['_'] ??
+              decodedToken['id'] ??
+              decodedToken['sub'] ??
+              '')
+          .toString();
+    } catch (e) {
+      debugPrint("Error decoding token: $e");
+      return '';
+    }
   }
 }

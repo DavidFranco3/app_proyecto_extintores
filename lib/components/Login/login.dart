@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
         FlushbarHelper.showError(
           context: context,
           title: 'Error de acceso',
-          message: response['message'] ?? 'Credenciales incorrectas',
+          message: response['message'] ?? 'Correo o contraseña incorrectos',
         );
       }
     } catch (e) {
@@ -73,13 +73,18 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF2C3E50), Color(0xFF707271)],
+            colors: isDark
+                ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                : [const Color(0xFF2C3E50), const Color(0xFF707271)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -105,11 +110,12 @@ class _LoginPageState extends State<LoginPage> {
                 Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.4 : 0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -121,13 +127,13 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
+                        Text(
                           'Bienvenido',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
+                            color: theme.colorScheme.onSurface,
                             letterSpacing: 1.1,
                           ),
                         ),
@@ -137,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: theme.hintColor,
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -147,6 +153,7 @@ class _LoginPageState extends State<LoginPage> {
                           label: 'Correo Electrónico',
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
+                          theme: theme,
                         ),
                         const SizedBox(height: 20),
                         // Password Field
@@ -161,6 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                               _obscurePassword = !_obscurePassword;
                             });
                           },
+                          theme: theme,
                         ),
                         const SizedBox(height: 32),
                         // Login Button
@@ -181,41 +189,55 @@ class _LoginPageState extends State<LoginPage> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    required ThemeData theme,
     bool isPassword = false,
     bool obscureText = false,
     VoidCallback? togglePassword,
     TextInputType? keyboardType,
   }) {
+    final isDark = theme.brightness == Brightness.dark;
+
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(fontWeight: FontWeight.w500),
+      style: TextStyle(
+        fontWeight: FontWeight.w500,
+        color: theme.colorScheme.onSurface,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xFF2C3E50)),
+        prefixIcon: Icon(icon, color: theme.colorScheme.primary),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   obscureText
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: Colors.grey,
+                  color: theme.hintColor,
                 ),
                 onPressed: togglePassword,
               )
             : null,
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDark
+            ? theme.colorScheme.surface.withValues(alpha: 0.1)
+            : Colors.grey[50],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+          borderSide:
+              isDark ? BorderSide(color: theme.dividerColor) : BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide:
+              isDark ? BorderSide(color: theme.dividerColor) : BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFF2C3E50), width: 1.5),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
         ),
-        labelStyle: const TextStyle(color: Colors.blueGrey),
+        labelStyle: TextStyle(color: theme.hintColor),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

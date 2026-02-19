@@ -103,7 +103,7 @@ class _AccionesState extends State<Acciones> {
     _passwordController = TextEditingController();
     _rolController = TextEditingController();
 
-    if (widget.accion == 'editar' || widget.accion == 'eliminar') {
+    if (widget.accion == 'editar') {
       _nombreController.text = widget.data['nombre'] ?? '';
       _emailController.text = widget.data['email'] ?? '';
       _telefonoController.text = widget.data['telefono'] ?? '';
@@ -517,97 +517,6 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarUsuario(String id, data) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final conectado = await verificarConexion();
-
-    var dataTemp = {'estado': "false"};
-
-    if (!conectado) {
-      final box = Hive.box('operacionesOfflineUsuarios');
-      final operaciones = box.get('operaciones', defaultValue: []);
-      operaciones.add({
-        'accion': 'eliminar',
-        'id': id,
-        'data': dataTemp,
-      });
-      await box.put('operaciones', operaciones);
-
-      final usuariosBox = Hive.box('usuariosBox');
-      final actualesRaw = usuariosBox.get('usuarios', defaultValue: []);
-
-      final actuales = (actualesRaw as List)
-          .map<Map<String, dynamic>>(
-              (item) => Map<String, dynamic>.from(item as Map))
-          .toList();
-
-      final index = actuales.indexWhere((element) => element['id'] == id);
-      if (index != -1) {
-        actuales[index] = {
-          ...actuales[index],
-          'estado': 'false',
-          'updatedAt': DateTime.now().toString(),
-        };
-        await usuariosBox.put('usuarios', actuales);
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-      widget.onCompleted();
-      widget.showModal();
-      if (mounted) {
-        showCustomFlushbar(
-          context: context,
-          title: "Sin conexión",
-          message:
-              "Usuario eliminado localmente y se sincronizará cuando haya internet",
-          backgroundColor: Colors.orange,
-        );
-      }
-      return;
-    }
-
-    try {
-      final usuariosService = UsuariosService();
-      var response =
-          await usuariosService.actualizaDeshabilitarUsuario(id, dataTemp);
-
-      if (response['status'] == 200) {
-        setState(() {
-          _isLoading = false;
-        });
-        widget.onCompleted();
-        widget.showModal();
-        logsInformativos(
-            "Se ha eliminado el usuario ${data['id']} correctamente", {});
-        if (mounted) {
-          showCustomFlushbar(
-            context: context,
-            title: "Eliminación exitosa",
-            message: "Se han eliminado correctamente los datos del usuario",
-            backgroundColor: Colors.green,
-          );
-        }
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        showCustomFlushbar(
-          context: context,
-          title: "Oops...",
-          message: error.toString(),
-          backgroundColor: Colors.red,
-        );
-      }
-    }
-  }
-
   void _onSubmit() async {
     if (!isEditar && !isEliminar) {
       final dropboxService = DropboxService();
@@ -664,18 +573,14 @@ class _AccionesState extends State<Acciones> {
       _guardarUsuario(formData);
     } else if (widget.accion == 'editar') {
       _editarUsuario(widget.data['id'], formData);
-    } else if (widget.accion == 'eliminar') {
-      _eliminarUsuario(widget.data['id'], formData);
     }
   }
 
   String get buttonLabel {
     if (widget.accion == 'registrar') {
       return 'Guardar';
-    } else if (widget.accion == 'editar') {
-      return 'Actualizar';
     } else {
-      return 'Eliminar';
+      return 'Actualizar';
     }
   }
 

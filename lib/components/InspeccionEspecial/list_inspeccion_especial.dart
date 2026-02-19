@@ -1,10 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
-import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
+import '../Generales/sweet_alert.dart';
+import '../../api/inspeccion_anual.dart';
+import '../Generales/flushbar_helper.dart';
 
 class TblInspeccionEspecial extends StatefulWidget {
   final VoidCallback showModal;
@@ -39,29 +41,31 @@ class _TblInspeccionEspecialState extends State<TblInspeccionEspecial> {
     });
   }
 
-  void openEliminarModal(Map<String, dynamic> row) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Eliminar Inspección'),
-              backgroundColor: const Color(0xFFE94742), // Red corporate
-              foregroundColor: Colors.white,
-            ),
-            body: Acciones(
-              showModal: () {
-                if (mounted) Navigator.pop(context);
-              },
-              onCompleted: widget.onCompleted,
-              accion: "eliminar",
-              data: row,
-            ),
-          );
-        },
-      ),
+  Future<void> openEliminarModal(Map<String, dynamic> row) async {
+    final confirmar = await SweetAlert.show(
+      context: context,
+      title: '¿Eliminar inspección?',
+      message: 'Esta acción no se puede deshacer.',
     );
+
+    if (confirmar == true) {
+      if (!mounted) return;
+      final service = InspeccionAnualService();
+      final response = await service
+          .deshabilitarInspeccionAnual(row['id'], {'estado': 'false'});
+
+      if (response['status'] == 200) {
+        widget.onCompleted();
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Eliminación exitosa",
+            message: "La inspección especial ha sido eliminada correctamente.",
+            backgroundColor: Colors.green,
+          );
+        }
+      }
+    }
   }
 
   @override

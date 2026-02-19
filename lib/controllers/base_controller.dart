@@ -32,7 +32,7 @@ abstract class BaseController extends ChangeNotifier {
         connectivity.onInternetChanged.listen((hasInternet) {
       _isConnected = hasInternet;
       if (hasInternet) {
-        debugPrint("🌐 Internet recovered! Triggering sync...");
+        debugPrint("Internet recovered! Triggering sync...");
         syncPendingActions();
       }
       notifyListeners();

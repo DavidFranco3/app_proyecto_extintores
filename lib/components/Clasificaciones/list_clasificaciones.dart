@@ -1,9 +1,13 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Usando font_awesome_flutter
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import './acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
+import '../Generales/sweet_alert.dart';
+import '../Generales/flushbar_helper.dart';
+import '../../controllers/clasificaciones_controller.dart';
 
 class TblClasificaciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -25,22 +29,40 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
   Widget? contentModal;
   String? titulosModal;
 
-  void openEliminarModal(Map<String, dynamic> row) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return Scaffold(
-            body: Acciones(
-              showModal: widget.showModal,
-              onCompleted: widget.onCompleted,
-              accion: "eliminar",
-              data: row,
-            ),
-          );
-        },
-      ),
+  void openEliminarModal(Map<String, dynamic> row) async {
+    final confirmed = await SweetAlert.show(
+      context: context,
+      title: '¿Estás seguro?',
+      message: 'Esta acción deshabilitará la clasificación "${row['nombre']}".',
+      confirmLabel: 'Sí, eliminar',
+      cancelLabel: 'Cancelar',
+      icon: FontAwesomeIcons.trashCan,
     );
+
+    if (confirmed == true) {
+      if (!mounted) return;
+
+      final controller = context.read<ClasificacionesController>();
+      final success =
+          await controller.deshabilitar(row['id'], {'estado': 'false'});
+
+      if (success && mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminación exitosa",
+          message: "La clasificación ha sido deshabilitada correctamente.",
+          backgroundColor: Colors.green,
+        );
+        widget.onCompleted();
+      } else if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message: "No se pudo deshabilitar la clasificación.",
+          backgroundColor: Colors.red,
+        );
+      }
+    }
   }
 
   void openEditarModal(Map<String, dynamic> row) {

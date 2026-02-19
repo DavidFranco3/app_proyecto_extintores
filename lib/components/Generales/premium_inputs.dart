@@ -72,36 +72,46 @@ class PremiumCardField extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry? padding;
+  final VoidCallback? onTap;
 
   const PremiumCardField({
     super.key,
     required this.child,
     this.margin,
     this.padding,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: margin ?? const EdgeInsets.only(bottom: 16),
-      padding: padding ?? const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-        border: isDark ? Border.all(color: Colors.white10) : null,
+    return GestureDetector(
+      onTap: onTap != null
+          ? () {
+              Feedback.forTap(context);
+              onTap!();
+            }
+          : null,
+      child: Container(
+        margin: margin ?? const EdgeInsets.only(bottom: 16),
+        padding: padding ?? const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+          border: isDark ? Border.all(color: Colors.white10) : null,
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 }

@@ -9,6 +9,8 @@ import '../api/auth.dart';
 import '../api/usuarios.dart';
 import '../api/logs.dart';
 import '../api/notificaciones.dart';
+import '../api/clientes.dart';
+import '../api/extintores.dart';
 import 'base_controller.dart';
 
 class HomeController extends BaseController {
@@ -17,9 +19,120 @@ class HomeController extends BaseController {
   List<Map<String, dynamic>> dataInspeccionesProximas = [];
   List<Map<String, dynamic>> dataInspeccionesProximas2 = [];
   List<Map<String, dynamic>> dataTokens = [];
+  List<Map<String, dynamic>> dataClientes = [];
+  List<Map<String, dynamic>> dataExtintores = [];
   String nombreUsuario = "Usuario";
   int pendingOperations = 0;
   List<Map<String, dynamic>> recentLogs = [];
+
+  // Getters para Gráficas
+  List<double> get monthlyInspectionsTrend {
+    final Map<int, int> counts = {};
+    final now = DateTime.now();
+
+    // Inicializar últimos 6 meses
+    for (int i = 5; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i).month;
+      counts[month] = 0;
+    }
+
+    for (var item in dataInspecciones) {
+      try {
+        final date = DateTime.parse(item['createdAt']);
+        if (counts.containsKey(date.month)) {
+          counts[date.month] = (counts[date.month] ?? 0) + 1;
+        }
+      } catch (_) {}
+    }
+
+    // Devolver en orden cronológico (de hace 5 meses a hoy)
+    final List<double> values = [];
+    for (int i = 5; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i).month;
+      values.add((counts[month] ?? 0).toDouble());
+    }
+    return values;
+  }
+
+  Map<String, double> get inspectionStatusDistribution {
+    return {
+      'Hechas': dataInspecciones.length.toDouble(),
+      'Próximas': dataInspeccionesProximas.length.toDouble(),
+    };
+  }
+
+  Map<String, double> get municipioDistribution {
+    final Map<String, double> counts = {};
+    for (var cliente in dataClientes) {
+      final mun = cliente['municipio']?.toString() ?? 'Otro';
+      counts[mun] = (counts[mun] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Map<String, int> get inventoryStatusSummary {
+    int vencidos = 0;
+    int proximos = 0;
+    int alDia = 0;
+    final now = DateTime.now();
+
+    for (var ext in dataExtintores) {
+      final ultima = DateTime.tryParse(ext['ultimaRecarga'] ?? '');
+      if (ultima == null) {
+        alDia++;
+        continue;
+      }
+
+      final diffDays = now.difference(ultima).inDays;
+      if (diffDays >= 365) {
+        vencidos++;
+      } else if (diffDays >= 335) {
+        // A falta de 1 mes para el año
+        proximos++;
+      } else {
+        alDia++;
+      }
+    }
+
+    return {
+      'Vencidos': vencidos,
+      'Próximos': proximos,
+      'Al Día': alDia,
+      'Total': dataExtintores.length,
+    };
+  }
+
+  Map<String, double> get extintorTypesDistribution {
+    final Map<String, double> counts = {};
+    for (var ext in dataExtintores) {
+      final tipo = ext['extintor']?.toString() ?? 'Otro';
+      counts[tipo] = (counts[tipo] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  List<Map<String, dynamic>> get weeklyAgenda {
+    final now = DateTime.now();
+    final nextWeek = now.add(const Duration(days: 7));
+
+    final List<Map<String, dynamic>> agenda =
+        dataInspeccionesProximas.where((item) {
+      final String? dateStr = item['proximaInspeccion'];
+      if (dateStr == null) return false;
+      final date = DateTime.tryParse(dateStr);
+      if (date == null) return false;
+      return date.isAfter(now) && date.isBefore(nextWeek);
+    }).toList();
+
+    // Sort by date ascending
+    agenda.sort((a, b) {
+      final dateA = DateTime.parse(a['proximaInspeccion']);
+      final dateB = DateTime.parse(b['proximaInspeccion']);
+      return dateA.compareTo(dateB);
+    });
+
+    return agenda;
+  }
 
   final _authService = AuthService();
   final _usuarioService = UsuariosService();
@@ -28,6 +141,8 @@ class HomeController extends BaseController {
   final _proximasService = InspeccionesProximasService();
   final _logsService = LogsService();
   final _notificacionesService = NotificacionesService();
+  final _clientesService = ClientesService();
+  final _extintoresService = ExtintoresService();
 
   Timer? _notificationTimer;
 
@@ -49,6 +164,8 @@ class HomeController extends BaseController {
         obtenerNombreUsuario(),
         checkPendingOperations(),
         getRecentLogs(),
+        getClientes(),
+        getExtintores(),
       ]);
     } catch (e) {
       debugPrint("❌ Error crítico cargando datos del Home: $e");
@@ -183,6 +300,60 @@ class HomeController extends BaseController {
         }
       },
     );
+  }
+
+  Future<void> getClientes() async {
+    await fetchData<List<dynamic>>(
+      fetchFromApi: () => _clientesService
+          .listarClientes()
+          .then((list) => list.map((c) => c.toJson()).toList()),
+      cacheBox: 'clientesBox',
+      cacheKey: 'clientes',
+      onDataReceived: (data) {
+        dataClientes = List<Map<String, dynamic>>.from(data);
+      },
+      onCacheLoaded: (cachedData) {
+        if (cachedData is List) {
+          dataClientes = List<Map<String, dynamic>>.from(
+              cachedData.map((e) => Map<String, dynamic>.from(e)));
+        }
+      },
+    );
+  }
+
+  Future<void> getExtintores() async {
+    await fetchData<List<dynamic>>(
+      fetchFromApi: () => _extintoresService.listarExtintores(),
+      cacheBox: 'extintoresBox',
+      cacheKey: 'extintores',
+      onDataReceived: (data) {
+        dataExtintores = _formatModelExtintores(data);
+      },
+      onCacheLoaded: (cachedData) {
+        if (cachedData is List) {
+          dataExtintores = List<Map<String, dynamic>>.from(cachedData
+              .map((e) => Map<String, dynamic>.from(e))
+              .where((item) => item['estado'] == "true"));
+        }
+      },
+      formatToCache: (data) => _formatModelExtintores(data),
+    );
+  }
+
+  List<Map<String, dynamic>> _formatModelExtintores(List<dynamic> data) {
+    return data.map<Map<String, dynamic>>((item) {
+      return {
+        'id': item['_id'],
+        'numeroSerie': item['numeroSerie'],
+        'idTipoExtintor': item['idTipoExtintor'],
+        'extintor': item['tipoExtintor']?['nombre'] ?? 'Desconocido',
+        'capacidad': item['capacidad'],
+        'ultimaRecarga': item['ultimaRecarga'],
+        'estado': item['estado'],
+        'createdAt': item['createdAt'],
+        'updatedAt': item['updatedAt'],
+      };
+    }).toList();
   }
 
   void scheduleDailyNotification() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../api/clientes.dart';
+import '../../api/models/cliente_model.dart';
 import '../Logs/logs_informativos.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -94,23 +95,41 @@ class _AccionesState extends State<Acciones> {
     _puestoController = TextEditingController();
     _responsableController = TextEditingController();
 
-    if (widget.accion == 'editar' || widget.accion == 'eliminar') {
-      _nombreController.text = widget.data['nombre'] ?? '';
-      _imagenController.text = widget.data['imagen'] ?? '';
-      _imagenCloudinaryController.text = widget.data['imagenCloudinary'] ?? '';
-      _correoController.text = widget.data['correo'] ?? '';
-      _telefonoController.text = widget.data['telefono'] ?? '';
-      _calleController.text = widget.data['calle'] ?? '';
-      _nExteriorController.text = widget.data['nExterior'] ?? '';
-      _nInteriorController.text = widget.data['nInterior'] ?? '';
-      _coloniaController.text = widget.data['colonia'] ?? '';
-      _estadoDomController.text = widget.data['estadoDom'] ?? '';
-      _municipioController.text = widget.data['municipio'] ?? '';
-      _cpostalController.text = widget.data['cPostal'] ?? '';
-      _referenciaController.text = widget.data['referencia'] ?? '';
-      _responsableController.text = widget.data['responsable'] ?? '';
-      _puestoController.text = widget.data['puesto'] ?? '';
-      imageUrl = widget.data['imagen'].replaceAll('dl=0', 'raw=1');
+    if (widget.accion == 'editar') {
+      final direccion = widget.data['direccion'] ?? {};
+      _nombreController.text = (widget.data['nombre'] ?? '').toString();
+      _imagenController.text = (widget.data['imagen'] ?? '').toString();
+      _imagenCloudinaryController.text =
+          (widget.data['imagenCloudinary'] ?? '').toString();
+      _correoController.text = (widget.data['correo'] ?? '').toString();
+      _telefonoController.text = (widget.data['telefono'] ?? '').toString();
+
+      _calleController.text =
+          (direccion['calle'] ?? widget.data['calle'] ?? '').toString();
+      _nExteriorController.text =
+          (direccion['nExterior'] ?? widget.data['nExterior'] ?? '').toString();
+      _nInteriorController.text =
+          (direccion['nInterior'] ?? widget.data['nInterior'] ?? '').toString();
+      _coloniaController.text =
+          (direccion['colonia'] ?? widget.data['colonia'] ?? '').toString();
+      _estadoDomController.text =
+          (direccion['estadoDom'] ?? widget.data['estadoDom'] ?? '').toString();
+      _municipioController.text =
+          (direccion['municipio'] ?? widget.data['municipio'] ?? '').toString();
+      _cpostalController.text =
+          (direccion['cPostal'] ?? widget.data['cPostal'] ?? '').toString();
+      _referenciaController.text =
+          (direccion['referencia'] ?? widget.data['referencia'] ?? '')
+              .toString();
+
+      _responsableController.text =
+          (widget.data['responsable'] ?? '').toString();
+      _puestoController.text = (widget.data['puesto'] ?? '').toString();
+
+      final String? rawImagen = widget.data['imagen'];
+      if (rawImagen != null && rawImagen.isNotEmpty) {
+        imageUrl = rawImagen.replaceAll('dl=0', 'raw=1');
+      }
     }
     Future.delayed(Duration(seconds: 1), () {
       setState(() {
@@ -208,6 +227,7 @@ class _AccionesState extends State<Acciones> {
     final dropboxService = DropboxService();
     final cloudinaryService = CloudinaryService();
 
+    final clientesBox = Hive.box('clientesBox');
     final List<String> operacionesExitosas = [];
 
     for (var operacion in List.from(operaciones)) {
@@ -248,44 +268,45 @@ class _AccionesState extends State<Acciones> {
           final response =
               await clientesService.registrarClientes(operacion['data']);
 
-          if (response['status'] == 200 && response['data'] != null) {
-            final clientesBox = Hive.box('clientesBox');
+          if (response['status'] == 200 && response['body']['data'] != null) {
             final actualesRaw = clientesBox.get('clientes', defaultValue: []);
-
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
+            final actuales =
+                (actualesRaw as List).map<Map<String, dynamic>>((item) {
+              if (item is Map) return Map<String, dynamic>.from(item);
+              if (item is ClienteModel) return item.toJson();
+              return {};
+            }).toList();
 
             actuales.removeWhere((element) => element['id'] == operacion['id']);
 
             actuales.add({
-              'id': response['data']['_id'],
-              'nombre': response['data']['nombre'],
-              'imagen': response['data']['imagen'],
-              'imagenCloudinary': response['data']['imagenCloudinary'],
-              'correo': response['data']['correo'],
-              'telefono': response['data']['telefono'],
-              'calle': response['data']['direccion']['calle'],
-              'nExterior':
-                  response['data']['direccion']['nExterior']?.isNotEmpty ??
-                          false
-                      ? response['data']['direccion']['nExterior']
-                      : 'S/N',
-              'nInterior':
-                  response['data']['direccion']['nInterior']?.isNotEmpty ??
-                          false
-                      ? response['data']['direccion']['nInterior']
-                      : 'S/N',
-              'colonia': response['data']['direccion']['colonia'],
-              'estadoDom': response['data']['direccion']['estadoDom'],
-              'municipio': response['data']['direccion']['municipio'],
-              'cPostal': response['data']['direccion']['cPostal'],
-              'referencia': response['data']['direccion']['referencia'],
+              'id': response['body']['data']['_id'],
+              'nombre': response['body']['data']['nombre'],
+              'imagen': response['body']['data']['imagen'],
+              'imagenCloudinary': response['body']['data']['imagenCloudinary'],
+              'correo': response['body']['data']['correo'],
+              'telefono': response['body']['data']['telefono'],
+              'calle': response['body']['data']['direccion']['calle'],
+              'nExterior': (response['body']['data']['direccion']['nExterior']
+                          ?.isNotEmpty ??
+                      false)
+                  ? response['body']['data']['direccion']['nExterior']
+                  : 'S/N',
+              'nInterior': (response['body']['data']['direccion']['nInterior']
+                          ?.isNotEmpty ??
+                      false)
+                  ? response['body']['data']['direccion']['nInterior']
+                  : 'S/N',
+              'colonia': response['body']['data']['direccion']['colonia'],
+              'estadoDom': response['body']['data']['direccion']['estadoDom'],
+              'municipio': response['body']['data']['direccion']['municipio'],
+              'cPostal': response['body']['data']['direccion']['cPostal'],
+              'referencia': response['body']['data']['direccion']['referencia'],
+              'responsable': response['body']['data']['responsable'] ?? '',
+              'puesto': response['body']['data']['puesto'] ?? '',
               'estado': "true",
-              'createdAt': response['data']['createdAt'],
-              'updatedAt': response['data']['updatedAt'],
-              // añade los demás campos si es necesario
+              'createdAt': response['body']['data']['createdAt'],
+              'updatedAt': response['body']['data']['updatedAt'],
             });
 
             await clientesBox.put('clientes', actuales);
@@ -297,16 +318,16 @@ class _AccionesState extends State<Acciones> {
               operacion['id'], operacion['data']);
 
           if (response['status'] == 200) {
-            final clientesBox = Hive.box('clientesBox');
             final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+            final actuales =
+                (actualesRaw as List).map<Map<String, dynamic>>((item) {
+              if (item is Map) return Map<String, dynamic>.from(item);
+              if (item is ClienteModel) return item.toJson();
+              return {};
+            }).toList();
 
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
+            final index = actuales.indexWhere((element) =>
+                (element['id'] ?? element['_id']) == operacion['id']);
             if (index != -1) {
               actuales[index] = {
                 ...actuales[index],
@@ -325,14 +346,15 @@ class _AccionesState extends State<Acciones> {
           if (response['status'] == 200) {
             final clientesBox = Hive.box('clientesBox');
             final actualesRaw = clientesBox.get('clientes', defaultValue: []);
+            final actuales =
+                (actualesRaw as List).map<Map<String, dynamic>>((item) {
+              if (item is Map) return Map<String, dynamic>.from(item);
+              if (item is ClienteModel) return item.toJson();
+              return {};
+            }).toList();
 
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
+            final index = actuales.indexWhere((element) =>
+                (element['id'] ?? element['_id']) == operacion['id']);
             if (index != -1) {
               actuales[index] = {
                 ...actuales[index],
@@ -364,31 +386,29 @@ class _AccionesState extends State<Acciones> {
     }
 
     try {
-      final List<dynamic> dataAPI = await clientesService.listarClientes();
+      final List<ClienteModel> dataAPI = await clientesService.listarClientes();
 
       final formateadas = dataAPI
           .map<Map<String, dynamic>>((item) => {
-                'id': item['_id'],
-                'nombre': item['nombre'],
-                'imagen': item['imagen'],
-                'imagenCloudinary': item['imagenCloudinary'],
-                'correo': item['correo'],
-                'telefono': item['telefono'],
-                'calle': item['direccion']['calle'],
-                'nExterior': item['direccion']['nExterior']?.isNotEmpty ?? false
-                    ? item['direccion']['nExterior']
-                    : 'S/N',
-                'nInterior': item['direccion']['nInterior']?.isNotEmpty ?? false
-                    ? item['direccion']['nInterior']
-                    : 'S/N',
-                'colonia': item['direccion']['colonia'],
-                'estadoDom': item['direccion']['estadoDom'],
-                'municipio': item['direccion']['municipio'],
-                'cPostal': item['direccion']['cPostal'],
-                'referencia': item['direccion']['referencia'],
-                'estado': item['estado'],
-                'createdAt': item['createdAt'],
-                'updatedAt': item['updatedAt'],
+                'id': item.id,
+                'nombre': item.nombre,
+                'imagen': item.imagen,
+                'imagenCloudinary': item.imagenCloudinary,
+                'correo': item.correo,
+                'telefono': item.telefono,
+                'calle': item.calle,
+                'nExterior': item.nExterior,
+                'nInterior': item.nInterior,
+                'colonia': item.colonia,
+                'estadoDom': item.estadoDom,
+                'municipio': item.municipio,
+                'cPostal': item.cPostal,
+                'referencia': item.referencia,
+                'responsable': item.responsable,
+                'puesto': item.puesto,
+                'estado': item.estado,
+                'createdAt': item.createdAt,
+                'updatedAt': item.updatedAt,
               })
           .toList();
 
@@ -627,97 +647,6 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarCliente(String id, data) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final conectado = await verificarConexion();
-
-    var dataTemp = {'estado': "false"};
-
-    if (!conectado) {
-      final box = Hive.box('operacionesOfflineClientes');
-      final operaciones = box.get('operaciones', defaultValue: []);
-      operaciones.add({
-        'accion': 'eliminar',
-        'id': id,
-        'data': dataTemp,
-      });
-      await box.put('operaciones', operaciones);
-
-      final clientesBox = Hive.box('clientesBox');
-      final actualesRaw = clientesBox.get('clientes', defaultValue: []);
-
-      final actuales = (actualesRaw as List)
-          .map<Map<String, dynamic>>(
-              (item) => Map<String, dynamic>.from(item as Map))
-          .toList();
-
-      final index = actuales.indexWhere((element) => element['id'] == id);
-      if (index != -1) {
-        actuales[index] = {
-          ...actuales[index],
-          'estado': 'false',
-          'updatedAt': DateTime.now().toString(),
-        };
-        await clientesBox.put('clientes', actuales);
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-      widget.onCompleted();
-      widget.showModal();
-      if (mounted) {
-        showCustomFlushbar(
-          context: context,
-          title: "Sin conexión",
-          message:
-              "Clasificación eliminada localmente y se sincronizará cuando haya internet",
-          backgroundColor: Colors.orange,
-        );
-      }
-      return;
-    }
-
-    try {
-      final clientesService = ClientesService();
-      var response = await clientesService.deshabilitarClientes(id, dataTemp);
-
-      if (response['status'] == 200) {
-        setState(() {
-          _isLoading = false;
-        });
-        widget.onCompleted();
-        widget.showModal();
-        logsInformativos(
-            "Se ha eliminado la cleintes ${data['id']} correctamente", {});
-        if (mounted) {
-          showCustomFlushbar(
-            context: context,
-            title: "Eliminación exitosa",
-            message:
-                "Se han eliminado correctamente los datos de la clasificación",
-            backgroundColor: Colors.green,
-          );
-        }
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        showCustomFlushbar(
-          context: context,
-          title: "Oops...",
-          message: error.toString(),
-          backgroundColor: Colors.red,
-        );
-      }
-    }
-  }
-
   void _onSubmit() async {
     setState(() {
       _isLoading = true;
@@ -773,9 +702,7 @@ class _AccionesState extends State<Acciones> {
       if (widget.accion == 'registrar') {
         _guardarCliente(formData);
       } else if (widget.accion == 'editar') {
-        _editarCliente(widget.data['id'], formData);
-      } else if (widget.accion == 'eliminar') {
-        _eliminarCliente(widget.data['id'], formData);
+        _editarCliente(widget.data['id'] ?? widget.data['_id'], formData);
       }
     } else {
       setState(() {
@@ -787,10 +714,8 @@ class _AccionesState extends State<Acciones> {
   String get buttonLabel {
     if (widget.accion == 'registrar') {
       return 'Guardar';
-    } else if (widget.accion == 'editar') {
-      return 'Actualizar';
     } else {
-      return 'Eliminar';
+      return 'Actualizar';
     }
   }
 

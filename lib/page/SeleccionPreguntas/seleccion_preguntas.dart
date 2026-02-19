@@ -619,7 +619,7 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
                     },
                     decoratorProps: DropDownDecoratorProps(
                       decoration: PremiumInputs.decoration(
-                        labelText: 'Cliente',
+                        labelText: '',
                         prefixIcon: FontAwesomeIcons.userTag,
                       ),
                     ),

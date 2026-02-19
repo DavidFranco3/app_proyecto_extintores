@@ -13,6 +13,8 @@ class ClienteModel {
   final String municipio;
   final String cPostal;
   final String referencia;
+  final String responsable;
+  final String puesto;
   final String estado;
   final String createdAt;
   final String updatedAt;
@@ -32,6 +34,8 @@ class ClienteModel {
     required this.municipio,
     required this.cPostal,
     required this.referencia,
+    required this.responsable,
+    required this.puesto,
     required this.estado,
     required this.createdAt,
     required this.updatedAt,
@@ -40,24 +44,30 @@ class ClienteModel {
   factory ClienteModel.fromJson(Map<String, dynamic> json) {
     final direccion = json['direccion'] ?? {};
     return ClienteModel(
-      id: json['_id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       nombre: json['nombre'] ?? '',
       imagen: json['imagen'],
       imagenCloudinary: json['imagenCloudinary'],
       correo: json['correo'] ?? '',
       telefono: json['telefono'] ?? '',
-      calle: direccion['calle'] ?? '',
+      calle: direccion['calle'] ?? json['calle'] ?? '',
       nExterior: (direccion['nExterior']?.isNotEmpty == true)
           ? direccion['nExterior']
-          : 'S/N',
+          : (json['nExterior']?.isNotEmpty == true)
+              ? json['nExterior']
+              : 'S/N',
       nInterior: (direccion['nInterior']?.isNotEmpty == true)
           ? direccion['nInterior']
-          : 'S/N',
-      colonia: direccion['colonia'] ?? '',
-      estadoDom: direccion['estadoDom'] ?? '',
-      municipio: direccion['municipio'] ?? '',
-      cPostal: direccion['cPostal'] ?? '',
-      referencia: direccion['referencia'] ?? '',
+          : (json['nInterior']?.isNotEmpty == true)
+              ? json['nInterior']
+              : 'S/N',
+      colonia: direccion['colonia'] ?? json['colonia'] ?? '',
+      estadoDom: direccion['estadoDom'] ?? json['estadoDom'] ?? '',
+      municipio: direccion['municipio'] ?? json['municipio'] ?? '',
+      cPostal: direccion['cPostal'] ?? json['cPostal'] ?? '',
+      referencia: direccion['referencia'] ?? json['referencia'] ?? '',
+      responsable: json['responsable'] ?? '',
+      puesto: json['puesto'] ?? '',
       estado: json['estado']?.toString() ?? 'true',
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
@@ -82,6 +92,8 @@ class ClienteModel {
         'cPostal': cPostal,
         'referencia': referencia,
       },
+      'responsable': responsable,
+      'puesto': puesto,
       'estado': estado,
       'createdAt': createdAt,
       'updatedAt': updatedAt,

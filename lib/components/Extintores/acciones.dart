@@ -50,7 +50,7 @@ class _AccionesState extends State<Acciones> {
     _capacidadController = TextEditingController();
     _ultimaRecargaController = TextEditingController();
 
-    if (widget.accion == 'editar' || widget.accion == 'eliminar') {
+    if (widget.accion == 'editar') {
       _numeroSerieController.text = widget.data['numeroSerie'] ?? '';
       _idTipoExtintorController.text = widget.data['idTipoExtintor'] ?? '';
       _capacidadController.text = widget.data['capacidad'] ?? '';
@@ -249,34 +249,6 @@ class _AccionesState extends State<Acciones> {
               actuales[index] = {
                 ...actuales[index],
                 ...operacion['data'],
-                'updatedAt': DateTime.now().toString(),
-              };
-              await extintoresBox.put('extintores', actuales);
-            }
-          }
-
-          operacionesExitosas.add(operacion['operacionId']);
-        } else if (operacion['accion'] == 'eliminar') {
-          final response = await extintoresService
-              .actualizaDeshabilitarExtintores(
-                  operacion['id'], {'estado': 'false'});
-
-          if (response['status'] == 200) {
-            final extintoresBox = Hive.box('extintoresBox');
-            final actualesRaw =
-                extintoresBox.get('extintores', defaultValue: []);
-
-            final actuales = (actualesRaw as List)
-                .map<Map<String, dynamic>>(
-                    (item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            final index = actuales
-                .indexWhere((element) => element['id'] == operacion['id']);
-            if (index != -1) {
-              actuales[index] = {
-                ...actuales[index],
-                'estado': 'false',
                 'updatedAt': DateTime.now().toString(),
               };
               await extintoresBox.put('extintores', actuales);
@@ -530,97 +502,6 @@ class _AccionesState extends State<Acciones> {
     }
   }
 
-  void _eliminarExtintor(String id, data) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final conectado = await verificarConexion();
-
-    var dataTemp = {'estado': "false"};
-
-    if (!conectado) {
-      final box = Hive.box('operacionesOfflineExtintores');
-      final operaciones = box.get('operaciones', defaultValue: []);
-      operaciones.add({
-        'accion': 'eliminar',
-        'id': id,
-        'data': dataTemp,
-      });
-      await box.put('operaciones', operaciones);
-
-      final extintoresBox = Hive.box('extintoresBox');
-      final actualesRaw = extintoresBox.get('extintores', defaultValue: []);
-
-      final actuales = (actualesRaw as List)
-          .map<Map<String, dynamic>>(
-              (item) => Map<String, dynamic>.from(item as Map))
-          .toList();
-
-      final index = actuales.indexWhere((element) => element['id'] == id);
-      if (index != -1) {
-        actuales[index] = {
-          ...actuales[index],
-          'estado': 'false',
-          'updatedAt': DateTime.now().toString(),
-        };
-        await extintoresBox.put('extintores', actuales);
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-      widget.onCompleted();
-      widget.showModal();
-      if (mounted) {
-        showCustomFlushbar(
-          context: context,
-          title: "Sin conexión",
-          message:
-              "Extintor eliminado localmente y se sincronizará cuando haya internet",
-          backgroundColor: Colors.orange,
-        );
-      }
-      return;
-    }
-
-    try {
-      final extintoresService = ExtintoresService();
-      var response =
-          await extintoresService.actualizaDeshabilitarExtintores(id, dataTemp);
-
-      if (response['status'] == 200) {
-        setState(() {
-          _isLoading = false;
-        });
-        widget.onCompleted();
-        widget.showModal();
-        logsInformativos(
-            "Se ha eliminado el extintor ${data['id']} correctamente", {});
-        if (mounted) {
-          showCustomFlushbar(
-            context: context,
-            title: "Eliminación exitosa",
-            message: "Se han eliminado correctamente los datos del extintor",
-            backgroundColor: Colors.green,
-          );
-        }
-      }
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        showCustomFlushbar(
-          context: context,
-          title: "Oops...",
-          message: error.toString(),
-          backgroundColor: Colors.red,
-        );
-      }
-    }
-  }
-
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
       final selectedType = dataTiposExtintores.firstWhere(
@@ -640,8 +521,6 @@ class _AccionesState extends State<Acciones> {
         _guardarExtintor(formData);
       } else if (widget.accion == 'editar') {
         _editarExtintor(widget.data['id'], formData);
-      } else if (widget.accion == 'eliminar') {
-        _eliminarExtintor(widget.data['id'], formData);
       }
     }
   }
@@ -649,10 +528,8 @@ class _AccionesState extends State<Acciones> {
   String get buttonLabel {
     if (widget.accion == 'registrar') {
       return 'Guardar';
-    } else if (widget.accion == 'editar') {
-      return 'Actualizar';
     } else {
-      return 'Eliminar';
+      return 'Actualizar';
     }
   }
 

@@ -1,10 +1,14 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../api/models/cliente_model.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
+import '../Generales/sweet_alert.dart';
+import '../Generales/flushbar_helper.dart';
+import '../../controllers/clientes_controller.dart';
 
 class TblClientes extends StatefulWidget {
   final VoidCallback showModal;
@@ -43,24 +47,40 @@ class _TblClientesState extends State<TblClientes> {
     );
   }
 
-  void openEliminarModal(ClienteModel row) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return Scaffold(
-            body: Acciones(
-              showModal: () {
-                if (mounted) Navigator.pop(context);
-              },
-              onCompleted: widget.onCompleted,
-              accion: "eliminar",
-              data: row.toJson(),
-            ),
-          );
-        },
-      ),
+  void openEliminarModal(ClienteModel row) async {
+    final confirmed = await SweetAlert.show(
+      context: context,
+      title: '¿Estás seguro?',
+      message: 'Esta acción deshabilitará al cliente "${row.nombre}".',
+      confirmLabel: 'Sí, eliminar',
+      cancelLabel: 'Cancelar',
+      icon: FontAwesomeIcons.trashCan,
     );
+
+    if (confirmed == true) {
+      if (!mounted) return;
+
+      final controller = context.read<ClientesController>();
+      final success =
+          await controller.deshabilitar(row.id, {'estado': 'false'});
+
+      if (success && mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Eliminación exitosa",
+          message: "El cliente ha sido deshabilitado correctamente.",
+          backgroundColor: Colors.green,
+        );
+        widget.onCompleted();
+      } else if (mounted) {
+        showCustomFlushbar(
+          context: context,
+          title: "Error",
+          message: "No se pudo deshabilitar al cliente.",
+          backgroundColor: Colors.red,
+        );
+      }
+    }
   }
 
   @override

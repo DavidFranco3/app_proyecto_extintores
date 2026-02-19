@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
@@ -14,9 +13,12 @@ import './pdf2.dart';
 import './pdf3.dart';
 import '../../page/LlenarEncuestaEditar/llenar_encuesta_editar.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
-import '../Generales/flushbar_helper.dart';
 import '../../page/CargarImagenesFinales/cargar_imagenes_finales.dart';
 import 'package:intl/intl.dart';
+import '../../controllers/inspecciones_controller.dart';
+import 'package:provider/provider.dart';
+import '../Generales/sweet_alert.dart';
+import '../Generales/flushbar_helper.dart';
 
 class TblInspecciones extends StatefulWidget {
   final VoidCallback showModal;
@@ -126,19 +128,32 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     }
   }
 
-  void openEliminarModal(Map<String, dynamic> row) {
-    // Navegar a la página de eliminación en lugar de mostrar un modal
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Acciones(
-          showModal: widget.showModal,
-          onCompleted: widget.onCompleted,
-          accion: "eliminar",
-          data: row,
-        ),
-      ),
+  Future<void> openEliminarModal(Map<String, dynamic> row) async {
+    final confirmar = await SweetAlert.show(
+      context: context,
+      title: '¿Eliminar inspección?',
+      message: 'Esta acción no se puede deshacer.',
     );
+
+    if (confirmar == true) {
+      if (!mounted) return;
+      final controller =
+          Provider.of<InspeccionesController>(context, listen: false);
+      final exito =
+          await controller.deshabilitar(row['id'], {'estado': 'false'});
+
+      if (exito) {
+        widget.onCompleted();
+        if (mounted) {
+          showCustomFlushbar(
+            context: context,
+            title: "Eliminación exitosa",
+            message: "La inspección ha sido eliminada correctamente.",
+            backgroundColor: Colors.green,
+          );
+        }
+      }
+    }
   }
 
   void openCargaImagenes(row) {
