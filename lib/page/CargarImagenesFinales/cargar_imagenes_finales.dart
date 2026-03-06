@@ -13,10 +13,10 @@ import 'dart:io';
 import '../InspeccionesPantalla1/inspecciones_pantalla_1.dart';
 import '../../api/dropbox.dart';
 import '../../api/cloudinary.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/inspecciones_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 
-class CargarImagenesFinalesScreen extends StatefulWidget {
+class CargarImagenesFinalesScreen extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final Function onCompleted;
   final String accion;
@@ -32,12 +32,12 @@ class CargarImagenesFinalesScreen extends StatefulWidget {
   });
 
   @override
-  State<CargarImagenesFinalesScreen> createState() =>
+  ConsumerState<CargarImagenesFinalesScreen> createState() =>
       _CargarImagenesFinalesScreenState();
 }
 
 class _CargarImagenesFinalesScreenState
-    extends State<CargarImagenesFinalesScreen> {
+    extends ConsumerState<CargarImagenesFinalesScreen> {
   final _formKey = GlobalKey<FormState>();
   bool loading = true;
   bool _isLoading = false;
@@ -69,7 +69,7 @@ class _CargarImagenesFinalesScreenState
       _isLoading = true;
     });
 
-    final controller = context.read<InspeccionesController>();
+    final controller = ref.read(inspeccionesProvider);
     final isOnline = !controller.isOffline;
 
     final wasSent =

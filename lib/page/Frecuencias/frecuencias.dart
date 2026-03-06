@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/frecuencias_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Frecuencias/list_frecuencias.dart';
 import '../../components/Frecuencias/acciones.dart';
 import '../../components/Load/load.dart';
@@ -9,19 +9,19 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 
-class FrecuenciasPage extends StatefulWidget {
+class FrecuenciasPage extends ConsumerStatefulWidget {
   const FrecuenciasPage({super.key});
 
   @override
-  State<FrecuenciasPage> createState() => _FrecuenciasPageState();
+  ConsumerState<FrecuenciasPage> createState() => _FrecuenciasPageState();
 }
 
-class _FrecuenciasPageState extends State<FrecuenciasPage> {
+class _FrecuenciasPageState extends ConsumerState<FrecuenciasPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FrecuenciasController>().cargarFrecuencias();
+      ref.read(frecuenciasProvider).cargarFrecuencias();
     });
   }
 
@@ -33,8 +33,7 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
           showModal: () {
             if (mounted) Navigator.pop(context);
           },
-          onCompleted: () =>
-              context.read<FrecuenciasController>().cargarFrecuencias(),
+          onCompleted: () => ref.read(frecuenciasProvider).cargarFrecuencias(),
           accion: "registrar",
           data: null,
         ),
@@ -47,8 +46,9 @@ class _FrecuenciasPageState extends State<FrecuenciasPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Periodos"),
-      body: Consumer<FrecuenciasController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(frecuenciasProvider);
           if (controller.loading && controller.dataFrecuencias.isEmpty) {
             return Load();
           }

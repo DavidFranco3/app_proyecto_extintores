@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/usuarios_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Usuarios/list_usuarios.dart';
 import '../../components/Usuarios/acciones.dart';
 import '../../components/Load/load.dart';
@@ -9,19 +9,19 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 
-class UsuariosPage extends StatefulWidget {
+class UsuariosPage extends ConsumerStatefulWidget {
   const UsuariosPage({super.key});
 
   @override
-  State<UsuariosPage> createState() => _UsuariosPageState();
+  ConsumerState<UsuariosPage> createState() => _UsuariosPageState();
 }
 
-class _UsuariosPageState extends State<UsuariosPage> {
+class _UsuariosPageState extends ConsumerState<UsuariosPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<UsuariosController>().cargarUsuarios();
+      ref.read(usuariosProvider).cargarUsuarios();
     });
   }
 
@@ -33,8 +33,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
           showModal: () {
             if (mounted) Navigator.pop(context);
           },
-          onCompleted: () =>
-              context.read<UsuariosController>().cargarUsuarios(),
+          onCompleted: () => ref.read(usuariosProvider).cargarUsuarios(),
           accion: "registrar",
           data: null,
         ),
@@ -47,8 +46,9 @@ class _UsuariosPageState extends State<UsuariosPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Usuarios"),
-      body: Consumer<UsuariosController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(usuariosProvider);
           if (controller.loading && controller.dataUsuarios.isEmpty) {
             return Load();
           }

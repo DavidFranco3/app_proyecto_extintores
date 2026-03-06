@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart'; // Generado por FlutterFire CLI
 import 'components/Login/login.dart';
 import 'components/Home/home.dart';
@@ -12,19 +12,7 @@ import 'components/Generales/flushbar_helper.dart';
 import 'api/auth.dart';
 import 'api/tokens.dart';
 import 'utils/offline_sync_util.dart';
-import 'controllers/home_controller.dart';
-import 'controllers/theme_controller.dart';
-import 'controllers/clientes_controller.dart';
-import 'controllers/ramas_controller.dart';
-import 'controllers/frecuencias_controller.dart';
-import 'controllers/clasificaciones_controller.dart';
-import 'controllers/extintores_controller.dart';
-import 'controllers/tipos_extintores_controller.dart';
-import 'controllers/inspecciones_proximas_controller.dart';
-import 'controllers/logs_controller.dart';
-import 'controllers/usuarios_controller.dart';
-import 'controllers/encuestas_controller.dart';
-import 'controllers/inspecciones_controller.dart';
+import 'providers/app_providers.dart';
 
 // 🌎 Navigator global para diálogos y flushbar
 import 'utils/globals.dart';
@@ -220,37 +208,22 @@ Future<void> main() async {
 
   // 🚀 Ejecutar app
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => HomeController()),
-        ChangeNotifierProvider(create: (_) => ThemeController()),
-        ChangeNotifierProvider(create: (_) => ClientesController()),
-        ChangeNotifierProvider(create: (_) => RamasController()),
-        ChangeNotifierProvider(create: (_) => FrecuenciasController()),
-        ChangeNotifierProvider(create: (_) => ClasificacionesController()),
-        ChangeNotifierProvider(create: (_) => ExtintoresController()),
-        ChangeNotifierProvider(create: (_) => TiposExtintoresController()),
-        ChangeNotifierProvider(create: (_) => InspeccionesProximasController()),
-        ChangeNotifierProvider(create: (_) => LogsController()),
-        ChangeNotifierProvider(create: (_) => UsuariosController()),
-        ChangeNotifierProvider(create: (_) => EncuestasController()),
-        ChangeNotifierProvider(create: (_) => InspeccionesController()),
-      ],
+    ProviderScope(
       child: MyApp(isLoggedIn: isLoggedIn),
     ),
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   final bool isLoggedIn;
 
   const MyApp({super.key, required this.isLoggedIn});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -275,62 +248,60 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeController>(
-      builder: (context, themeController, child) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          debugShowCheckedModeBanner: false,
-          title: 'Prueba Extintores',
-          themeMode: themeController.themeMode,
-          theme: ThemeData(
-            useMaterial3: true,
-            primaryColor: const Color(0xFFE94742),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFE94742),
-              primary: const Color(0xFFE94742),
-              secondary: const Color(0xFF2C3E50),
-              surface: Colors.white,
-              brightness: Brightness.light,
-            ),
-            scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.white,
-              foregroundColor: Color(0xFF2C3E50),
-              elevation: 0,
-            ),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            primaryColor: const Color(0xFFE94742),
-            scaffoldBackgroundColor: const Color(0xFF0F172A),
-            cardTheme: const CardThemeData(
-              color: Color(0xFF1E293B),
-              elevation: 0,
-            ),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFE94742),
-              brightness: Brightness.dark,
-              primary: const Color(0xFFE94742),
-              secondary: const Color(0xFF94A3B8),
-              surface: const Color(0xFF1E293B),
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF1E293B),
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
-          ),
-          supportedLocales: const [Locale('es', 'ES')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          locale: const Locale('es', 'ES'),
-          home: widget.isLoggedIn ? const HomePage() : const LoginPage(),
-        );
-      },
+    final themeMode = ref.watch(themeProvider);
+
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      title: 'Prueba Extintores',
+      themeMode: themeMode,
+      theme: ThemeData(
+        useMaterial3: true,
+        primaryColor: const Color(0xFFE94742),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFE94742),
+          primary: const Color(0xFFE94742),
+          secondary: const Color(0xFF2C3E50),
+          surface: Colors.white,
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF2C3E50),
+          elevation: 0,
+        ),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFFE94742),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        cardTheme: const CardThemeData(
+          color: Color(0xFF1E293B),
+          elevation: 0,
+        ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFE94742),
+          brightness: Brightness.dark,
+          primary: const Color(0xFFE94742),
+          secondary: const Color(0xFF94A3B8),
+          surface: const Color(0xFF1E293B),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1E293B),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      ),
+      supportedLocales: const [Locale('es', 'ES')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      locale: const Locale('es', 'ES'),
+      home: widget.isLoggedIn ? const HomePage() : const LoginPage(),
     );
   }
 }

@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../api/models/cliente_model.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
@@ -8,9 +9,8 @@ import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import '../Generales/sweet_alert.dart';
 import '../Generales/flushbar_helper.dart';
-import '../../controllers/clientes_controller.dart';
 
-class TblClientes extends StatefulWidget {
+class TblClientes extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final List<ClienteModel> clientes;
   final Function onCompleted;
@@ -23,10 +23,10 @@ class TblClientes extends StatefulWidget {
   });
 
   @override
-  State<TblClientes> createState() => _TblClientesState();
+  ConsumerState<TblClientes> createState() => _TblClientesState();
 }
 
-class _TblClientesState extends State<TblClientes> {
+class _TblClientesState extends ConsumerState<TblClientes> {
   void openEditarModal(ClienteModel row) {
     Navigator.push(
       context,
@@ -60,7 +60,7 @@ class _TblClientesState extends State<TblClientes> {
     if (confirmed == true) {
       if (!mounted) return;
 
-      final controller = context.read<ClientesController>();
+      final controller = ref.read(clientesProvider);
       final success =
           await controller.deshabilitar(row.id, {'estado': 'false'});
 

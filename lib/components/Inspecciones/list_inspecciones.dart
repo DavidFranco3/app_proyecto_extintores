@@ -15,12 +15,13 @@ import '../../page/LlenarEncuestaEditar/llenar_encuesta_editar.dart';
 import '../../page/GraficaDatosInspecciones/grafica_datos_inspecciones.dart';
 import '../../page/CargarImagenesFinales/cargar_imagenes_finales.dart';
 import 'package:intl/intl.dart';
-import '../../controllers/inspecciones_controller.dart';
-import 'package:provider/provider.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../Generales/sweet_alert.dart';
 import '../Generales/flushbar_helper.dart';
 
-class TblInspecciones extends StatefulWidget {
+class TblInspecciones extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> inspecciones;
   final Function onCompleted;
@@ -32,10 +33,10 @@ class TblInspecciones extends StatefulWidget {
       required this.onCompleted});
 
   @override
-  State<TblInspecciones> createState() => _TblInspeccionesState();
+  ConsumerState<TblInspecciones> createState() => _TblInspeccionesState();
 }
 
-class _TblInspeccionesState extends State<TblInspecciones> {
+class _TblInspeccionesState extends ConsumerState<TblInspecciones> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -137,8 +138,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
 
     if (confirmar == true) {
       if (!mounted) return;
-      final controller =
-          Provider.of<InspeccionesController>(context, listen: false);
+      final controller = ref.read(inspeccionesProvider);
       final exito =
           await controller.deshabilitar(row['id'], {'estado': 'false'});
 

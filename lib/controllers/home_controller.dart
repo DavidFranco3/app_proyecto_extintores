@@ -12,6 +12,11 @@ import '../api/notificaciones.dart';
 import '../api/clientes.dart';
 import '../api/extintores.dart';
 import 'base_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final homeProvider = ChangeNotifierProvider<HomeController>((ref) {
+  return HomeController();
+});
 
 class HomeController extends BaseController {
   bool _isInitialized = false;

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/inspecciones_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Inspecciones/list_inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -9,7 +9,7 @@ import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
 
-class InspeccionesPage extends StatefulWidget {
+class InspeccionesPage extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final dynamic data;
   final dynamic data2;
@@ -22,17 +22,15 @@ class InspeccionesPage extends StatefulWidget {
   });
 
   @override
-  State<InspeccionesPage> createState() => _InspeccionesPageState();
+  ConsumerState<InspeccionesPage> createState() => _InspeccionesPageState();
 }
 
-class _InspeccionesPageState extends State<InspeccionesPage> {
+class _InspeccionesPageState extends ConsumerState<InspeccionesPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<InspeccionesController>()
-          .cargarInspecciones(widget.data["id"]);
+      ref.read(inspeccionesProvider).cargarInspecciones(widget.data["id"]);
     });
   }
 
@@ -55,8 +53,9 @@ class _InspeccionesPageState extends State<InspeccionesPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Historial de actividades"),
-      body: Consumer<InspeccionesController>(
-        builder: (context, controller, child) {
+      body: Builder(
+        builder: (context) {
+          final controller = ref.watch(inspeccionesProvider);
           if (controller.loading && controller.dataInspecciones.isEmpty) {
             return Load();
           }

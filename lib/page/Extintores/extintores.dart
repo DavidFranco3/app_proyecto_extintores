@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/extintores_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Extintores/list_extintores.dart';
 import '../../components/Extintores/acciones.dart';
 import '../../components/Load/load.dart';
@@ -9,19 +9,19 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 
-class ExtintoresPage extends StatefulWidget {
+class ExtintoresPage extends ConsumerStatefulWidget {
   const ExtintoresPage({super.key});
 
   @override
-  State<ExtintoresPage> createState() => _ExtintoresPageState();
+  ConsumerState<ExtintoresPage> createState() => _ExtintoresPageState();
 }
 
-class _ExtintoresPageState extends State<ExtintoresPage> {
+class _ExtintoresPageState extends ConsumerState<ExtintoresPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ExtintoresController>().cargarExtintores();
+      ref.read(extintoresProvider).cargarExtintores();
     });
   }
 
@@ -35,8 +35,7 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
             showModal: () {
               if (mounted) Navigator.pop(context);
             },
-            onCompleted: () =>
-                context.read<ExtintoresController>().cargarExtintores(),
+            onCompleted: () => ref.read(extintoresProvider).cargarExtintores(),
             accion: "registrar",
             data: null,
           );
@@ -50,8 +49,9 @@ class _ExtintoresPageState extends State<ExtintoresPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Extintores"),
-      body: Consumer<ExtintoresController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(extintoresProvider);
           if (controller.loading && controller.dataExtintores.isEmpty) {
             return Load();
           }

@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ThemeController extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
-  final _box = Hive.box('settingsBox');
+// Provider global para el tema
+final themeProvider = NotifierProvider<ThemeController, ThemeMode>(() {
+  return ThemeController();
+});
 
-  ThemeMode get themeMode => _themeMode;
+class ThemeController extends Notifier<ThemeMode> {
+  late Box _box;
 
-  bool get isDarkMode => _themeMode == ThemeMode.dark;
-
-  ThemeController() {
-    _loadTheme();
-  }
-
-  void _loadTheme() {
+  @override
+  ThemeMode build() {
+    _box = Hive.box('settingsBox');
     final themeIndex = _box.get('themeMode');
     if (themeIndex != null) {
-      _themeMode = ThemeMode.values[themeIndex];
-      notifyListeners();
+      return ThemeMode.values[themeIndex];
     }
+    return ThemeMode.system;
   }
 
+  bool get isDarkMode => state == ThemeMode.dark;
+
   Future<void> toggleTheme(bool isDark) async {
-    _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
-    notifyListeners();
-    await _box.put('themeMode', _themeMode.index);
+    state = isDark ? ThemeMode.dark : ThemeMode.light;
+    await _box.put('themeMode', state.index);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    _themeMode = mode;
-    notifyListeners();
+    state = mode;
     await _box.put('themeMode', mode.index);
   }
 }

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/ramas_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Ramas/list_ramas.dart';
 import '../../components/Ramas/acciones.dart';
 import '../../components/Load/load.dart';
@@ -9,19 +9,19 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 
-class RamasPage extends StatefulWidget {
+class RamasPage extends ConsumerStatefulWidget {
   const RamasPage({super.key});
 
   @override
-  State<RamasPage> createState() => _RamasPageState();
+  ConsumerState<RamasPage> createState() => _RamasPageState();
 }
 
-class _RamasPageState extends State<RamasPage> {
+class _RamasPageState extends ConsumerState<RamasPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RamasController>().cargarRamas();
+      ref.read(ramasProvider).cargarRamas();
     });
   }
 
@@ -34,7 +34,7 @@ class _RamasPageState extends State<RamasPage> {
           showModal: () {
             if (mounted) Navigator.pop(context);
           },
-          onCompleted: () => context.read<RamasController>().cargarRamas(),
+          onCompleted: () => ref.read(ramasProvider).cargarRamas(),
           accion: "registrar",
           data: null,
         ),
@@ -47,8 +47,9 @@ class _RamasPageState extends State<RamasPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Tipos de sistemas"),
-      body: Consumer<RamasController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(ramasProvider);
           if (controller.loading && controller.dataRamas.isEmpty) {
             return Load();
           }

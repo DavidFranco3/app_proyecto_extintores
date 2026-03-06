@@ -1,24 +1,24 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/logs_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Logs/list_logs.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class LogsPage extends StatefulWidget {
+class LogsPage extends ConsumerStatefulWidget {
   const LogsPage({super.key});
 
   @override
-  State<LogsPage> createState() => _LogsPageState();
+  ConsumerState<LogsPage> createState() => _LogsPageState();
 }
 
-class _LogsPageState extends State<LogsPage> {
+class _LogsPageState extends ConsumerState<LogsPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LogsController>().cargarLogs();
+      ref.read(logsProvider).cargarLogs();
     });
   }
 
@@ -27,8 +27,9 @@ class _LogsPageState extends State<LogsPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Logs"),
-      body: Consumer<LogsController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(logsProvider);
           if (controller.loading && controller.dataLogs.isEmpty) {
             return Load();
           }

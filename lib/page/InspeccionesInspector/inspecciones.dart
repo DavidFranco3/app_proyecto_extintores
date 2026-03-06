@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/inspecciones_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Inspecciones/list_inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -9,7 +9,7 @@ import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 import '../InspeccionesPantalla2/inspecciones_pantalla_2.dart';
 
-class InspeccionesInspectorPage extends StatefulWidget {
+class InspeccionesInspectorPage extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final dynamic data;
   final dynamic data2;
@@ -22,16 +22,17 @@ class InspeccionesInspectorPage extends StatefulWidget {
   });
 
   @override
-  State<InspeccionesInspectorPage> createState() =>
+  ConsumerState<InspeccionesInspectorPage> createState() =>
       _InspeccionesInspectorPageState();
 }
 
-class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
+class _InspeccionesInspectorPageState
+    extends ConsumerState<InspeccionesInspectorPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<InspeccionesController>().cargarInspecciones(
+      ref.read(inspeccionesProvider).cargarInspecciones(
             widget.data["id"],
             cacheBox: 'inspeccionesInspectorBox',
           );
@@ -57,8 +58,9 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Historial de actividades"),
-      body: Consumer<InspeccionesController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(inspeccionesProvider);
           if (controller.loading && controller.dataInspecciones.isEmpty) {
             return Load();
           }
@@ -110,10 +112,11 @@ class _InspeccionesInspectorPageState extends State<InspeccionesInspectorPage> {
                     if (mounted) Navigator.pop(context);
                   },
                   inspecciones: controller.dataInspecciones,
-                  onCompleted: () => controller.cargarInspecciones(
-                    widget.data["id"],
-                    cacheBox: 'inspeccionesInspectorBox',
-                  ),
+                  onCompleted: () =>
+                      ref.read(inspeccionesProvider).cargarInspecciones(
+                            widget.data["id"],
+                            cacheBox: 'inspeccionesInspectorBox',
+                          ),
                 ),
               ),
             ],

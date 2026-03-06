@@ -435,10 +435,11 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
         dataRamas = [];
       });
     } finally {
-      if (!mounted) return;
-      setState(() {
-        loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 

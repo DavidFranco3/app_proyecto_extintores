@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import '../../controllers/encuestas_controller.dart';
+import '../../providers/app_providers.dart';
 import '../../components/Encuestas/list_encuestas.dart';
 import '../CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
 import '../../components/Load/load.dart';
@@ -11,14 +11,14 @@ import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 import '../../components/Generales/premium_inputs.dart';
 
-class EncuestasPage extends StatefulWidget {
+class EncuestasPage extends ConsumerStatefulWidget {
   const EncuestasPage({super.key});
 
   @override
-  State<EncuestasPage> createState() => _EncuestasPageState();
+  ConsumerState<EncuestasPage> createState() => _EncuestasPageState();
 }
 
-class _EncuestasPageState extends State<EncuestasPage> {
+class _EncuestasPageState extends ConsumerState<EncuestasPage> {
   TextEditingController nombreController = TextEditingController();
   TextEditingController clasificacionController = TextEditingController();
   TextEditingController ramaController = TextEditingController();
@@ -27,7 +27,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EncuestasController>().cargarTodo();
+      ref.read(encuestasProvider).cargarTodo();
     });
   }
 
@@ -39,8 +39,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
           showModal: () {
             if (mounted) Navigator.pop(context);
           },
-          onCompleted: () =>
-              context.read<EncuestasController>().cargarEncuestas(),
+          onCompleted: () => ref.read(encuestasProvider).cargarEncuestas(),
           accion: "registrar",
           data: null,
           nombreController: nombreController,
@@ -50,7 +49,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
       ),
     ).then((_) {
       if (!mounted) return;
-      context.read<EncuestasController>().cargarEncuestas();
+      ref.read(encuestasProvider).cargarEncuestas();
     });
   }
 
@@ -59,8 +58,9 @@ class _EncuestasPageState extends State<EncuestasPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Crear actividad"),
-      body: Consumer<EncuestasController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(encuestasProvider);
           if (controller.loading && controller.dataEncuestas.isEmpty) {
             return Load();
           }

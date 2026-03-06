@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -14,28 +14,28 @@ import '../../page/Clientes/clientes.dart';
 import '../../page/Extintores/extintores.dart';
 import '../../page/SeleccionarInspeccionesClientes/seleccionar_inspecciones_clientes.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
     // Iniciar carga de datos al entrar al Home
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<HomeController>().init();
+        ref.read(homeProvider.notifier).init();
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<HomeController>();
+    final controller = ref.watch(homeProvider);
 
     return Scaffold(
       appBar: const Header(),

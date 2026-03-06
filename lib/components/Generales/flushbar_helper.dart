@@ -84,13 +84,13 @@ void showCustomFlushbar({
   ToastificationType type = ToastificationType.info;
 
   if (backgroundColor == Colors.green ||
-      backgroundColor.value == Colors.green.value) {
+      backgroundColor.toARGB32() == Colors.green.toARGB32()) {
     type = ToastificationType.success;
   } else if (backgroundColor == Colors.red ||
-      backgroundColor.value == Colors.red.value) {
+      backgroundColor.toARGB32() == Colors.red.toARGB32()) {
     type = ToastificationType.error;
   } else if (backgroundColor == Colors.orange ||
-      backgroundColor.value == Colors.orange.value) {
+      backgroundColor.toARGB32() == Colors.orange.toARGB32()) {
     type = ToastificationType.warning;
   }
 

@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../controllers/theme_controller.dart';
 import '../../page/Clasificaciones/clasificaciones.dart';
 import '../../page/Frecuencias/frecuencias.dart';
@@ -28,16 +28,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:hive/hive.dart';
 
-class MenuLateral extends StatefulWidget {
+class MenuLateral extends ConsumerStatefulWidget {
   final String currentPage;
 
   const MenuLateral({super.key, required this.currentPage});
 
   @override
-  State<MenuLateral> createState() => _MenuLateralState();
+  ConsumerState<MenuLateral> createState() => _MenuLateralState();
 }
 
-class _MenuLateralState extends State<MenuLateral> {
+class _MenuLateralState extends ConsumerState<MenuLateral> {
   String? tipoUsuario;
   String nombreUsuario = "Usuario";
   bool? tieneInternet;
@@ -246,34 +246,30 @@ class _MenuLateralState extends State<MenuLateral> {
                 ],
                 const Divider(),
                 _buildSectionHeader('PREFERENCIAS'),
-                Consumer<ThemeController>(
-                  builder: (context, themeController, child) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: SwitchListTile(
-                        secondary: Icon(
-                          themeController.isDarkMode
-                              ? Icons.dark_mode_outlined
-                              : Icons.light_mode_outlined,
-                          color: themeController.isDarkMode
-                              ? Colors.amber
-                              : Colors.blueGrey[700],
-                        ),
-                        title: const Text(
-                          'Modo Oscuro',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        value: themeController.isDarkMode,
-                        activeThumbColor: const Color(0xFFE94742),
-                        onChanged: (value) {
-                          themeController.toggleTheme(value);
-                        },
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: SwitchListTile(
+                    secondary: Icon(
+                      ref.watch(themeProvider) == ThemeMode.dark
+                          ? Icons.dark_mode_outlined
+                          : Icons.light_mode_outlined,
+                      color: ref.watch(themeProvider) == ThemeMode.dark
+                          ? Colors.amber
+                          : Colors.blueGrey[700],
+                    ),
+                    title: const Text(
+                      'Modo Oscuro',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
                       ),
-                    );
-                  },
+                    ),
+                    value: ref.watch(themeProvider) == ThemeMode.dark,
+                    activeThumbColor: const Color(0xFFE94742),
+                    onChanged: (value) {
+                      ref.read(themeProvider.notifier).toggleTheme(value);
+                    },
+                  ),
                 ),
               ],
             ),

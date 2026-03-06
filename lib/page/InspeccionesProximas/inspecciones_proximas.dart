@@ -1,27 +1,26 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/inspecciones_proximas_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/InspeccionesProximas/list_inspecciones_proximas.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 
-class InspeccionesProximasPage extends StatefulWidget {
+class InspeccionesProximasPage extends ConsumerStatefulWidget {
   const InspeccionesProximasPage({super.key});
 
   @override
-  State<InspeccionesProximasPage> createState() =>
+  ConsumerState<InspeccionesProximasPage> createState() =>
       _InspeccionesProximasPageState();
 }
 
-class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
+class _InspeccionesProximasPageState
+    extends ConsumerState<InspeccionesProximasPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<InspeccionesProximasController>()
-          .cargarInspeccionesProximas();
+      ref.read(inspeccionesProximasProvider).cargarInspeccionesProximas();
     });
   }
 
@@ -30,8 +29,9 @@ class _InspeccionesProximasPageState extends State<InspeccionesProximasPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Actividades próximas"),
-      body: Consumer<InspeccionesProximasController>(
-        builder: (context, controller, child) {
+      body: Builder(
+        builder: (context) {
+          final controller = ref.watch(inspeccionesProximasProvider);
           if (controller.loading &&
               controller.dataInspeccionesProximas.isEmpty) {
             return Load();

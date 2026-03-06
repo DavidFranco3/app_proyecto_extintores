@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import './acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import '../Generales/sweet_alert.dart';
 import '../Generales/flushbar_helper.dart';
-import '../../controllers/clasificaciones_controller.dart';
 
-class TblClasificaciones extends StatefulWidget {
+class TblClasificaciones extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> clasificaciones;
   final Function onCompleted;
@@ -21,10 +21,10 @@ class TblClasificaciones extends StatefulWidget {
       required this.onCompleted});
 
   @override
-  State<TblClasificaciones> createState() => _TblClasificacionesState();
+  ConsumerState<TblClasificaciones> createState() => _TblClasificacionesState();
 }
 
-class _TblClasificacionesState extends State<TblClasificaciones> {
+class _TblClasificacionesState extends ConsumerState<TblClasificaciones> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -42,7 +42,7 @@ class _TblClasificacionesState extends State<TblClasificaciones> {
     if (confirmed == true) {
       if (!mounted) return;
 
-      final controller = context.read<ClasificacionesController>();
+      final controller = ref.read(clasificacionesProvider);
       final success =
           await controller.deshabilitar(row['id'], {'estado': 'false'});
 

@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import '../Generales/sweet_alert.dart';
 import '../Generales/flushbar_helper.dart';
-import '../../controllers/usuarios_controller.dart';
 
-class TblUsuarios extends StatefulWidget {
+class TblUsuarios extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> usuarios;
   final Function onCompleted;
@@ -21,10 +21,10 @@ class TblUsuarios extends StatefulWidget {
       required this.onCompleted});
 
   @override
-  State<TblUsuarios> createState() => _TblUsuariosState();
+  ConsumerState<TblUsuarios> createState() => _TblUsuariosState();
 }
 
-class _TblUsuariosState extends State<TblUsuarios> {
+class _TblUsuariosState extends ConsumerState<TblUsuarios> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -59,7 +59,7 @@ class _TblUsuariosState extends State<TblUsuarios> {
     if (confirmed == true) {
       if (!mounted) return;
 
-      final controller = context.read<UsuariosController>();
+      final controller = ref.read(usuariosProvider);
       final success =
           await controller.deshabilitar(row['id'], {'estado': 'false'});
 

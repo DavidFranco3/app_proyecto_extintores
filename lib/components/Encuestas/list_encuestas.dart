@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
@@ -8,9 +9,8 @@ import '../Generales/sweet_alert.dart';
 import '../Generales/flushbar_helper.dart';
 import 'lista_preguntas.dart';
 import '../../page/CrearEncuestaPantalla1/crear_encuesta_pantalla_1.dart';
-import '../../controllers/encuestas_controller.dart';
 
-class TblEncuestas extends StatefulWidget {
+class TblEncuestas extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> encuestas;
   final Function onCompleted;
@@ -23,10 +23,10 @@ class TblEncuestas extends StatefulWidget {
   });
 
   @override
-  State<TblEncuestas> createState() => _TblEncuestasState();
+  ConsumerState<TblEncuestas> createState() => _TblEncuestasState();
 }
 
-class _TblEncuestasState extends State<TblEncuestas> {
+class _TblEncuestasState extends ConsumerState<TblEncuestas> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -35,7 +35,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
   TextEditingController clasificacionController = TextEditingController();
   TextEditingController ramaController = TextEditingController();
 
-  void openRegistroPage(row) {
+  void openRegistroPage(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -69,7 +69,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
     if (confirmed == true) {
       if (!mounted) return;
 
-      final controller = context.read<EncuestasController>();
+      final controller = ref.read(encuestasProvider);
       final success =
           await controller.deshabilitar(row['id'], {'estado': 'false'});
 
@@ -92,7 +92,7 @@ class _TblEncuestasState extends State<TblEncuestas> {
     }
   }
 
-  void openViewPreguntas(row) {
+  void openViewPreguntas(Map<String, dynamic> row) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -100,9 +100,10 @@ class _TblEncuestasState extends State<TblEncuestas> {
           return Scaffold(
             body: PreguntasVisualPage(
               showModal: () {
-                if (mounted)
+                if (mounted) {
                   Navigator.pop(
                       context); // Eliminar la lógica de cerrar el modal
+                }
               },
               onCompleted: widget.onCompleted,
               accion: "eliminar",

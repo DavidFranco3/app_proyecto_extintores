@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import 'acciones.dart';
 import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import '../Generales/sweet_alert.dart';
 import '../Generales/flushbar_helper.dart';
-import '../../controllers/extintores_controller.dart';
 
-class TblExtintores extends StatefulWidget {
+class TblExtintores extends ConsumerStatefulWidget {
   final VoidCallback showModal;
   final List<Map<String, dynamic>> extintores;
   final Function onCompleted;
@@ -21,10 +21,10 @@ class TblExtintores extends StatefulWidget {
       required this.onCompleted});
 
   @override
-  State<TblExtintores> createState() => _TblExtintoresState();
+  ConsumerState<TblExtintores> createState() => _TblExtintoresState();
 }
 
-class _TblExtintoresState extends State<TblExtintores> {
+class _TblExtintoresState extends ConsumerState<TblExtintores> {
   bool showModal = false;
   Widget? contentModal;
   String? titulosModal;
@@ -57,7 +57,7 @@ class _TblExtintoresState extends State<TblExtintores> {
     if (confirmed == true) {
       if (!mounted) return;
 
-      final controller = context.read<ExtintoresController>();
+      final controller = ref.read(extintoresProvider);
       final success =
           await controller.deshabilitar(row['id'], {'estado': 'false'});
 

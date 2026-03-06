@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../controllers/tipos_extintores_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../components/TiposExtintores/list_tipos_extintores.dart';
 import '../../components/TiposExtintores/acciones.dart';
 import '../../components/Load/load.dart';
@@ -9,19 +9,20 @@ import '../../components/Menu/menu_lateral.dart';
 import '../../components/Header/header.dart';
 import '../../components/Generales/premium_button.dart';
 
-class TiposExtintoresPage extends StatefulWidget {
+class TiposExtintoresPage extends ConsumerStatefulWidget {
   const TiposExtintoresPage({super.key});
 
   @override
-  State<TiposExtintoresPage> createState() => _TiposExtintoresPageState();
+  ConsumerState<TiposExtintoresPage> createState() =>
+      _TiposExtintoresPageState();
 }
 
-class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
+class _TiposExtintoresPageState extends ConsumerState<TiposExtintoresPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TiposExtintoresController>().cargarTiposExtintores();
+      ref.read(tiposExtintoresProvider).cargarTiposExtintores();
     });
   }
 
@@ -34,7 +35,7 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
             if (mounted) Navigator.pop(context);
           },
           onCompleted: () =>
-              context.read<TiposExtintoresController>().cargarTiposExtintores(),
+              ref.read(tiposExtintoresProvider).cargarTiposExtintores(),
           accion: "registrar",
           data: null,
         ),
@@ -47,8 +48,9 @@ class _TiposExtintoresPageState extends State<TiposExtintoresPage> {
     return Scaffold(
       appBar: Header(),
       drawer: MenuLateral(currentPage: "Tipos de extintores"),
-      body: Consumer<TiposExtintoresController>(
-        builder: (context, controller, child) {
+      body: Consumer(
+        builder: (context, ref, child) {
+          final controller = ref.watch(tiposExtintoresProvider);
           if (controller.loading && controller.dataTiposExtintores.isEmpty) {
             return Load();
           }
