@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../utils/constants.dart';
 import 'endpoints.dart';
 import 'api_client.dart';
@@ -21,6 +22,10 @@ class AuthService {
         // Guardar el token en almacenamiento. Dio ya decodifica el JSON.
         String token = response.data['token'];
         await setTokenApi(token);
+        // Persist login state for app startup
+        final box = Hive.box('settingsBox');
+        await box.put('isLoggedIn', true);
+
         return {'success': true, 'token': token};
       } else {
         return {'success': false, 'message': 'Error al iniciar sesión'};
@@ -44,6 +49,9 @@ class AuthService {
   // Cerrar sesión
   Future<void> logoutApi() async {
     await _storage.delete(key: tokenKey);
+    // Clear login state for app startup
+    final box = Hive.box('settingsBox');
+    await box.put('isLoggedIn', false);
   }
 
   // Obtener los datos del usuario logueado

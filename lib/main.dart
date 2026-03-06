@@ -133,6 +133,45 @@ Future<void> obtenerTokenFCM() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 📦 Inicializar Hive
+  await Hive.initFlutter();
+  final boxes = [
+    'clientesBox',
+    'reporteFinalBox',
+    'clasificacionesBox',
+    'encuestasBox',
+    'extintoresBox',
+    'frecuenciasBox',
+    'inspeccionesBox',
+    'inspeccionAnualBox',
+    'inspeccionesProximasBox',
+    'inspeccionesInspectorBox',
+    'logsBox',
+    'tokensBox',
+    'ramasBox',
+    'tiposExtintoresBox',
+    'usuariosBox',
+    'operacionesOfflineClasificaciones',
+    'operacionesOfflineExtintores',
+    'operacionesOfflineEncuestas',
+    'operacionesOfflineFrecuencias',
+    'operacionesOfflineRamas',
+    'operacionesOfflineTiposExtintores',
+    'operacionesOfflineInspecciones',
+    'operacionesOfflineInspeccionAnual',
+    'operacionesOfflineClientes',
+    'operacionesOfflineUsuarios',
+    'operacionesOfflineReportes',
+    'encuestasPendientes',
+    'operacionesOfflinePreguntas',
+    'offline_queue',
+    'settingsBox'
+  ];
+
+  for (var boxName in boxes) {
+    await Hive.openBox(boxName);
+  }
+
   // 🔥 Inicializar Firebase multiplataforma
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -175,45 +214,6 @@ Future<void> main() async {
     debugPrint(
         "📩 [BACKGROUND] Notificación abierta por el usuario: ${message.notification?.title}");
   });
-
-  // 📦 Inicializar Hive
-  await Hive.initFlutter();
-  final boxes = [
-    'clientesBox',
-    'reporteFinalBox',
-    'clasificacionesBox',
-    'encuestasBox',
-    'extintoresBox',
-    'frecuenciasBox',
-    'inspeccionesBox',
-    'inspeccionAnualBox',
-    'inspeccionesProximasBox',
-    'inspeccionesInspectorBox',
-    'logsBox',
-    'tokensBox',
-    'ramasBox',
-    'tiposExtintoresBox',
-    'usuariosBox',
-    'operacionesOfflineClasificaciones',
-    'operacionesOfflineExtintores',
-    'operacionesOfflineEncuestas',
-    'operacionesOfflineFrecuencias',
-    'operacionesOfflineRamas',
-    'operacionesOfflineTiposExtintores',
-    'operacionesOfflineInspecciones',
-    'operacionesOfflineInspeccionAnual',
-    'operacionesOfflineClientes',
-    'operacionesOfflineUsuarios',
-    'operacionesOfflineReportes',
-    'encuestasPendientes',
-    'operacionesOfflinePreguntas',
-    'offline_queue',
-    'settingsBox'
-  ];
-
-  for (var box in boxes) {
-    await Hive.openBox(box);
-  }
 
   // 🛠 Inicializar Util de Sincronización Offline
   OfflineSyncUtil().init();
