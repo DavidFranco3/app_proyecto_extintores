@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -119,8 +118,8 @@ Future<void> obtenerTokenFCM() async {
     final tokensService = TokensService();
 
     if (token != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('fcm_token', token);
+      final box = Hive.box('settingsBox');
+      await box.put('fcm_token', token);
       debugPrint("📌 Token FCM obtenido y guardado: $token");
       tokensService.registraTokens(formData);
     } else {
@@ -145,16 +144,16 @@ Future<void> main() async {
   // 🔔 Configurar FCM background
   FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
 
-  // 📌 Inicializar SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
-  if (!prefs.containsKey('isLoggedIn')) {
-    await prefs.setBool('isLoggedIn', false);
+  // 📌 Inicializar Hive settings
+  final box = Hive.box('settingsBox');
+  if (!box.containsKey('isLoggedIn')) {
+    await box.put('isLoggedIn', false);
   }
-  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  final bool isLoggedIn = box.get('isLoggedIn') ?? false;
 
-  // 📌 Inicializar FCM solo si hay sesión activa
+  // 📌 Inicializar FCM solo si hay sesión activa (No bloqueante para evitar cuelgues)
   if (isLoggedIn) {
-    await obtenerTokenFCM();
+    obtenerTokenFCM();
   }
 
   // 📌 Escuchar notificaciones en primer plano
@@ -208,7 +207,8 @@ Future<void> main() async {
     'operacionesOfflineReportes',
     'encuestasPendientes',
     'operacionesOfflinePreguntas',
-    'offline_queue'
+    'offline_queue',
+    'settingsBox'
   ];
 
   for (var box in boxes) {

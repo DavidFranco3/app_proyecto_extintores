@@ -115,7 +115,9 @@ class GenerarPdfPage4 {
       BuildContext context, Map<String, dynamic> data) async {
     try {
       final bytes = await _generatePdfBytes(data);
+      if (!context.mounted) return;
       final outputDirectory = await getExternalStorageDirectory();
+      if (!context.mounted) return;
 
       if (outputDirectory != null) {
         final sanitizedCliente = (data["cliente"] ?? "Cliente")
@@ -128,6 +130,7 @@ class GenerarPdfPage4 {
         final inspeccionesService = InspeccionesService();
         var response =
             await inspeccionesService.sendEmail2(data["id"], file.path);
+        if (!context.mounted) return;
 
         if (response['status'] == 200) {
           showCustomFlushbar(

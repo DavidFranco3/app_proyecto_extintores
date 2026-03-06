@@ -327,6 +327,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         await box.put('clientes', formateadas);
 
         if (mounted) {
+          if (!mounted) return;
           setState(() {
             dataClientes = formateadas;
             loading = false;
@@ -334,6 +335,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         }
       } else {
         if (mounted) {
+          if (!mounted) return;
           setState(() {
             dataClientes = [];
             loading = false;
@@ -343,6 +345,7 @@ class EncuestaPageState extends State<EncuestaPage> {
     } catch (e) {
       debugPrint("Error al obtener los clientes: $e");
       if (mounted) {
+        if (!mounted) return;
         setState(() {
           loading = false;
         });
@@ -356,6 +359,7 @@ class EncuestaPageState extends State<EncuestaPage> {
 
     if (guardados != null) {
       if (mounted) {
+        if (!mounted) return;
         setState(() {
           dataClientes = guardados
               .map<Map<String, dynamic>>(
@@ -367,6 +371,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       }
     } else {
       if (mounted) {
+        if (!mounted) return;
         setState(() {
           dataClientes = [];
           loading = false;
@@ -385,13 +390,16 @@ class EncuestaPageState extends State<EncuestaPage> {
       }
     } catch (e) {
       debugPrint("Error general al cargar ramas: $e");
+      if (!mounted) return;
       setState(() {
         dataRamas = [];
       });
     } finally {
-      setState(() {
-        loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 
@@ -405,6 +413,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       final box = Hive.box('ramasBox');
       await box.put('ramas', formateadas);
 
+      if (!mounted) return;
       setState(() {
         dataRamas = formateadas;
       });
@@ -420,6 +429,7 @@ class EncuestaPageState extends State<EncuestaPage> {
           .map((e) => Map<String, dynamic>.from(e))
           .where((item) => item['estado'] == "true"));
 
+      if (!mounted) return;
       setState(() {
         dataRamas = locales;
       });
@@ -465,11 +475,13 @@ class EncuestaPageState extends State<EncuestaPage> {
         final box = Hive.box('frecuenciasBox');
         await box.put('frecuencias', formateados);
 
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = formateados;
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = [];
           loading = false;
@@ -477,6 +489,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       }
     } catch (e) {
       debugPrint("Error al obtener las frecuencias: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -489,6 +502,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       final List<dynamic>? guardados = box.get('frecuencias');
 
       if (guardados != null) {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = guardados
               .map<Map<String, dynamic>>(
@@ -498,6 +512,7 @@ class EncuestaPageState extends State<EncuestaPage> {
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = [];
           loading = false;
@@ -551,11 +566,13 @@ class EncuestaPageState extends State<EncuestaPage> {
         final box = Hive.box('clasificacionesBox');
         await box.put('clasificaciones', formateadas);
 
+        if (!mounted) return;
         setState(() {
           dataClasificaciones = formateadas;
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataClasificaciones = [];
           loading = false;
@@ -563,6 +580,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       }
     } catch (e) {
       debugPrint("Error al obtener las clasificaciones: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -580,11 +598,13 @@ class EncuestaPageState extends State<EncuestaPage> {
           .where((item) => item['estado'] == "true")
           .toList();
 
+      if (!mounted) return;
       setState(() {
         dataClasificaciones = filtradas;
         loading = false;
       });
     } else {
+      if (!mounted) return;
       setState(() {
         dataClasificaciones = [];
         loading = false;
@@ -708,11 +728,13 @@ class EncuestaPageState extends State<EncuestaPage> {
         final box = Hive.box('encuestasBox');
         await box.put('encuestas', formateadas);
 
+        if (!mounted) return;
         setState(() {
           dataEncuestas = formateadas;
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataEncuestas = [];
           loading = false;
@@ -720,6 +742,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       }
     } catch (e) {
       debugPrint("Error al obtener las encuestas: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -743,11 +766,13 @@ class EncuestaPageState extends State<EncuestaPage> {
               item['idCliente'] == idCliente)
           .toList();
 
+      if (!mounted) return;
       setState(() {
         dataEncuestas = filtradas;
         loading = false;
       });
     } else {
+      if (!mounted) return;
       setState(() {
         dataEncuestas = [];
         loading = false;
@@ -889,6 +914,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         }
       }
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -903,6 +929,7 @@ class EncuestaPageState extends State<EncuestaPage> {
       });
       await box.put('encuestas', pendientes);
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
       if (mounted) {
         showCustomFlushbar(
@@ -992,6 +1019,7 @@ class EncuestaPageState extends State<EncuestaPage> {
         }
       }
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -1007,7 +1035,7 @@ class EncuestaPageState extends State<EncuestaPage> {
     }
   }
 
-  Future<void> _onSubmit(accion) async {
+  Future<void> _onSubmit(String accion) async {
     // ✅ Agregar async a la función
 
     final String? token = await AuthService().getTokenApi();
@@ -1024,6 +1052,7 @@ class EncuestaPageState extends State<EncuestaPage> {
 
     final dropboxService = DropboxService();
     final cloudinaryService = CloudinaryService();
+    if (!mounted) return;
     setState(() {
       _isLoading = true; // Activar la animación de carga al inicio
     });
@@ -1154,6 +1183,7 @@ class EncuestaPageState extends State<EncuestaPage> {
     }
 
 // Desactivamos la animación de carga después de que todas las imágenes se hayan subido
+    if (!mounted) return;
     setState(() {
       _isLoading = false; // Desactivar la animación de carga
     });

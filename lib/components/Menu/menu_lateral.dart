@@ -19,7 +19,6 @@ import '../../page/ReporteFinal/reporte_final.dart';
 import '../../page/Ramas/ramas.dart';
 import '../../page/SeleccionarInspeccionesClientes/seleccionar_inspecciones_clientes.dart';
 import '../Home/home.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
 import '../../api/auth.dart';
@@ -27,6 +26,7 @@ import '../../api/usuarios.dart';
 import '../../page/SeleccionPreguntas/seleccion_preguntas.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:hive/hive.dart';
 
 class MenuLateral extends StatefulWidget {
   final String currentPage;
@@ -65,13 +65,13 @@ class _MenuLateralState extends State<MenuLateral> {
   Future<void> _obtenerDatosUsuario() async {
     final authService = AuthService();
     final usuarioService = UsuariosService();
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('settingsBox');
 
     // Cargar nombre del caché
     if (mounted) {
       setState(() {
-        nombreUsuario = prefs.getString('nombreUsuario') ?? "Usuario";
-        tipoUsuario = prefs.getString('tipoUsuario');
+        nombreUsuario = box.get('nombreUsuario') ?? "Usuario";
+        tipoUsuario = box.get('tipoUsuario');
       });
     }
 
@@ -88,8 +88,8 @@ class _MenuLateralState extends State<MenuLateral> {
               tipoUsuario = user['tipo'];
               nombreUsuario = user['nombre'] ?? nombreUsuario;
             });
-            await prefs.setString('tipoUsuario', user['tipo']);
-            await prefs.setString('nombreUsuario', nombreUsuario);
+            await box.put('tipoUsuario', user['tipo']);
+            await box.put('nombreUsuario', nombreUsuario);
             return;
           }
         }
@@ -107,8 +107,8 @@ class _MenuLateralState extends State<MenuLateral> {
 
   Future<void> _logout() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('isLoggedIn');
+      final box = Hive.box('settingsBox');
+      await box.delete('isLoggedIn');
       logsInformativos("Sesión cerrada correctamente", {});
       AuthService authService = AuthService();
       await authService.logoutApi();

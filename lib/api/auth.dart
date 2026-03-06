@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../utils/constants.dart';
 import 'endpoints.dart';
@@ -7,6 +7,7 @@ import 'api_client.dart';
 
 class AuthService {
   final _api = ApiClient().dio;
+  final _storage = const FlutterSecureStorage();
 
   // Validar inicio de sesión
   Future<Map<String, dynamic>> login(Map<String, dynamic> data) async {
@@ -32,20 +33,17 @@ class AuthService {
 
   // Guardar el token en almacenamiento local
   Future<void> setTokenApi(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(tokenKey, token);
+    await _storage.write(key: tokenKey, value: token);
   }
 
   // Obtener el token
   Future<String?> getTokenApi() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(tokenKey);
+    return await _storage.read(key: tokenKey);
   }
 
   // Cerrar sesión
   Future<void> logoutApi() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(tokenKey);
+    await _storage.delete(key: tokenKey);
   }
 
   // Obtener los datos del usuario logueado

@@ -49,6 +49,7 @@ class _EncuestasPageState extends State<EncuestasPage> {
         ),
       ),
     ).then((_) {
+      if (!mounted) return;
       context.read<EncuestasController>().cargarEncuestas();
     });
   }

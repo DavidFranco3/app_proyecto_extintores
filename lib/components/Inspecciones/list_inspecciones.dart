@@ -156,7 +156,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
     }
   }
 
-  void openCargaImagenes(row) {
+  void openCargaImagenes(Map<String, dynamic> row) {
     // Navegar a la página de eliminación en lugar de mostrar un modal
     Navigator.push(
       context,

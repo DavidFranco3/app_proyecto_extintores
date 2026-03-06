@@ -58,18 +58,8 @@ class _TblInspeccionesPantalla1State extends State<TblInspeccionesPantalla1> {
                   'Registro':
                       row['index'], // Muestra "Registro 1", "Registro 2", etc.
                   'Nombre': row['nombre'],
-                  'Dirección': "C " +
-                      row['calle'] +
-                      " " +
-                      row['nExterior'] +
-                      " LOC " +
-                      row['colonia'] +
-                      " " +
-                      row['cPostal'] +
-                      " " +
-                      row['municipio'] +
-                      " , " +
-                      row['estadoDom'],
+                  'Dirección':
+                      "C ${row['calle']} ${row['nExterior']} LOC ${row['colonia']} ${row['cPostal']} ${row['municipio']} , ${row['estadoDom']}",
                   'Creado el': formatDate(row['createdAt'] ?? ''),
                   '_originalRow': row,
                 };
@@ -93,6 +83,3 @@ class _TblInspeccionesPantalla1State extends State<TblInspeccionesPantalla1> {
     );
   }
 }
-
-
-

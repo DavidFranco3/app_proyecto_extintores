@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 import '../api/inspecciones.dart';
 import '../api/inspecciones_proximas.dart';
@@ -176,8 +176,8 @@ class HomeController extends BaseController {
 
   Future<void> obtenerNombreUsuario() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      String? nombre = prefs.getString('nombreUsuario');
+      final box = Hive.box('settingsBox');
+      String? nombre = box.get('nombreUsuario');
       if (nombre != null) {
         nombreUsuario = nombre;
         notifyListeners();
@@ -190,7 +190,7 @@ class HomeController extends BaseController {
           final user = await _usuarioService.obtenerUsuario2(idUsuario);
           if (user != null && user['nombre'] != null) {
             nombreUsuario = user['nombre'];
-            await prefs.setString('nombreUsuario', user['nombre']);
+            await box.put('nombreUsuario', user['nombre']);
             notifyListeners();
           }
         }

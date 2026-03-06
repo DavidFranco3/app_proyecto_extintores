@@ -1,10 +1,5 @@
 // Repositories managed in settings.gradle
 
-// Probablemente ya no sea necesario con AGP 9 y Gradle 9
-rootProject.buildDir = "../build"
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
 subprojects {
     project.evaluationDependsOn(":app")
 }
@@ -16,6 +11,10 @@ subprojects {
                 compileSdk 35
             }
         }
+    }
+    // 🔧 Global suppression of obsolete warnings
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << "-Xlint:-options"
     }
 }
 

@@ -362,11 +362,11 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
     final Map<String, Map<String, Map<String, List<Map<String, dynamic>>>>>
         jerarquia = {};
     for (var encuesta in dataEncuestas) {
-      final rama = encuesta['idRama'] + "-" + encuesta['rama'];
+      final rama = '${encuesta['idRama']}-${encuesta['rama']}';
       final clasificacion =
-          encuesta['idClasificacion'] + "-" + encuesta['clasificacion'];
+          '${encuesta['idClasificacion']}-${encuesta['clasificacion']}';
       final frecuencia =
-          encuesta['idFrecuencia'] + "-" + encuesta['frecuencia'];
+          '${encuesta['idFrecuencia']}-${encuesta['frecuencia']}';
       jerarquia.putIfAbsent(rama, () => {});
       jerarquia[rama]!.putIfAbsent(clasificacion, () => {});
       jerarquia[rama]![clasificacion]!.putIfAbsent(frecuencia, () => []);
@@ -395,7 +395,6 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
   }
 
   Future<List<Map<String, dynamic>>> generarEstructuraGuardar(
-    BuildContext context,
     Map<String, Map<String, Map<String, List<Map<String, dynamic>>>>> jerarquia,
     List<String> seleccionados,
     TextEditingController clienteController,
@@ -551,7 +550,6 @@ class _EncuestasJerarquicasPageState extends State<EncuestasJerarquicasWidget> {
 
                                 final dataAGuardar =
                                     await generarEstructuraGuardar(
-                                  context,
                                   jerarquia,
                                   seleccionados.toList(),
                                   clienteController,

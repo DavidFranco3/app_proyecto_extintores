@@ -23,7 +23,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
   String? _sortColumn;
   bool _sortAscending = true;
   int _currentPage = 1;
-  int _itemsPerPage = 10;
+  final int _itemsPerPage = 10;
   final TextEditingController _searchController = TextEditingController();
 
   @override

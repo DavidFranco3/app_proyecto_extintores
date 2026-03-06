@@ -109,11 +109,13 @@ class _CrearEncuestaPantalla1ScreenState
         final box = Hive.box('clasificacionesBox');
         await box.put('clasificaciones', formateadas);
 
+        if (!mounted) return;
         setState(() {
           dataClasificaciones = formateadas;
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataClasificaciones = [];
           loading = false;
@@ -121,6 +123,7 @@ class _CrearEncuestaPantalla1ScreenState
       }
     } catch (e) {
       debugPrint("Error al obtener las clasificaciones: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -138,11 +141,13 @@ class _CrearEncuestaPantalla1ScreenState
           .where((item) => item['estado'] == "true")
           .toList();
 
+      if (!mounted) return;
       setState(() {
         dataClasificaciones = filtradas;
         loading = false;
       });
     } else {
+      if (!mounted) return;
       setState(() {
         dataClasificaciones = [];
         loading = false;
@@ -190,11 +195,13 @@ class _CrearEncuestaPantalla1ScreenState
         final box = Hive.box('frecuenciasBox');
         await box.put('frecuencias', formateados);
 
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = formateados;
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = [];
           loading = false;
@@ -202,6 +209,7 @@ class _CrearEncuestaPantalla1ScreenState
       }
     } catch (e) {
       debugPrint("Error al obtener las frecuencias: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -214,6 +222,7 @@ class _CrearEncuestaPantalla1ScreenState
       final List<dynamic>? guardados = box.get('frecuencias');
 
       if (guardados != null) {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = guardados
               .map<Map<String, dynamic>>(
@@ -223,6 +232,7 @@ class _CrearEncuestaPantalla1ScreenState
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           dataFrecuencias = [];
           loading = false;
@@ -230,6 +240,7 @@ class _CrearEncuestaPantalla1ScreenState
       }
     } catch (e) {
       debugPrint("Error leyendo desde Hive: $e");
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -262,10 +273,12 @@ class _CrearEncuestaPantalla1ScreenState
       }
     } catch (e) {
       debugPrint("Error general al cargar ramas: $e");
+      if (!mounted) return;
       setState(() {
         dataRamas = [];
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
@@ -282,6 +295,7 @@ class _CrearEncuestaPantalla1ScreenState
       final box = Hive.box('ramasBox');
       await box.put('ramas', formateadas);
 
+      if (!mounted) return;
       setState(() {
         dataRamas = formateadas;
       });
@@ -297,6 +311,7 @@ class _CrearEncuestaPantalla1ScreenState
           .map((e) => Map<String, dynamic>.from(e))
           .where((item) => item['estado'] == "true"));
 
+      if (!mounted) return;
       setState(() {
         dataRamas = locales;
       });

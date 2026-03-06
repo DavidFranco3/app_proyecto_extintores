@@ -53,8 +53,9 @@ class InspeccionesController extends BaseController {
         final res = await _service.registraInspecciones(data);
         if (res['status'] == 200 || res['status'] == 201) {
           // Replace temp with real data or just reload
-          if (data['idCliente'] != null)
+          if (data['idCliente'] != null) {
             await cargarInspecciones(data['idCliente']);
+          }
           return true;
         }
         return false;
@@ -166,7 +167,9 @@ class InspeccionesController extends BaseController {
       if (success) {
         await queue.removeAction(action.id);
         debugPrint("✅ Inspeccion synced: ${action.id}");
-        if (clientId != null) await cargarInspecciones(clientId);
+        if (clientId != null) {
+          await cargarInspecciones(clientId);
+        }
       }
     }
   }

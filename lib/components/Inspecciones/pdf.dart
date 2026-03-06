@@ -585,6 +585,7 @@ class PdfGenerator {
             await inspeccionesService.sendEmail2(data["id"], file.path);
 
         if (response['status'] == 200) {
+          if (!context.mounted) return;
           showCustomFlushbar(
             context: context,
             title: "Correo enviado",
@@ -592,6 +593,7 @@ class PdfGenerator {
             backgroundColor: Colors.green,
           );
         } else {
+          if (!context.mounted) return;
           showCustomFlushbar(
             context: context,
             title: "Error al enviar el correo",
@@ -602,6 +604,7 @@ class PdfGenerator {
       }
     } catch (e) {
       debugPrint('Error sending PDF: $e');
+      if (!context.mounted) return;
       showCustomFlushbar(
         context: context,
         title: "Error",

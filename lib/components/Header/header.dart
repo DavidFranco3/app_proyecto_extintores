@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import '../../api/auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../Login/login.dart';
 import '../Logs/logs_informativos.dart';
 import '../../api/usuarios.dart';
@@ -11,8 +11,8 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
 
   Future<void> _cerrarSesion(BuildContext context) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('isLoggedIn');
+      final box = Hive.box('settingsBox');
+      await box.delete('isLoggedIn');
       logsInformativos("Sesion cerrada correctamente", {});
       AuthService authService = AuthService();
       authService.logoutApi();

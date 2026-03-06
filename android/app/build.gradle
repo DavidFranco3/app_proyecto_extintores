@@ -6,7 +6,7 @@ plugins {
 
 dependencies {
   // Import the Firebase BoM
-  implementation platform('com.google.firebase:firebase-bom:34.9.0')
+  implementation platform('com.google.firebase:firebase-bom:34.10.0')
   coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
 
   // TODO: Add the dependencies for Firebase products you want to use
@@ -59,7 +59,7 @@ android {
 
     buildTypes {
         // release {
-        //     signingConfig = signingConfigs.debug
+            // signingConfig = signingConfigs.debug
         // }
         release {
           signingConfig = signingConfigs.release
@@ -71,18 +71,20 @@ flutter {
     source = "../.."
 }
 
-// 🔧 Suprimir advertencias de opciones obsoletas
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += "-Xlint:-options"
-}
+
+// 🔧 Suprimir advertencias de opciones obsoletas (Redundant - handled in root build.gradle)
+// tasks.withType(JavaCompile).configureEach {
+//     options.compilerArgs += "-Xlint:-options"
+// }
 
 // Eliminado kotlin jvmToolchain para evitar conflictos en esta etapa
 
 
-// 🔧 Aplicar compatibilidad global a Java 21
-allprojects {
-    tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-}
+
+// 🔧 Aplicar compatibilidad global (Redundant - handled in root build.gradle)
+// allprojects {
+//     tasks.withType(JavaCompile).configureEach {
+//         sourceCompatibility = JavaVersion.VERSION_21
+//         targetCompatibility = JavaVersion.VERSION_21
+//     }
+// }

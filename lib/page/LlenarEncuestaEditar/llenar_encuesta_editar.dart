@@ -847,7 +847,7 @@ class _EncuestaEditarPageState extends State<EncuestaEditarPage> {
     }
   }
 
-  Future<void> _onSubmit(accion) async {
+  Future<void> _onSubmit(String accion) async {
     // ✅ Agregar async a la función
 
     final String? token = await AuthService().getTokenApi();
