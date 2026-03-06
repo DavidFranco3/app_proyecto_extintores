@@ -4,7 +4,7 @@ import '../Generales/list_view.dart';
 import '../Generales/premium_button.dart';
 import '../Generales/formato_fecha.dart';
 import 'dart:io';
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:dio/dio.dart';
 import '../../api/inspecciones.dart';
 import 'package:path_provider/path_provider.dart';
@@ -78,7 +78,7 @@ class _TblInspeccionesState extends State<TblInspecciones> {
       // Verificar si el archivo fue descargado correctamente
       File file = File(filePath);
       if (await file.exists()) {
-        OpenFile.open(filePath);
+        OpenFilex.open(filePath);
         debugPrint("Archivo guardado correctamente en: $filePath");
       } else {
         throw Exception("El archivo no se descargó correctamente.");

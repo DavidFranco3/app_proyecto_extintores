@@ -5,7 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 class GraficaBarras extends StatefulWidget {
@@ -139,7 +139,7 @@ class _GraficaBarrasState extends State<GraficaBarras> {
         final file = File(filePath);
         await file.writeAsBytes(await pdf.save());
         debugPrint("PDF guardado en: $filePath");
-        await OpenFile.open(filePath);
+        await OpenFilex.open(filePath);
       } else {
         debugPrint("No se pudo obtener el directorio de almacenamiento.");
       }

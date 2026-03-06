@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -297,7 +297,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
       File(finalPath).writeAsBytesSync(bytes);
       outputDocument.dispose();
 
-      OpenFile.open(finalPath);
+      OpenFilex.open(finalPath);
     } catch (e) {
       debugPrint("Error al combinar los PDF: $e");
     } finally {

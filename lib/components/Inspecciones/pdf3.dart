@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart'; // For BuildContext, Colors
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../api/inspecciones.dart';
 import '../Generales/flushbar_helper.dart';
@@ -104,7 +104,7 @@ class GenerarPdfPage4 {
         await file.writeAsBytes(bytes, flush: true);
         debugPrint(
             "PDF (Problemas) Generated: ${file.path}, Size: ${bytes.length} bytes");
-        await OpenFile.open(file.path);
+        await OpenFilex.open(file.path);
       }
     } catch (e) {
       debugPrint('Error generating PDF: $e');

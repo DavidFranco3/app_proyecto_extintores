@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../utils/pdf_utils.dart';
 import '../../utils/pdf_theme.dart';
@@ -132,6 +132,6 @@ class GenerarPdfPage {
     final filePath = "${output.path}/$fileName";
     final file = File(filePath);
     await file.writeAsBytes(await pdf.save(), flush: true);
-    await OpenFile.open(filePath);
+    await OpenFilex.open(filePath);
   }
 }

@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../api/inspecciones.dart'; // Import service
 import '../Generales/flushbar_helper.dart'; // Import flushbar
@@ -557,7 +557,7 @@ class PdfGenerator {
         final file = File(filePath);
         await file.writeAsBytes(bytes, flush: true);
         debugPrint("PDF Saved: $filePath");
-        await OpenFile.open(filePath);
+        await OpenFilex.open(filePath);
       }
     } catch (e) {
       debugPrint("Error saving PDF: $e");
