@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../utils/globals.dart';
 
 class PremiumInputs {
@@ -10,7 +11,7 @@ class PremiumInputs {
     BuildContext? context, // Opcional ahora
     required String labelText,
     String? hintText,
-    IconData? prefixIcon,
+    dynamic prefixIcon,
     Widget? suffixIcon,
     bool enabled = true,
   }) {
@@ -25,8 +26,11 @@ class PremiumInputs {
       labelText: labelText,
       hintText: hintText,
       prefixIcon: prefixIcon != null
-          ? Icon(prefixIcon,
-              color: secondaryColor.withValues(alpha: 0.6), size: 20)
+          ? (prefixIcon is IconData
+              ? Icon(prefixIcon,
+                  color: secondaryColor.withValues(alpha: 0.6), size: 20)
+              : FaIcon(prefixIcon,
+                  color: secondaryColor.withValues(alpha: 0.6), size: 20))
           : null,
       suffixIcon: suffixIcon,
       labelStyle: TextStyle(
@@ -118,7 +122,7 @@ class PremiumCardField extends StatelessWidget {
 
 class PremiumSectionTitle extends StatelessWidget {
   final String title;
-  final IconData? icon;
+  final dynamic icon;
 
   const PremiumSectionTitle({
     super.key,
@@ -133,7 +137,9 @@ class PremiumSectionTitle extends StatelessWidget {
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 18, color: const Color(0xFFE94742)),
+            icon is IconData
+                ? Icon(icon, size: 18, color: const Color(0xFFE94742))
+                : FaIcon(icon, size: 18, color: const Color(0xFFE94742)),
             const SizedBox(width: 8),
           ],
           Expanded(
@@ -156,7 +162,7 @@ class PremiumSectionTitle extends StatelessWidget {
 class PremiumMetricCard extends StatelessWidget {
   final String title;
   final String count;
-  final IconData icon;
+  final dynamic icon;
   final Color color;
   final VoidCallback onTap;
 
@@ -202,7 +208,9 @@ class PremiumMetricCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.white, size: 28),
+            icon is IconData
+                ? Icon(icon, color: Colors.white, size: 28)
+                : FaIcon(icon as dynamic, color: Colors.white, size: 28),
             const Spacer(),
             Text(
               count,
@@ -229,7 +237,7 @@ class PremiumMetricCard extends StatelessWidget {
 
 class PremiumActionIcon extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final dynamic icon;
   final Color color;
   final VoidCallback onTap;
 
@@ -260,7 +268,9 @@ class PremiumActionIcon extends StatelessWidget {
               border: Border.all(
                   color: color.withValues(alpha: isDark ? 0.3 : 0.2)),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: icon is IconData
+                ? Icon(icon, color: color, size: 24)
+                : FaIcon(icon as dynamic, color: color, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
@@ -279,7 +289,7 @@ class PremiumActionIcon extends StatelessWidget {
 
 class PremiumEmptyState extends StatelessWidget {
   final String message;
-  final IconData icon;
+  final dynamic icon;
 
   const PremiumEmptyState({
     super.key,
@@ -305,8 +315,12 @@ class PremiumEmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon,
-              color: isDark ? Colors.grey[600] : Colors.grey[400], size: 48),
+          icon is IconData
+              ? Icon(icon,
+                  color: isDark ? Colors.grey[600] : Colors.grey[400], size: 48)
+              : FaIcon(icon as dynamic,
+                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                  size: 48),
           const SizedBox(height: 16),
           Text(
             message,

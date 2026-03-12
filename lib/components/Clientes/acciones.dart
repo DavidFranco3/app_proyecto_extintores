@@ -780,7 +780,7 @@ class _AccionesState extends State<Acciones> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                Icon(
+                                                FaIcon(
                                                     FontAwesomeIcons
                                                         .cloudArrowUp,
                                                     size: 40,

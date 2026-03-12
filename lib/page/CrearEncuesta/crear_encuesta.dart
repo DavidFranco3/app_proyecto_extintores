@@ -873,7 +873,7 @@ class _CrearEncuestaScreenState extends State<CrearEncuestaScreen> {
                               ),
                             ),
                             trailing: IconButton(
-                              icon: const Icon(FontAwesomeIcons.trashCan,
+                              icon: const FaIcon(FontAwesomeIcons.trashCan,
                                   color: Color(0xFFE94742), size: 18),
                               onPressed: () => _eliminarPregunta(index),
                             ),

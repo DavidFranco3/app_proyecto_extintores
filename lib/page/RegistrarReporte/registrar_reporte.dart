@@ -471,7 +471,7 @@ class _RegistrarReporteScreenState extends State<RegistrarReporteScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        FaIcon(
                                           FontAwesomeIcons.cloudArrowUp,
                                           size: 50,
                                           color: const Color(0xFFE94742)

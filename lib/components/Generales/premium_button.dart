@@ -6,7 +6,7 @@ enum PremiumButtonStyle { primary, secondary, danger }
 class PremiumActionButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String label;
-  final IconData icon;
+  final dynamic icon;
   final List<Color>? gradientColors;
   final bool isFullWidth;
   final bool isLoading;
@@ -85,7 +85,9 @@ class PremiumActionButton extends StatelessWidget {
                     ),
                   )
                 else if (!iconRight) ...[
-                  Icon(icon, color: Colors.white, size: 20),
+                  icon is IconData
+                      ? Icon(icon, color: Colors.white, size: 20)
+                      : FaIcon(icon, color: Colors.white, size: 20),
                   const SizedBox(width: 10),
                 ],
                 Flexible(
@@ -103,7 +105,9 @@ class PremiumActionButton extends StatelessWidget {
                 ),
                 if (!isLoading && iconRight) ...[
                   const SizedBox(width: 10),
-                  Icon(icon, color: Colors.white, size: 20),
+                  icon is IconData
+                      ? Icon(icon, color: Colors.white, size: 20)
+                      : FaIcon(icon, color: Colors.white, size: 20),
                 ],
               ],
             ),

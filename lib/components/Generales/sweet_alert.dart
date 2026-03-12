@@ -9,7 +9,7 @@ class SweetAlert {
     required String message,
     String confirmLabel = 'Confirmar',
     String cancelLabel = 'Cancelar',
-    IconData icon = FontAwesomeIcons.circleExclamation,
+    dynamic icon = FontAwesomeIcons.circleExclamation,
     Color iconColor = const Color(0xFFE94742),
   }) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -47,11 +47,17 @@ class SweetAlert {
                     color: iconColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: FaIcon(
-                    icon,
-                    size: 50,
-                    color: iconColor,
-                  ),
+                  child: icon is IconData
+                      ? Icon(
+                          icon,
+                          size: 50,
+                          color: iconColor,
+                        )
+                      : FaIcon(
+                          icon,
+                          size: 50,
+                          color: iconColor,
+                        ),
                 ),
                 const SizedBox(height: 20),
                 Text(

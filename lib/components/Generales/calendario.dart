@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import './event.dart';
 import 'package:intl/intl.dart';
@@ -271,7 +271,7 @@ class _CalendarioState extends State<Calendario> {
                     children: [
                       Row(
                         children: [
-                          const Icon(FontAwesomeIcons.clock,
+                          const FaIcon(FontAwesomeIcons.clock,
                               size: 12, color: Colors.grey),
                           const SizedBox(width: 6),
                           Text(
@@ -303,7 +303,7 @@ class _CalendarioState extends State<Calendario> {
                   radius: 18,
                   backgroundColor:
                       const Color(0xFFE94742).withValues(alpha: 0.1),
-                  child: const Icon(
+                  child: const FaIcon(
                     FontAwesomeIcons.chevronRight,
                     size: 14,
                     color: Color(0xFFE94742),
@@ -322,7 +322,7 @@ class _CalendarioState extends State<Calendario> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          FaIcon(
             FontAwesomeIcons.calendarDay,
             size: 60,
             color: Colors.grey.withValues(alpha: 0.2),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -263,7 +263,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             color: Colors.blueGrey.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
+          child: const FaIcon(
             FontAwesomeIcons.circleExclamation,
             size: 14,
             color: Colors.blueGrey,

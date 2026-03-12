@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -435,7 +435,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
                                     color: const Color(0xFFE3F2FD),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(
+                                  child: const FaIcon(
                                       FontAwesomeIcons.fileContract,
                                       color: Color(0xFF1565C0),
                                       size: 20),
@@ -452,7 +452,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        const Icon(FontAwesomeIcons.clock,
+                                        const FaIcon(FontAwesomeIcons.clock,
                                             size: 12, color: Colors.grey),
                                         const SizedBox(width: 4),
                                         Text(
@@ -487,7 +487,7 @@ class _ClienteInspeccionesAppState extends State<ClienteInspeccionesApp> {
                         child: Center(
                           child: Column(
                             children: [
-                              Icon(FontAwesomeIcons.folderOpen,
+                              FaIcon(FontAwesomeIcons.folderOpen,
                                   size: 40, color: Colors.grey[400]),
                               const SizedBox(height: 10),
                               Text("No hay actividades registradas",

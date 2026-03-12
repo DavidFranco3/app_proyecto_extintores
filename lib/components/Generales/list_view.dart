@@ -226,7 +226,7 @@ class _DataTableCustomState extends State<DataTableCustom> {
                     color: Colors.blueAccent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(FontAwesomeIcons.arrowDownShortWide,
+                  child: const FaIcon(FontAwesomeIcons.arrowDownShortWide,
                       color: Colors.blueAccent),
                 ),
                 onSelected: (colName) {

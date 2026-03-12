@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:prueba/components/Header/header.dart';
 import 'package:prueba/components/Menu/menu_lateral.dart';
 import '../Load/load.dart';
@@ -86,7 +86,7 @@ class _PreguntasVisualPageState extends State<PreguntasVisualPage> {
                       children: [
                         ElevatedButton.icon(
                           onPressed: closeRegistroModal,
-                          icon: Icon(FontAwesomeIcons.arrowLeft),
+                          icon: FaIcon(FontAwesomeIcons.arrowLeft),
                           label: _isLoading
                               ? SpinKitFadingCircle(
                                   color: const Color.fromARGB(255, 241, 8, 8),

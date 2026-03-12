@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../api/inspecciones.dart';
 import '../../components/Load/load.dart';
 import '../../components/Menu/menu_lateral.dart';
@@ -284,7 +284,7 @@ class _GraficaInspeccionesPageState extends State<GraficaInspeccionesPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(FontAwesomeIcons.chartBar,
+                                  FaIcon(FontAwesomeIcons.chartBar,
                                       size: 50, color: Colors.grey),
                                   SizedBox(height: 10),
                                   Text("No hay datos para mostrar",

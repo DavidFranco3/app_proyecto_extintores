@@ -2277,7 +2277,7 @@ class EncuestaPageState extends State<EncuestaPage> {
                                                       ],
                                                     ),
                                                     trailing: IconButton(
-                                                      icon: const Icon(
+                                                      icon: const FaIcon(
                                                           FontAwesomeIcons
                                                               .trash,
                                                           size: 18,
